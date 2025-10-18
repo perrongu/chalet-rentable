@@ -113,6 +113,11 @@ function createDefaultProject(): Project {
       },
       amortizationYears: { value: 30 },
       paymentFrequency: PaymentFrequency.MONTHLY,
+      annualAppreciationRate: { 
+        value: 2,
+        range: { min: 0, max: 10, default: 2, useRange: true },
+        sourceInfo: { source: '', remarks: '' }
+      },
     },
     acquisitionFees: {
       transferDuties: { value: 6666 },
@@ -241,6 +246,16 @@ function loadProjectFromStorage(): Project {
           f.downPayment = migrateInputWithSource(f.downPayment);
           f.interestRate = migrateInputWithSource(f.interestRate);
           f.amortizationYears = migrateInputWithSource(f.amortizationYears);
+          // Ajouter annualAppreciationRate s'il n'existe pas
+          if (!f.annualAppreciationRate) {
+            f.annualAppreciationRate = { 
+              value: 2,
+              range: { min: 0, max: 10, default: 2, useRange: true },
+              sourceInfo: { source: '', remarks: '' }
+            };
+          } else {
+            f.annualAppreciationRate = migrateInputWithSource(f.annualAppreciationRate);
+          }
         }
         
         // Migrer les frais d'acquisition

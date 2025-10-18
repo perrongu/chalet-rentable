@@ -299,6 +299,16 @@ export function InputForm() {
               ]}
             />
           </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <RangeInput
+              label="Taux d'appréciation annuel (%)"
+              value={inputs.financing.annualAppreciationRate}
+              onChange={(value) => updateFinancing('annualAppreciationRate', value)}
+              min={0}
+              max={20}
+              step={0.1}
+            />
+          </div>
         </CardContent>
       </Card>
 

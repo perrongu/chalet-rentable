@@ -11,6 +11,7 @@ export const PARAMETER_LABELS: Record<string, string> = {
   'financing.downPayment': 'Mise de fonds',
   'financing.interestRate': 'Taux d\'intérêt',
   'financing.amortizationYears': 'Amortissement',
+  'financing.annualAppreciationRate': 'Taux d\'appréciation annuel',
   'acquisitionFees.transferDuties': 'Droits de mutation',
   'acquisitionFees.notaryFees': 'Frais de notaire',
   'acquisitionFees.other': 'Autres frais d\'acquisition',
@@ -32,6 +33,12 @@ export const KPI_OPTIONS: Array<{ value: keyof KPIResults; label: string }> = [
   { value: 'annualDebtService', label: 'Service de la dette annuel' },
   { value: 'totalAcquisitionFees', label: 'Frais d\'acquisition' },
   { value: 'initialInvestment', label: 'Investissement initial' },
+  { value: 'principalPaidFirstYear', label: 'Capitalisation (capital remboursé 1ère année)' },
+  { value: 'propertyAppreciation', label: 'Plus-value (appréciation annuelle)' },
+  { value: 'cashflowROI', label: 'ROI Cashflow' },
+  { value: 'capitalizationROI', label: 'ROI Capitalisation' },
+  { value: 'appreciationROI', label: 'ROI Plus-value' },
+  { value: 'totalROI', label: 'ROI Total' },
 ];
 
 // ============================================================================
@@ -45,6 +52,7 @@ export const AVAILABLE_PARAMETERS = [
   { path: 'financing.downPayment', label: 'Mise de fonds' },
   { path: 'financing.interestRate', label: 'Taux d\'intérêt' },
   { path: 'financing.amortizationYears', label: 'Amortissement' },
+  { path: 'financing.annualAppreciationRate', label: 'Taux d\'appréciation annuel' },
 ];
 
 // ============================================================================

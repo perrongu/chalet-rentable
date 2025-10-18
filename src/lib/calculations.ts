@@ -318,21 +318,119 @@ export function calculateInitialInvestment(
 export function calculateAnnualCashflow(
   annualRevenue: number,
   totalExpenses: number,
-  annualDebtService: number,
   sources?: SourceInfo[]
 ): { value: number; trace: CalculationTrace } {
-  const cashflow = round(annualRevenue - totalExpenses - annualDebtService);
+  const cashflow = round(annualRevenue - totalExpenses);
 
   return {
     value: cashflow,
     trace: {
-      formula: 'Cashflow annuel = Revenus bruts - Dépenses - Service de la dette',
+      formula: 'Cashflow annuel = Revenus bruts - Dépenses totales',
       variables: {
         'Revenus annuels bruts ($)': annualRevenue,
         'Dépenses totales ($)': totalExpenses,
-        'Service de la dette ($)': annualDebtService,
       },
       result: cashflow,
+      sources,
+    },
+  };
+}
+
+export function calculatePrincipalPaidFirstYear(
+  loanAmount: number,
+  annualRate: number,
+  frequency: PaymentFrequency,
+  periodicPayment: number,
+  sources?: SourceInfo[]
+): { value: number; trace: CalculationTrace } {
+  const paymentsPerYear = getPaymentsPerYear(frequency);
+  const periodicRate = annualRate / 100 / paymentsPerYear;
+  
+  let principalPaid = 0;
+  let remainingBalance = loanAmount;
+  
+  // Calculer le capital remboursé pour chaque paiement de la première année
+  for (let i = 0; i < paymentsPerYear; i++) {
+    const interestPayment = remainingBalance * periodicRate;
+    const principalPayment = periodicPayment - interestPayment;
+    principalPaid += principalPayment;
+    remainingBalance -= principalPayment;
+  }
+  
+  principalPaid = round(principalPaid);
+
+  return {
+    value: principalPaid,
+    trace: {
+      formula: 'Capitalisation = Somme du capital remboursé durant les paiements de la première année',
+      variables: {
+        'Montant du prêt ($)': loanAmount,
+        'Taux annuel (%)': annualRate,
+        'Paiement périodique ($)': periodicPayment,
+        'Paiements par an': paymentsPerYear,
+        'Capital remboursé ($)': principalPaid,
+      },
+      result: principalPaid,
+      sources,
+    },
+  };
+}
+
+export function calculatePropertyAppreciation(
+  purchasePrice: number,
+  appreciationRate: number,
+  sources?: SourceInfo[]
+): { value: number; trace: CalculationTrace } {
+  const appreciation = round(purchasePrice * (appreciationRate / 100));
+
+  return {
+    value: appreciation,
+    trace: {
+      formula: 'Plus-value = Prix d\'achat × (Taux d\'appréciation / 100)',
+      variables: {
+        'Prix d\'achat ($)': purchasePrice,
+        'Taux d\'appréciation annuel (%)': appreciationRate,
+      },
+      result: appreciation,
+      sources,
+    },
+  };
+}
+
+export function calculateROI(
+  profit: number,
+  initialInvestment: number,
+  label: string,
+  sources?: SourceInfo[]
+): { value: number; trace: CalculationTrace } {
+  // Éviter division par zéro
+  if (initialInvestment <= 0) {
+    return {
+      value: 0,
+      trace: {
+        formula: `${label} ROI (%) = (${label} / Investissement initial) × 100`,
+        variables: {
+          [`${label} ($)`]: profit,
+          'Investissement initial ($)': initialInvestment,
+          'Note': 'Division par zéro évitée - investissement initial invalide',
+        },
+        result: 0,
+        sources,
+      },
+    };
+  }
+  
+  const roi = round((profit / initialInvestment) * 100, 2);
+
+  return {
+    value: roi,
+    trace: {
+      formula: `${label} ROI (%) = (${label} / Investissement initial) × 100`,
+      variables: {
+        [`${label} ($)`]: profit,
+        'Investissement initial ($)': initialInvestment,
+      },
+      result: roi,
       sources,
     },
   };
@@ -438,6 +536,7 @@ export function calculateKPIs(inputs: ProjectInputs): KPIResults {
   const interestRate = extractValue(inputs.financing.interestRate);
   const amortization = extractValue(inputs.financing.amortizationYears);
   const frequency = inputs.financing.paymentFrequency;
+  const appreciationRate = extractValue(inputs.financing.annualAppreciationRate);
 
   const transferDuties = extractValue(inputs.acquisitionFees.transferDuties);
   const notaryFees = extractValue(inputs.acquisitionFees.notaryFees);
@@ -454,6 +553,11 @@ export function calculateKPIs(inputs: ProjectInputs): KPIResults {
     extractSource(inputs.financing.downPayment),
     extractSource(inputs.financing.interestRate),
     extractSource(inputs.financing.amortizationYears),
+  ].filter(Boolean) as SourceInfo[];
+
+  const appreciationSources = [
+    extractSource(inputs.financing.purchasePrice),
+    extractSource(inputs.financing.annualAppreciationRate),
   ].filter(Boolean) as SourceInfo[];
 
   const feesSources = [
@@ -492,9 +596,28 @@ export function calculateKPIs(inputs: ProjectInputs): KPIResults {
   );
   const annualCashflow = calculateAnnualCashflow(
     annualRevenue.value,
-    expenses.total,
-    annualDebtService.value
+    expenses.total
   );
+  const principalPaidFirstYear = calculatePrincipalPaidFirstYear(
+    loanAmount.value,
+    interestRate,
+    frequency,
+    periodicPayment.value,
+    financingSources
+  );
+  const propertyAppreciation = calculatePropertyAppreciation(
+    purchasePrice,
+    appreciationRate,
+    appreciationSources
+  );
+  
+  // Calculs des ROI
+  const cashflowROI = calculateROI(annualCashflow.value, initialInvestment.value, 'Cashflow');
+  const capitalizationROI = calculateROI(principalPaidFirstYear.value, initialInvestment.value, 'Capitalisation');
+  const appreciationROI = calculateROI(propertyAppreciation.value, initialInvestment.value, 'Plus-value');
+  const totalProfit = annualCashflow.value + principalPaidFirstYear.value + propertyAppreciation.value;
+  const totalROI = calculateROI(totalProfit, initialInvestment.value, 'Total');
+  
   const cashOnCash = calculateCashOnCash(annualCashflow.value, initialInvestment.value);
   const capRate = calculateCapRate(annualRevenue.value, expenses.total, purchasePrice);
 
@@ -510,6 +633,12 @@ export function calculateKPIs(inputs: ProjectInputs): KPIResults {
     totalAcquisitionFees: totalAcquisitionFees.value,
     initialInvestment: initialInvestment.value,
     annualCashflow: annualCashflow.value,
+    principalPaidFirstYear: principalPaidFirstYear.value,
+    propertyAppreciation: propertyAppreciation.value,
+    cashflowROI: cashflowROI.value,
+    capitalizationROI: capitalizationROI.value,
+    appreciationROI: appreciationROI.value,
+    totalROI: totalROI.value,
     cashOnCash: cashOnCash.value,
     capRate: capRate.value,
     traces: {
@@ -529,6 +658,12 @@ export function calculateKPIs(inputs: ProjectInputs): KPIResults {
       totalAcquisitionFees: totalAcquisitionFees.trace,
       initialInvestment: initialInvestment.trace,
       annualCashflow: annualCashflow.trace,
+      principalPaidFirstYear: principalPaidFirstYear.trace,
+      propertyAppreciation: propertyAppreciation.trace,
+      cashflowROI: cashflowROI.trace,
+      capitalizationROI: capitalizationROI.trace,
+      appreciationROI: appreciationROI.trace,
+      totalROI: totalROI.trace,
       cashOnCash: cashOnCash.trace,
       capRate: capRate.trace,
     },

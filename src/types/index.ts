@@ -70,6 +70,7 @@ export interface FinancingInputs {
   interestRate: InputWithSource<number>; // Taux annuel en %
   amortizationYears: InputWithSource<number>;
   paymentFrequency: PaymentFrequency;
+  annualAppreciationRate: InputWithSource<number>; // Taux d'appréciation annuel de la propriété en %
 }
 
 export interface AcquisitionFees {
@@ -141,6 +142,14 @@ export interface KPIResults {
   annualCashflow: number;
   cashOnCash: number; // ROI en %
   capRate: number; // Cap rate en %
+  
+  // Rendement détaillé
+  principalPaidFirstYear: number; // Capital remboursé la première année (capitalisation)
+  propertyAppreciation: number; // Plus-value annuelle de la propriété
+  cashflowROI: number; // ROI du cashflow en %
+  capitalizationROI: number; // ROI de la capitalisation en %
+  appreciationROI: number; // ROI de la plus-value en %
+  totalROI: number; // ROI total en %
 
   // Traçabilité des calculs
   traces: Record<keyof Omit<KPIResults, 'traces' | 'expensesByCategory'>, CalculationTrace>;
