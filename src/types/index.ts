@@ -7,10 +7,20 @@ export interface SourceInfo {
   remarks?: string; // Remarques/notes additionnelles
 }
 
+export interface RangeValue {
+  min: number;
+  max: number;
+  default: number;
+  useRange: boolean; // Si true, utilise min/max pour sensibilité
+}
+
 export interface InputWithSource<T = number> {
   value: T;
+  range?: RangeValue; // Optionnel: si présent et useRange=true, utilise default pour les calculs
   sourceInfo?: SourceInfo;
 }
+
+export type NumericInputWithSource = InputWithSource<number>;
 
 // ============================================================================
 // TYPES D'INPUTS
@@ -24,12 +34,24 @@ export const ExpenseType = {
 
 export type ExpenseType = typeof ExpenseType[keyof typeof ExpenseType];
 
+export const ExpenseCategory = {
+  ENTRETIEN: 'Entretien',
+  SERVICES: 'Services',
+  ASSURANCES: 'Assurances',
+  TAXES: 'Taxes',
+  UTILITIES: 'Utilités',
+  GESTION: 'Gestion',
+  AUTRE: 'Autre',
+} as const;
+
+export type ExpenseCategory = typeof ExpenseCategory[keyof typeof ExpenseCategory];
+
 export interface ExpenseLine {
   id: string;
   name: string;
   type: ExpenseType;
   amount: InputWithSource<number>; // Montant ou pourcentage selon le type
-  category?: string; // Catégorie optionnelle (entretien, taxes, assurances, etc.)
+  category?: ExpenseCategory; // Catégorie optionnelle prédéfinie
 }
 
 export const PaymentFrequency = {

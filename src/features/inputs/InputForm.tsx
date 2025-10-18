@@ -1,9 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
+import { RangeInput } from '../../components/ui/RangeInput';
 import { Select } from '../../components/ui/Select';
 import { useProject } from '../../store/ProjectContext';
-import type { ExpenseLine } from '../../types';
-import { ExpenseType, PaymentFrequency } from '../../types';
+import type { ExpenseLine, InputWithSource } from '../../types';
+import { ExpenseType, ExpenseCategory, PaymentFrequency } from '../../types';
 import { useMemo } from 'react';
 
 export function InputForm() {
@@ -24,57 +25,54 @@ export function InputForm() {
     return grouped;
   }, [inputs.expenses]);
 
-  const updateRevenue = (field: string, value: number) => {
-    const currentField = inputs.revenue[field as keyof typeof inputs.revenue];
+  const updateRevenue = (field: string, value: InputWithSource<number> | number) => {
     dispatch({
       type: 'UPDATE_BASE_INPUTS',
       payload: {
         revenue: {
           ...inputs.revenue,
-          [field]: typeof currentField === 'object' ? { ...currentField, value } : value,
+          [field]: value,
         },
       } as any,
     });
   };
 
-  const updateFinancing = (field: string, value: number | PaymentFrequency) => {
-    const currentField = inputs.financing[field as keyof typeof inputs.financing];
+  const updateFinancing = (field: string, value: InputWithSource<number> | number | PaymentFrequency) => {
     dispatch({
       type: 'UPDATE_BASE_INPUTS',
       payload: {
         financing: {
           ...inputs.financing,
-          [field]:
-            field === 'paymentFrequency'
-              ? value
-              : typeof currentField === 'object' ? { ...currentField, value } : value,
+          [field]: value,
         },
       } as any,
     });
   };
 
-  const updateAcquisitionFees = (field: string, value: number) => {
+  const updateAcquisitionFees = (field: string, value: InputWithSource<number> | number) => {
+    // Si c'est un nombre simple (pour transferDuties), le convertir en InputWithSource
+    const finalValue = typeof value === 'number' 
+      ? { ...inputs.acquisitionFees[field as keyof typeof inputs.acquisitionFees], value }
+      : value;
+    
     dispatch({
       type: 'UPDATE_BASE_INPUTS',
       payload: {
         acquisitionFees: {
           ...inputs.acquisitionFees,
-          [field]: {
-            ...inputs.acquisitionFees[field as keyof typeof inputs.acquisitionFees],
-            value,
-          },
+          [field]: finalValue,
         },
       },
     });
   };
 
-  const addExpenseLine = (category?: string) => {
+  const addExpenseLine = (category?: ExpenseCategory) => {
     const newLine: ExpenseLine = {
       id: crypto.randomUUID(),
       name: 'Nouvelle dépense',
       type: ExpenseType.FIXED_ANNUAL,
       amount: { value: 0 },
-      category: category || 'Autre',
+      category: category || ExpenseCategory.AUTRE,
     };
 
     dispatch({
@@ -114,19 +112,17 @@ export function InputForm() {
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Input
-              type="number"
+            <RangeInput
               label="Tarif moyen par nuitée ($)"
-              value={inputs.revenue.averageDailyRate.value}
-              onChange={(e) => updateRevenue('averageDailyRate', Number(e.target.value))}
+              value={inputs.revenue.averageDailyRate}
+              onChange={(value) => updateRevenue('averageDailyRate', value)}
               min={0}
               step={10}
             />
-            <Input
-              type="number"
+            <RangeInput
               label="Taux d'occupation (%)"
-              value={inputs.revenue.occupancyRate.value}
-              onChange={(e) => updateRevenue('occupancyRate', Number(e.target.value))}
+              value={inputs.revenue.occupancyRate}
+              onChange={(value) => updateRevenue('occupancyRate', value)}
               min={0}
               max={100}
               step={1}
@@ -162,75 +158,80 @@ export function InputForm() {
                 {expenses.map((line) => (
                   <div
                     key={line.id}
-                    className="grid grid-cols-12 gap-2 items-start py-2 px-2 hover:bg-gray-50 rounded group"
+                    className="py-2 px-2 hover:bg-gray-50 rounded group space-y-2"
                   >
-                    <div className="col-span-4">
-                      <Input
-                        value={line.name}
-                        onChange={(e) => updateExpenseLine(line.id, { name: e.target.value })}
-                        className="text-sm"
-                      />
+                    <div className="grid grid-cols-12 gap-2 items-start">
+                      <div className="col-span-4">
+                        <Input
+                          value={line.name}
+                          onChange={(e) => updateExpenseLine(line.id, { name: e.target.value })}
+                          className="text-sm"
+                        />
+                      </div>
+                      <div className="col-span-3">
+                        <Select
+                          value={line.type}
+                          onChange={(e) =>
+                            updateExpenseLine(line.id, { type: e.target.value as ExpenseType })
+                          }
+                          options={[
+                            { value: ExpenseType.FIXED_ANNUAL, label: 'Annuel' },
+                            { value: ExpenseType.FIXED_MONTHLY, label: 'Mensuel' },
+                            { value: ExpenseType.PERCENTAGE_REVENUE, label: '% revenus' },
+                          ]}
+                          className="text-sm"
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <Select
+                          value={line.category || ExpenseCategory.AUTRE}
+                          onChange={(e) =>
+                            updateExpenseLine(line.id, { category: e.target.value as ExpenseCategory })
+                          }
+                          options={Object.values(ExpenseCategory).map(cat => ({
+                            value: cat,
+                            label: cat,
+                          }))}
+                          className="text-sm"
+                        />
+                      </div>
+                      <div className="col-span-2 flex items-center justify-center">
+                        <button
+                          onClick={() => deleteExpenseLine(line.id)}
+                          className="text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="Supprimer"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                      <div className="col-span-1"></div>
                     </div>
-                    <div className="col-span-3">
-                      <Select
-                        value={line.type}
-                        onChange={(e) =>
-                          updateExpenseLine(line.id, { type: e.target.value as ExpenseType })
-                        }
-                        options={[
-                          { value: ExpenseType.FIXED_ANNUAL, label: 'Annuel' },
-                          { value: ExpenseType.FIXED_MONTHLY, label: 'Mensuel' },
-                          { value: ExpenseType.PERCENTAGE_REVENUE, label: '% revenus' },
-                        ]}
-                        className="text-sm"
-                      />
-                    </div>
-                    <div className="col-span-2">
-                      <Input
-                        type="number"
-                        value={line.amount.value}
-                        onChange={(e) =>
-                          updateExpenseLine(line.id, {
-                            amount: { ...line.amount, value: Number(e.target.value) },
-                          })
-                        }
+                    <div className="pl-2">
+                      <RangeInput
+                        label=""
+                        value={line.amount}
+                        onChange={(value) => updateExpenseLine(line.id, { amount: value })}
                         min={0}
                         step={line.type === ExpenseType.PERCENTAGE_REVENUE ? 0.1 : 10}
                         className="text-sm"
                       />
                     </div>
-                    <div className="col-span-2">
-                      <Input
-                        value={line.category || ''}
-                        onChange={(e) => updateExpenseLine(line.id, { category: e.target.value })}
-                        className="text-sm"
-                      />
-                    </div>
-                    <div className="col-span-1 flex items-center justify-center pt-2">
-                      <button
-                        onClick={() => deleteExpenseLine(line.id)}
-                        className="text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
-                        title="Supprimer"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </button>
-                    </div>
                   </div>
                 ))}
               </div>
               <button
-                onClick={() => addExpenseLine(category)}
+                onClick={() => addExpenseLine(category as ExpenseCategory)}
                 className="text-sm text-blue-600 hover:text-blue-700 pl-2 py-1"
               >
                 + Ajouter une dépense
@@ -241,7 +242,7 @@ export function InputForm() {
             <div className="text-center py-4">
               <p className="text-gray-500 text-sm mb-2">Aucune dépense configurée</p>
               <button
-                onClick={() => addExpenseLine('Exploitation')}
+                onClick={() => addExpenseLine(ExpenseCategory.AUTRE)}
                 className="text-sm text-blue-600 hover:text-blue-700"
               >
                 + Ajouter une dépense
@@ -258,38 +259,34 @@ export function InputForm() {
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Input
-              type="number"
+            <RangeInput
               label="Prix d'achat ($)"
-              value={inputs.financing.purchasePrice.value}
-              onChange={(e) => updateFinancing('purchasePrice', Number(e.target.value))}
+              value={inputs.financing.purchasePrice}
+              onChange={(value) => updateFinancing('purchasePrice', value)}
               min={0}
               step={1000}
             />
-            <Input
-              type="number"
+            <RangeInput
               label="Mise de fonds ($)"
-              value={inputs.financing.downPayment.value}
-              onChange={(e) => updateFinancing('downPayment', Number(e.target.value))}
+              value={inputs.financing.downPayment}
+              onChange={(value) => updateFinancing('downPayment', value)}
               min={0}
               step={1000}
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <Input
-              type="number"
+            <RangeInput
               label="Taux d'intérêt (%)"
-              value={inputs.financing.interestRate.value}
-              onChange={(e) => updateFinancing('interestRate', Number(e.target.value))}
+              value={inputs.financing.interestRate}
+              onChange={(value) => updateFinancing('interestRate', value)}
               min={0}
               max={20}
               step={0.1}
             />
-            <Input
-              type="number"
+            <RangeInput
               label="Amortissement (années)"
-              value={inputs.financing.amortizationYears.value}
-              onChange={(e) => updateFinancing('amortizationYears', Number(e.target.value))}
+              value={inputs.financing.amortizationYears}
+              onChange={(value) => updateFinancing('amortizationYears', value)}
               min={1}
               max={50}
               step={1}
@@ -324,19 +321,17 @@ export function InputForm() {
               min={0}
               step={100}
             />
-            <Input
-              type="number"
+            <RangeInput
               label="Frais de notaire ($)"
-              value={inputs.acquisitionFees.notaryFees.value}
-              onChange={(e) => updateAcquisitionFees('notaryFees', Number(e.target.value))}
+              value={inputs.acquisitionFees.notaryFees}
+              onChange={(value) => updateAcquisitionFees('notaryFees', value)}
               min={0}
               step={100}
             />
-            <Input
-              type="number"
+            <RangeInput
               label="Autres frais ($)"
-              value={inputs.acquisitionFees.other.value}
-              onChange={(e) => updateAcquisitionFees('other', Number(e.target.value))}
+              value={inputs.acquisitionFees.other}
+              onChange={(value) => updateAcquisitionFees('other', value)}
               min={0}
               step={100}
             />

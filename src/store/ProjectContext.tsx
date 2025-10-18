@@ -9,7 +9,7 @@ import type {
   OptimizationConfig,
   OptimizationResult,
 } from '../types';
-import { ExpenseType, PaymentFrequency } from '../types';
+import { ExpenseType, ExpenseCategory, PaymentFrequency } from '../types';
 import { calculateKPIs } from '../lib/calculations';
 
 // ============================================================================
@@ -24,74 +24,92 @@ function createDefaultProject(): Project {
   const baseInputs: ProjectInputs = {
     name: 'Mon Projet',
     revenue: {
-      averageDailyRate: { value: 215, sourceInfo: { source: '', remarks: '' } },
-      occupancyRate: { value: 75, sourceInfo: { source: '', remarks: '' } },
+      averageDailyRate: { 
+        value: 215, 
+        range: { min: 150, max: 300, default: 215, useRange: true },
+        sourceInfo: { source: '', remarks: '' } 
+      },
+      occupancyRate: { 
+        value: 75, 
+        range: { min: 50, max: 90, default: 75, useRange: true },
+        sourceInfo: { source: '', remarks: '' } 
+      },
       daysPerYear: 365,
     },
     expenses: [
-      // Dépenses d'exploitation
       {
         id: '1',
         name: 'Attestation CITQ',
         type: ExpenseType.FIXED_ANNUAL,
         amount: { value: 875 },
-        category: 'Exploitation',
+        category: ExpenseCategory.SERVICES,
       },
       {
         id: '2',
         name: 'Compagnie de gestion',
         type: ExpenseType.PERCENTAGE_REVENUE,
-        amount: { value: 15 },
-        category: 'Exploitation',
+        amount: { 
+          value: 15,
+          range: { min: 10, max: 20, default: 15, useRange: true }
+        },
+        category: ExpenseCategory.GESTION,
       },
       {
         id: '3',
         name: 'Déneigement et pelouse',
         type: ExpenseType.FIXED_ANNUAL,
         amount: { value: 800 },
-        category: 'Exploitation',
+        category: ExpenseCategory.ENTRETIEN,
       },
       {
         id: '4',
         name: 'Câble / Internet / Netflix',
         type: ExpenseType.FIXED_ANNUAL,
         amount: { value: 1200 },
-        category: 'Exploitation',
+        category: ExpenseCategory.UTILITIES,
       },
-      // Dépenses de détention
       {
         id: '5',
         name: 'Taxes municipales',
         type: ExpenseType.FIXED_ANNUAL,
         amount: { value: 3000 },
-        category: 'Détention',
+        category: ExpenseCategory.TAXES,
       },
       {
         id: '6',
         name: 'Taxes scolaires',
         type: ExpenseType.FIXED_ANNUAL,
         amount: { value: 180 },
-        category: 'Détention',
+        category: ExpenseCategory.TAXES,
       },
       {
         id: '7',
         name: 'Frais énergie',
         type: ExpenseType.FIXED_ANNUAL,
-        amount: { value: 2400 },
-        category: 'Détention',
+        amount: { 
+          value: 2400,
+          range: { min: 1800, max: 3000, default: 2400, useRange: true }
+        },
+        category: ExpenseCategory.UTILITIES,
       },
       {
         id: '8',
         name: 'Assurances habitation',
         type: ExpenseType.FIXED_ANNUAL,
         amount: { value: 3000 },
-        category: 'Détention',
+        category: ExpenseCategory.ASSURANCES,
       },
     ],
     financing: {
-      purchasePrice: { value: 550000 },
+      purchasePrice: { 
+        value: 550000,
+        range: { min: 500000, max: 600000, default: 550000, useRange: true }
+      },
       downPayment: { value: 27500 },
-      interestRate: { value: 5.5 },
+      interestRate: { 
+        value: 5.5,
+        range: { min: 4.5, max: 7.0, default: 5.5, useRange: true }
+      },
       amortizationYears: { value: 30 },
       paymentFrequency: PaymentFrequency.MONTHLY,
     },
@@ -130,11 +148,84 @@ function createDefaultProject(): Project {
   };
 }
 
+function migrateInputWithSource(input: any): any {
+  // Si c'est un nombre simple, le convertir en InputWithSource
+  if (typeof input === 'number') {
+    return { value: input };
+  }
+  
+  // Si c'est déjà un objet avec value mais sans range
+  if (typeof input === 'object' && input !== null && 'value' in input) {
+    // Si pas de range, on garde tel quel
+    return input;
+  }
+  
+  return input;
+}
+
+function migrateExpenseCategory(category?: string): any {
+  if (!category) return ExpenseCategory.AUTRE;
+  
+  // Mapper les anciennes catégories aux nouvelles
+  const mapping: Record<string, any> = {
+    'Exploitation': ExpenseCategory.SERVICES,
+    'Détention': ExpenseCategory.AUTRE,
+    'Entretien': ExpenseCategory.ENTRETIEN,
+    'Services': ExpenseCategory.SERVICES,
+    'Assurances': ExpenseCategory.ASSURANCES,
+    'Taxes': ExpenseCategory.TAXES,
+    'Utilités': ExpenseCategory.UTILITIES,
+    'Gestion': ExpenseCategory.GESTION,
+  };
+  
+  return mapping[category] || ExpenseCategory.AUTRE;
+}
+
 function loadProjectFromStorage(): Project {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const project = JSON.parse(stored);
+      
+      // Migration des données
+      if (project.baseInputs) {
+        // Migrer les revenus
+        if (project.baseInputs.revenue) {
+          project.baseInputs.revenue.averageDailyRate = migrateInputWithSource(
+            project.baseInputs.revenue.averageDailyRate
+          );
+          project.baseInputs.revenue.occupancyRate = migrateInputWithSource(
+            project.baseInputs.revenue.occupancyRate
+          );
+        }
+        
+        // Migrer les dépenses
+        if (project.baseInputs.expenses) {
+          project.baseInputs.expenses = project.baseInputs.expenses.map((expense: any) => ({
+            ...expense,
+            amount: migrateInputWithSource(expense.amount),
+            category: migrateExpenseCategory(expense.category),
+          }));
+        }
+        
+        // Migrer le financement
+        if (project.baseInputs.financing) {
+          const f = project.baseInputs.financing;
+          f.purchasePrice = migrateInputWithSource(f.purchasePrice);
+          f.downPayment = migrateInputWithSource(f.downPayment);
+          f.interestRate = migrateInputWithSource(f.interestRate);
+          f.amortizationYears = migrateInputWithSource(f.amortizationYears);
+        }
+        
+        // Migrer les frais d'acquisition
+        if (project.baseInputs.acquisitionFees) {
+          const a = project.baseInputs.acquisitionFees;
+          a.transferDuties = migrateInputWithSource(a.transferDuties);
+          a.notaryFees = migrateInputWithSource(a.notaryFees);
+          a.other = migrateInputWithSource(a.other);
+        }
+      }
+      
       // Convertir les dates
       project.createdAt = new Date(project.createdAt);
       project.updatedAt = new Date(project.updatedAt);
@@ -142,6 +233,7 @@ function loadProjectFromStorage(): Project {
         s.createdAt = new Date(s.createdAt);
         s.updatedAt = new Date(s.updatedAt);
       });
+      
       return project;
     }
   } catch (error) {

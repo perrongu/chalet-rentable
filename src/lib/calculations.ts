@@ -17,6 +17,10 @@ function round(value: number, decimals: number = 2): number {
 
 function extractValue<T>(input: InputWithSource<T> | T): T {
   if (typeof input === 'object' && input !== null && 'value' in input) {
+    // Si useRange est activé et qu'on a une range, utiliser la valeur par défaut
+    if ('range' in input && input.range && input.range.useRange) {
+      return input.range.default as T;
+    }
     return input.value;
   }
   return input as T;
