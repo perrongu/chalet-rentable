@@ -1,0 +1,532 @@
+import type {
+  ProjectInputs,
+  KPIResults,
+  CalculationTrace,
+  InputWithSource,
+  SourceInfo,
+} from '../types';
+import { ExpenseType, PaymentFrequency } from '../types';
+
+// ============================================================================
+// UTILITAIRES
+// ============================================================================
+
+function round(value: number, decimals: number = 2): number {
+  return Math.round(value * Math.pow(10, decimals)) / Math.pow(10, decimals);
+}
+
+function extractValue<T>(input: InputWithSource<T> | T): T {
+  if (typeof input === 'object' && input !== null && 'value' in input) {
+    return input.value;
+  }
+  return input as T;
+}
+
+function extractSource<T>(input: InputWithSource<T> | T): SourceInfo | undefined {
+  if (typeof input === 'object' && input !== null && 'value' in input && 'sourceInfo' in input) {
+    return input.sourceInfo;
+  }
+  return undefined;
+}
+
+// ============================================================================
+// CALCULS DE REVENUS
+// ============================================================================
+
+export function calculateNightsSold(
+  occupancyRate: number,
+  daysPerYear: number = 365
+): { value: number; trace: CalculationTrace } {
+  const nights = round(daysPerYear * (occupancyRate / 100));
+
+  return {
+    value: nights,
+    trace: {
+      formula: 'Nuitées vendues = Jours par an × (Taux d\'occupation / 100)',
+      variables: {
+        'Jours par an': daysPerYear,
+        'Taux d\'occupation (%)': occupancyRate,
+      },
+      result: nights,
+    },
+  };
+}
+
+export function calculateAnnualRevenue(
+  averageDailyRate: number,
+  nightsSold: number,
+  sources?: SourceInfo[]
+): { value: number; trace: CalculationTrace } {
+  const revenue = round(averageDailyRate * nightsSold);
+
+  return {
+    value: revenue,
+    trace: {
+      formula: 'Revenus annuels = Tarif moyen par nuitée × Nuitées vendues',
+      variables: {
+        'Tarif moyen par nuitée ($)': averageDailyRate,
+        'Nuitées vendues': nightsSold,
+      },
+      result: revenue,
+      sources,
+    },
+  };
+}
+
+// ============================================================================
+// CALCULS DE DÉPENSES
+// ============================================================================
+
+export function calculateExpenses(
+  expenseLines: ProjectInputs['expenses'],
+  annualRevenue: number
+): {
+  total: number;
+  byCategory: Record<string, number>;
+  traces: CalculationTrace[];
+  sources: SourceInfo[];
+} {
+  let total = 0;
+  const byCategory: Record<string, number> = {};
+  const traces: CalculationTrace[] = [];
+  const sources: SourceInfo[] = [];
+
+  expenseLines.forEach((line) => {
+    const amount = extractValue(line.amount);
+    const sourceInfo = extractSource(line.amount);
+    let annualAmount = 0;
+
+    switch (line.type) {
+      case ExpenseType.FIXED_ANNUAL:
+        annualAmount = amount;
+        traces.push({
+          formula: `${line.name} = Montant annuel`,
+          variables: {
+            'Montant annuel ($)': amount,
+          },
+          result: annualAmount,
+          sources: sourceInfo ? [sourceInfo] : undefined,
+        });
+        break;
+
+      case ExpenseType.FIXED_MONTHLY:
+        annualAmount = amount * 12;
+        traces.push({
+          formula: `${line.name} = Montant mensuel × 12`,
+          variables: {
+            'Montant mensuel ($)': amount,
+          },
+          result: annualAmount,
+          sources: sourceInfo ? [sourceInfo] : undefined,
+        });
+        break;
+
+      case ExpenseType.PERCENTAGE_REVENUE:
+        annualAmount = (annualRevenue * amount) / 100;
+        traces.push({
+          formula: `${line.name} = Revenus annuels × (Pourcentage / 100)`,
+          variables: {
+            'Revenus annuels ($)': annualRevenue,
+            'Pourcentage (%)': amount,
+          },
+          result: annualAmount,
+          sources: sourceInfo ? [sourceInfo] : undefined,
+        });
+        break;
+    }
+
+    annualAmount = round(annualAmount);
+    total += annualAmount;
+
+    const category = line.category || 'Autre';
+    byCategory[category] = (byCategory[category] || 0) + annualAmount;
+
+    if (sourceInfo) {
+      sources.push(sourceInfo);
+    }
+  });
+
+  return {
+    total: round(total),
+    byCategory,
+    traces,
+    sources,
+  };
+}
+
+// ============================================================================
+// CALCULS DE FINANCEMENT
+// ============================================================================
+
+function getPaymentsPerYear(frequency: PaymentFrequency): number {
+  switch (frequency) {
+    case PaymentFrequency.MONTHLY:
+      return 12;
+    case PaymentFrequency.BI_WEEKLY:
+      return 26;
+    case PaymentFrequency.WEEKLY:
+      return 52;
+    case PaymentFrequency.ANNUAL:
+      return 1;
+    default:
+      return 12;
+  }
+}
+
+export function calculateLoanAmount(
+  purchasePrice: number,
+  downPayment: number,
+  sources?: SourceInfo[]
+): { value: number; trace: CalculationTrace } {
+  const loan = round(purchasePrice - downPayment);
+
+  return {
+    value: loan,
+    trace: {
+      formula: 'Montant du prêt = Prix d\'achat - Mise de fonds',
+      variables: {
+        'Prix d\'achat ($)': purchasePrice,
+        'Mise de fonds ($)': downPayment,
+      },
+      result: loan,
+      sources,
+    },
+  };
+}
+
+export function calculatePeriodicPayment(
+  loanAmount: number,
+  annualRate: number,
+  amortizationYears: number,
+  frequency: PaymentFrequency,
+  sources?: SourceInfo[]
+): { value: number; trace: CalculationTrace } {
+  const paymentsPerYear = getPaymentsPerYear(frequency);
+  const totalPayments = amortizationYears * paymentsPerYear;
+  const periodicRate = annualRate / 100 / paymentsPerYear;
+
+  let payment = 0;
+  if (periodicRate === 0) {
+    // Cas sans intérêt
+    payment = loanAmount / totalPayments;
+  } else {
+    // Formule standard d'annuité
+    payment =
+      (loanAmount * periodicRate * Math.pow(1 + periodicRate, totalPayments)) /
+      (Math.pow(1 + periodicRate, totalPayments) - 1);
+  }
+
+  payment = round(payment);
+
+  return {
+    value: payment,
+    trace: {
+      formula:
+        'Paiement périodique = (Prêt × r × (1+r)^n) / ((1+r)^n - 1)\noù r = taux périodique, n = nombre de paiements',
+      variables: {
+        'Montant du prêt ($)': loanAmount,
+        'Taux annuel (%)': annualRate,
+        'Taux périodique (%)': round(periodicRate * 100, 4),
+        'Amortissement (années)': amortizationYears,
+        'Paiements par an': paymentsPerYear,
+        'Nombre total de paiements': totalPayments,
+      },
+      result: payment,
+      sources,
+    },
+  };
+}
+
+export function calculateAnnualDebtService(
+  periodicPayment: number,
+  frequency: PaymentFrequency,
+  sources?: SourceInfo[]
+): { value: number; trace: CalculationTrace } {
+  const paymentsPerYear = getPaymentsPerYear(frequency);
+  const annual = round(periodicPayment * paymentsPerYear);
+
+  return {
+    value: annual,
+    trace: {
+      formula: 'Service de la dette annuel = Paiement périodique × Paiements par an',
+      variables: {
+        'Paiement périodique ($)': periodicPayment,
+        'Paiements par an': paymentsPerYear,
+      },
+      result: annual,
+      sources,
+    },
+  };
+}
+
+// ============================================================================
+// FRAIS D'ACQUISITION
+// ============================================================================
+
+export function calculateTotalAcquisitionFees(
+  transferDuties: number,
+  notaryFees: number,
+  other: number,
+  sources?: SourceInfo[]
+): { value: number; trace: CalculationTrace } {
+  const total = round(transferDuties + notaryFees + other);
+
+  return {
+    value: total,
+    trace: {
+      formula: 'Frais d\'acquisition = Droits de mutation + Frais notaire + Autres',
+      variables: {
+        'Droits de mutation ($)': transferDuties,
+        'Frais notaire ($)': notaryFees,
+        'Autres ($)': other,
+      },
+      result: total,
+      sources,
+    },
+  };
+}
+
+export function calculateInitialInvestment(
+  downPayment: number,
+  acquisitionFees: number,
+  sources?: SourceInfo[]
+): { value: number; trace: CalculationTrace } {
+  const initial = round(downPayment + acquisitionFees);
+
+  return {
+    value: initial,
+    trace: {
+      formula: 'Investissement initial = Mise de fonds + Frais d\'acquisition',
+      variables: {
+        'Mise de fonds ($)': downPayment,
+        'Frais d\'acquisition ($)': acquisitionFees,
+      },
+      result: initial,
+      sources,
+    },
+  };
+}
+
+// ============================================================================
+// MÉTRIQUES DE RENTABILITÉ
+// ============================================================================
+
+export function calculateAnnualCashflow(
+  annualRevenue: number,
+  totalExpenses: number,
+  annualDebtService: number,
+  sources?: SourceInfo[]
+): { value: number; trace: CalculationTrace } {
+  const cashflow = round(annualRevenue - totalExpenses - annualDebtService);
+
+  return {
+    value: cashflow,
+    trace: {
+      formula: 'Cashflow annuel = Revenus - Dépenses - Service de la dette',
+      variables: {
+        'Revenus annuels ($)': annualRevenue,
+        'Dépenses totales ($)': totalExpenses,
+        'Service de la dette ($)': annualDebtService,
+      },
+      result: cashflow,
+      sources,
+    },
+  };
+}
+
+export function calculateCashOnCash(
+  annualCashflow: number,
+  initialInvestment: number,
+  sources?: SourceInfo[]
+): { value: number; trace: CalculationTrace } {
+  const coc = initialInvestment > 0 ? round((annualCashflow / initialInvestment) * 100, 2) : 0;
+
+  return {
+    value: coc,
+    trace: {
+      formula: 'Cash-on-Cash (%) = (Cashflow annuel / Investissement initial) × 100',
+      variables: {
+        'Cashflow annuel ($)': annualCashflow,
+        'Investissement initial ($)': initialInvestment,
+      },
+      result: coc,
+      sources,
+    },
+  };
+}
+
+export function calculateCapRate(
+  annualRevenue: number,
+  totalExpenses: number,
+  purchasePrice: number,
+  sources?: SourceInfo[]
+): { value: number; trace: CalculationTrace } {
+  const noi = annualRevenue - totalExpenses; // Net Operating Income
+  const capRate = purchasePrice > 0 ? round((noi / purchasePrice) * 100, 2) : 0;
+
+  return {
+    value: capRate,
+    trace: {
+      formula:
+        'Cap Rate (%) = (NOI / Prix d\'achat) × 100\noù NOI = Revenus - Dépenses (excluant service de la dette)',
+      variables: {
+        'Revenus annuels ($)': annualRevenue,
+        'Dépenses totales ($)': totalExpenses,
+        'NOI ($)': round(noi),
+        'Prix d\'achat ($)': purchasePrice,
+      },
+      result: capRate,
+      sources,
+    },
+  };
+}
+
+// ============================================================================
+// FONCTION PRINCIPALE DE CALCUL
+// ============================================================================
+
+export function calculateKPIs(inputs: ProjectInputs): KPIResults {
+  // Extraction des valeurs
+  const adr = extractValue(inputs.revenue.averageDailyRate);
+  const occupancy = extractValue(inputs.revenue.occupancyRate);
+  const daysPerYear = inputs.revenue.daysPerYear || 365;
+
+  const purchasePrice = extractValue(inputs.financing.purchasePrice);
+  const downPayment = extractValue(inputs.financing.downPayment);
+  const interestRate = extractValue(inputs.financing.interestRate);
+  const amortization = extractValue(inputs.financing.amortizationYears);
+  const frequency = inputs.financing.paymentFrequency;
+
+  const transferDuties = extractValue(inputs.acquisitionFees.transferDuties);
+  const notaryFees = extractValue(inputs.acquisitionFees.notaryFees);
+  const otherFees = extractValue(inputs.acquisitionFees.other);
+
+  // Collecte des sources
+  const revenueSources = [
+    extractSource(inputs.revenue.averageDailyRate),
+    extractSource(inputs.revenue.occupancyRate),
+  ].filter(Boolean) as SourceInfo[];
+
+  const financingSources = [
+    extractSource(inputs.financing.purchasePrice),
+    extractSource(inputs.financing.downPayment),
+    extractSource(inputs.financing.interestRate),
+    extractSource(inputs.financing.amortizationYears),
+  ].filter(Boolean) as SourceInfo[];
+
+  const feesSources = [
+    extractSource(inputs.acquisitionFees.transferDuties),
+    extractSource(inputs.acquisitionFees.notaryFees),
+    extractSource(inputs.acquisitionFees.other),
+  ].filter(Boolean) as SourceInfo[];
+
+  // Calculs en cascade
+  const nightsSold = calculateNightsSold(occupancy, daysPerYear);
+  const annualRevenue = calculateAnnualRevenue(adr, nightsSold.value, revenueSources);
+  const expenses = calculateExpenses(inputs.expenses, annualRevenue.value);
+  const loanAmount = calculateLoanAmount(purchasePrice, downPayment, financingSources);
+  const periodicPayment = calculatePeriodicPayment(
+    loanAmount.value,
+    interestRate,
+    amortization,
+    frequency,
+    financingSources
+  );
+  const annualDebtService = calculateAnnualDebtService(
+    periodicPayment.value,
+    frequency,
+    financingSources
+  );
+  const totalAcquisitionFees = calculateTotalAcquisitionFees(
+    transferDuties,
+    notaryFees,
+    otherFees,
+    feesSources
+  );
+  const initialInvestment = calculateInitialInvestment(
+    downPayment,
+    totalAcquisitionFees.value,
+    [...financingSources, ...feesSources]
+  );
+  const annualCashflow = calculateAnnualCashflow(
+    annualRevenue.value,
+    expenses.total,
+    annualDebtService.value
+  );
+  const cashOnCash = calculateCashOnCash(annualCashflow.value, initialInvestment.value);
+  const capRate = calculateCapRate(annualRevenue.value, expenses.total, purchasePrice);
+
+  // Construction du résultat
+  return {
+    nightsSold: nightsSold.value,
+    annualRevenue: annualRevenue.value,
+    totalExpenses: expenses.total,
+    expensesByCategory: expenses.byCategory,
+    loanAmount: loanAmount.value,
+    periodicPayment: periodicPayment.value,
+    annualDebtService: annualDebtService.value,
+    totalAcquisitionFees: totalAcquisitionFees.value,
+    initialInvestment: initialInvestment.value,
+    annualCashflow: annualCashflow.value,
+    cashOnCash: cashOnCash.value,
+    capRate: capRate.value,
+    traces: {
+      nightsSold: nightsSold.trace,
+      annualRevenue: annualRevenue.trace,
+      totalExpenses: {
+        formula: 'Dépenses totales = Somme de toutes les lignes de dépenses',
+        variables: Object.fromEntries(
+          expenses.traces.map((t, i) => [`Ligne ${i + 1}`, t.result])
+        ),
+        result: expenses.total,
+        sources: expenses.sources.length > 0 ? expenses.sources : undefined,
+      },
+      loanAmount: loanAmount.trace,
+      periodicPayment: periodicPayment.trace,
+      annualDebtService: annualDebtService.trace,
+      totalAcquisitionFees: totalAcquisitionFees.trace,
+      initialInvestment: initialInvestment.trace,
+      annualCashflow: annualCashflow.trace,
+      cashOnCash: cashOnCash.trace,
+      capRate: capRate.trace,
+    },
+  };
+}
+
+// ============================================================================
+// UTILITAIRE POUR RÉCUPÉRER UNE VALEUR PAR CHEMIN
+// ============================================================================
+
+export function getValueByPath(inputs: ProjectInputs, path: string): number {
+  const parts = path.split('.');
+  let current: any = inputs;
+
+  for (const part of parts) {
+    if (current === undefined || current === null) {
+      return 0;
+    }
+    current = current[part];
+  }
+
+  return extractValue(current);
+}
+
+export function setValueByPath(inputs: ProjectInputs, path: string, value: number): ProjectInputs {
+  const parts = path.split('.');
+  const newInputs = JSON.parse(JSON.stringify(inputs)); // Deep clone
+  let current: any = newInputs;
+
+  for (let i = 0; i < parts.length - 1; i++) {
+    current = current[parts[i]];
+  }
+
+  const lastPart = parts[parts.length - 1];
+  if (typeof current[lastPart] === 'object' && 'value' in current[lastPart]) {
+    current[lastPart].value = value;
+  } else {
+    current[lastPart] = value;
+  }
+
+  return newInputs;
+}
+

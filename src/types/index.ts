@@ -1,0 +1,279 @@
+// ============================================================================
+// TYPES DE BASE
+// ============================================================================
+
+export interface SourceInfo {
+  source?: string; // Source de l'information (URL, document, etc.)
+  remarks?: string; // Remarques/notes additionnelles
+}
+
+export interface InputWithSource<T = number> {
+  value: T;
+  sourceInfo?: SourceInfo;
+}
+
+// ============================================================================
+// TYPES D'INPUTS
+// ============================================================================
+
+export const ExpenseType = {
+  FIXED_ANNUAL: 'FIXED_ANNUAL', // Montant fixe annuel
+  FIXED_MONTHLY: 'FIXED_MONTHLY', // Montant fixe mensuel
+  PERCENTAGE_REVENUE: 'PERCENTAGE_REVENUE', // Pourcentage des revenus
+} as const;
+
+export type ExpenseType = typeof ExpenseType[keyof typeof ExpenseType];
+
+export interface ExpenseLine {
+  id: string;
+  name: string;
+  type: ExpenseType;
+  amount: InputWithSource<number>; // Montant ou pourcentage selon le type
+  category?: string; // Catégorie optionnelle (entretien, taxes, assurances, etc.)
+}
+
+export const PaymentFrequency = {
+  MONTHLY: 'MONTHLY',
+  BI_WEEKLY: 'BI_WEEKLY',
+  WEEKLY: 'WEEKLY',
+  ANNUAL: 'ANNUAL',
+} as const;
+
+export type PaymentFrequency = typeof PaymentFrequency[keyof typeof PaymentFrequency];
+
+export interface FinancingInputs {
+  purchasePrice: InputWithSource<number>;
+  downPayment: InputWithSource<number>; // Montant ou sera calculé depuis downPaymentPercent
+  downPaymentPercent?: InputWithSource<number>; // Alternative en %
+  interestRate: InputWithSource<number>; // Taux annuel en %
+  amortizationYears: InputWithSource<number>;
+  paymentFrequency: PaymentFrequency;
+}
+
+export interface AcquisitionFees {
+  transferDuties: InputWithSource<number>; // Droits de mutation
+  notaryFees: InputWithSource<number>;
+  other: InputWithSource<number>;
+}
+
+export interface RevenueInputs {
+  averageDailyRate: InputWithSource<number>; // ADR - Tarif moyen par nuitée
+  occupancyRate: InputWithSource<number>; // Taux d'occupation en %
+  daysPerYear?: number; // Par défaut 365
+}
+
+export interface ProjectInputs {
+  name: string;
+  revenue: RevenueInputs;
+  expenses: ExpenseLine[];
+  financing: FinancingInputs;
+  acquisitionFees: AcquisitionFees;
+}
+
+// ============================================================================
+// SCENARIOS
+// ============================================================================
+
+export type InputOverride = Partial<ProjectInputs>;
+
+export interface Scenario {
+  id: string;
+  name: string;
+  description?: string;
+  isBase: boolean; // Le scénario de base contient toutes les valeurs
+  overrides?: InputOverride; // Seulement les différences vs base
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// ============================================================================
+// CALCULS & KPIs
+// ============================================================================
+
+export interface CalculationTrace {
+  formula: string; // Formule en format lisible
+  variables: Record<string, number | string>; // Valeurs des variables
+  result: number;
+  sources?: SourceInfo[]; // Sources des inputs utilisés
+}
+
+export interface KPIResults {
+  // Revenus
+  nightsSold: number;
+  annualRevenue: number;
+
+  // Dépenses
+  totalExpenses: number;
+  expensesByCategory: Record<string, number>;
+
+  // Financement
+  loanAmount: number;
+  periodicPayment: number;
+  annualDebtService: number;
+
+  // Investissement
+  totalAcquisitionFees: number;
+  initialInvestment: number; // Mise de fonds + frais
+
+  // Métriques de rentabilité
+  annualCashflow: number;
+  cashOnCash: number; // ROI en %
+  capRate: number; // Cap rate en %
+
+  // Traçabilité des calculs
+  traces: Record<keyof Omit<KPIResults, 'traces' | 'expensesByCategory'>, CalculationTrace>;
+}
+
+// ============================================================================
+// ANALYSES DE SENSIBILITÉ
+// ============================================================================
+
+export interface ParameterRange {
+  parameter: string; // Chemin vers le paramètre (ex: "revenue.averageDailyRate")
+  label: string; // Nom affiché
+  min: number;
+  base: number;
+  max: number;
+  steps?: number; // Nombre de points à calculer (par défaut: 10)
+}
+
+export interface SensitivityAnalysis1D {
+  id: string;
+  name: string;
+  objective: keyof KPIResults; // KPI à analyser
+  parameters: ParameterRange[];
+  results?: {
+    impacts: Array<{
+      parameter: string;
+      label: string;
+      impactLow: number; // Impact du min sur l'objectif
+      impactHigh: number; // Impact du max sur l'objectif
+      relativeImpact: number; // Impact relatif (pour tri)
+    }>;
+    detailedResults: Array<{
+      parameter: string;
+      values: Array<{
+        paramValue: number;
+        objectiveValue: number;
+      }>;
+    }>;
+  };
+  createdAt: Date;
+}
+
+export interface SensitivityAnalysis2D {
+  id: string;
+  name: string;
+  objective: keyof KPIResults;
+  parameterX: ParameterRange;
+  parameterY: ParameterRange;
+  results?: {
+    grid: number[][]; // Grille des résultats [y][x]
+    xValues: number[];
+    yValues: number[];
+  };
+  createdAt: Date;
+}
+
+// ============================================================================
+// OPTIMISATION
+// ============================================================================
+
+export const OptimizationObjective = {
+  MAXIMIZE: 'MAXIMIZE',
+  MINIMIZE: 'MINIMIZE',
+} as const;
+
+export type OptimizationObjective = typeof OptimizationObjective[keyof typeof OptimizationObjective];
+
+export interface OptimizationVariable {
+  parameter: string;
+  label: string;
+  min: number;
+  max: number;
+  step?: number; // Pas pour la recherche (optionnel)
+  locked?: boolean; // Si true, la variable est fixée à sa valeur actuelle
+}
+
+export const ConstraintOperator = {
+  GREATER_THAN: '>=',
+  LESS_THAN: '<=',
+  EQUAL: '==',
+} as const;
+
+export type ConstraintOperator = typeof ConstraintOperator[keyof typeof ConstraintOperator];
+
+export interface OptimizationConstraint {
+  id: string;
+  metric: keyof KPIResults;
+  operator: ConstraintOperator;
+  value: number;
+  label?: string;
+}
+
+export interface OptimizationConfig {
+  id: string;
+  name: string;
+  objective: OptimizationObjective;
+  targetMetric: keyof KPIResults;
+  variables: OptimizationVariable[];
+  constraints: OptimizationConstraint[];
+  maxIterations?: number; // Pour grid search
+  topK?: number; // Nombre de meilleures solutions à retourner (défaut: 10)
+}
+
+export interface OptimizationSolution {
+  rank: number;
+  values: Record<string, number>; // Valeurs des variables
+  kpis: KPIResults;
+  objectiveValue: number;
+  feasible: boolean; // Respecte toutes les contraintes
+}
+
+export interface OptimizationResult {
+  configId: string;
+  solutions: OptimizationSolution[];
+  iterations: number;
+  duration: number; // Durée en ms
+  completedAt: Date;
+}
+
+// ============================================================================
+// PROJET COMPLET
+// ============================================================================
+
+export interface Project {
+  id: string;
+  name: string;
+  description?: string;
+  baseInputs: ProjectInputs;
+  scenarios: Scenario[];
+  activeScenarioId: string;
+  sensitivityAnalyses1D: SensitivityAnalysis1D[];
+  sensitivityAnalyses2D: SensitivityAnalysis2D[];
+  optimizations: {
+    configs: OptimizationConfig[];
+    results: Record<string, OptimizationResult>; // Key: configId
+  };
+  createdAt: Date;
+  updatedAt: Date;
+  version: string; // Version du format de données
+}
+
+// ============================================================================
+// UTILITAIRES
+// ============================================================================
+
+export interface ExportOptions {
+  includeCharts: boolean;
+  includeTraces: boolean;
+  includeSources: boolean;
+  format: 'json' | 'xlsx' | 'csv' | 'pdf';
+}
+
+export interface ChartData {
+  type: 'bar' | 'line' | 'tornado' | 'heatmap';
+  title: string;
+  data: any; // Structure dépend du type de graphique
+}
+
