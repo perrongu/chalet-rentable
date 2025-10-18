@@ -104,7 +104,7 @@ export function InputForm() {
       {/* Section Revenus */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle>Revenus locatifs</CardTitle>
+          <CardTitle>Revenus locatifs bruts</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -173,7 +173,7 @@ export function InputForm() {
                           options={[
                             { value: ExpenseType.FIXED_ANNUAL, label: 'Annuel' },
                             { value: ExpenseType.FIXED_MONTHLY, label: 'Mensuel' },
-                            { value: ExpenseType.PERCENTAGE_REVENUE, label: '% revenus' },
+                            { value: ExpenseType.PERCENTAGE_REVENUE, label: '% revenus bruts' },
                           ]}
                           className="text-sm"
                         />

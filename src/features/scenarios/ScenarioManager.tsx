@@ -215,7 +215,7 @@ export function ScenarioManager() {
                 </thead>
                 <tbody>
                   <tr className="border-b">
-                    <td className="py-2 px-3">Revenus annuels</td>
+                    <td className="py-2 px-3">Revenus annuels bruts</td>
                     {comparisonData.map((d, i) => (
                       <td key={i} className="text-right py-2 px-3 font-medium">
                         {formatCurrency(d.revenus)}

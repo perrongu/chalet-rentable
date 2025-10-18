@@ -70,7 +70,7 @@ export function KPIDashboard({ kpis, onInspect }: KPIDashboardProps) {
     <div className="space-y-6">
       {/* Section Revenus */}
       <div>
-        <h3 className="text-lg font-semibold mb-3">Revenus</h3>
+        <h3 className="text-lg font-semibold mb-3">Revenus bruts</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <MetricCard
             title="Nuitées vendues"
@@ -79,7 +79,7 @@ export function KPIDashboard({ kpis, onInspect }: KPIDashboardProps) {
             onInspect={() => onInspect?.('nightsSold')}
           />
           <MetricCard
-            title="Revenus annuels"
+            title="Revenus annuels bruts"
             value={formatCurrency(kpis.annualRevenue)}
             color="blue"
             onInspect={() => onInspect?.('annualRevenue')}

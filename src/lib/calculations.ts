@@ -66,7 +66,7 @@ export function calculateAnnualRevenue(
   return {
     value: revenue,
     trace: {
-      formula: 'Revenus annuels = Tarif moyen par nuitée × Nuitées vendues',
+      formula: 'Revenus annuels bruts = Tarif moyen par nuitée × Nuitées vendues',
       variables: {
         'Tarif moyen par nuitée ($)': averageDailyRate,
         'Nuitées vendues': nightsSold,
@@ -128,9 +128,9 @@ export function calculateExpenses(
       case ExpenseType.PERCENTAGE_REVENUE:
         annualAmount = (annualRevenue * amount) / 100;
         traces.push({
-          formula: `${line.name} = Revenus annuels × (Pourcentage / 100)`,
+          formula: `${line.name} = Revenus annuels bruts × (Pourcentage / 100)`,
           variables: {
-            'Revenus annuels ($)': annualRevenue,
+            'Revenus annuels bruts ($)': annualRevenue,
             'Pourcentage (%)': amount,
           },
           result: annualAmount,
@@ -326,9 +326,9 @@ export function calculateAnnualCashflow(
   return {
     value: cashflow,
     trace: {
-      formula: 'Cashflow annuel = Revenus - Dépenses - Service de la dette',
+      formula: 'Cashflow annuel = Revenus bruts - Dépenses - Service de la dette',
       variables: {
-        'Revenus annuels ($)': annualRevenue,
+        'Revenus annuels bruts ($)': annualRevenue,
         'Dépenses totales ($)': totalExpenses,
         'Service de la dette ($)': annualDebtService,
       },
@@ -390,9 +390,9 @@ export function calculateCapRate(
       value: 0,
       trace: {
         formula:
-          'Cap Rate (%) = (NOI / Prix d\'achat) × 100\noù NOI = Revenus - Dépenses (excluant service de la dette)',
+          'Cap Rate (%) = (NOI / Prix d\'achat) × 100\noù NOI = Revenus bruts - Dépenses (excluant service de la dette)',
         variables: {
-          'Revenus annuels ($)': annualRevenue,
+          'Revenus annuels bruts ($)': annualRevenue,
           'Dépenses totales ($)': totalExpenses,
           'NOI ($)': round(noi),
           'Prix d\'achat ($)': purchasePrice,
@@ -410,9 +410,9 @@ export function calculateCapRate(
     value: capRate,
     trace: {
       formula:
-        'Cap Rate (%) = (NOI / Prix d\'achat) × 100\noù NOI = Revenus - Dépenses (excluant service de la dette)',
+        'Cap Rate (%) = (NOI / Prix d\'achat) × 100\noù NOI = Revenus bruts - Dépenses (excluant service de la dette)',
       variables: {
-        'Revenus annuels ($)': annualRevenue,
+        'Revenus annuels bruts ($)': annualRevenue,
         'Dépenses totales ($)': totalExpenses,
         'NOI ($)': round(noi),
         'Prix d\'achat ($)': purchasePrice,

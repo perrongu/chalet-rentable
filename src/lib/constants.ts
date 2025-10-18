@@ -24,7 +24,7 @@ export const KPI_OPTIONS: Array<{ value: keyof KPIResults; label: string }> = [
   { value: 'annualCashflow', label: 'Cashflow annuel' },
   { value: 'cashOnCash', label: 'Cash-on-Cash' },
   { value: 'capRate', label: 'Cap Rate' },
-  { value: 'annualRevenue', label: 'Revenus annuels' },
+  { value: 'annualRevenue', label: 'Revenus annuels bruts' },
   { value: 'totalExpenses', label: 'Dépenses totales' },
   { value: 'nightsSold', label: 'Nuitées vendues' },
   { value: 'loanAmount', label: 'Montant du prêt' },

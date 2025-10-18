@@ -66,7 +66,7 @@ export function exportKPIsToExcel(
   const comparisonData: any[][] = [
     ['Métrique', ...scenarios.map((s) => s.name)],
     ['Nuitées vendues', ...scenarios.map((s) => s.kpis.nightsSold)],
-    ['Revenus annuels ($)', ...scenarios.map((s) => s.kpis.annualRevenue)],
+    ['Revenus annuels bruts ($)', ...scenarios.map((s) => s.kpis.annualRevenue)],
     ['Dépenses totales ($)', ...scenarios.map((s) => s.kpis.totalExpenses)],
     ['Montant du prêt ($)', ...scenarios.map((s) => s.kpis.loanAmount)],
     ['Paiement périodique ($)', ...scenarios.map((s) => s.kpis.periodicPayment)],
@@ -263,7 +263,7 @@ export async function exportReportToPDF(
 
     pdf.setFontSize(10);
     const kpiData = [
-      `Revenus annuels: ${scenario.kpis.annualRevenue.toLocaleString('fr-CA')} $`,
+      `Revenus annuels bruts: ${scenario.kpis.annualRevenue.toLocaleString('fr-CA')} $`,
       `Dépenses totales: ${scenario.kpis.totalExpenses.toLocaleString('fr-CA')} $`,
       `Service de la dette: ${scenario.kpis.annualDebtService.toLocaleString('fr-CA')} $`,
       `Cashflow annuel: ${scenario.kpis.annualCashflow.toLocaleString('fr-CA')} $`,
