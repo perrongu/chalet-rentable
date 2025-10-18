@@ -86,10 +86,10 @@ function createDefaultProject(): Project {
       {
         id: '7',
         name: 'Frais énergie',
-        type: ExpenseType.FIXED_ANNUAL,
+        type: ExpenseType.FIXED_MONTHLY,
         amount: { 
-          value: 2400,
-          range: { min: 1800, max: 3000, default: 2400, useRange: true }
+          value: 200,
+          range: { min: 150, max: 250, default: 200, useRange: true }
         },
         category: ExpenseCategory.UTILITIES,
       },
