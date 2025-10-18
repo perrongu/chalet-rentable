@@ -160,9 +160,9 @@ function AppContent() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" role="main">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           {/* Left Column - Inputs & Navigation */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-3 space-y-6">
             <Tabs defaultValue="inputs">
               <TabsList>
                 <TabsTrigger value="inputs">Paramètres</TabsTrigger>
@@ -194,7 +194,7 @@ function AppContent() {
           </div>
 
           {/* Right Column - KPI Dashboard */}
-          <aside className="lg:col-span-1" aria-label="Indicateurs de performance">
+          <aside className="lg:col-span-2" aria-label="Indicateurs de performance">
             <div className="sticky top-24">
               <Card>
                 <CardHeader>

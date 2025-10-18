@@ -35,19 +35,24 @@ function MetricCard({ title, value, color = 'blue', onInspect }: MetricCardProps
   return (
     <Card className={`${colorClasses[color]} border-2`}>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-gray-600">{title}</CardTitle>
+        <CardTitle className="text-xs font-medium text-gray-600 leading-tight">{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex items-end justify-between">
-          <div className={`text-2xl font-bold ${textColorClasses[color]}`}>{value}</div>
+        <div className="space-y-1">
+          <div 
+            className={`text-sm md:text-base lg:text-lg xl:text-xl font-bold ${textColorClasses[color]} leading-tight`}
+          >
+            {value}
+          </div>
           {onInspect && (
             <Button
               variant="ghost"
               size="sm"
               onClick={onInspect}
-              className="h-7 px-2 text-xs"
+              className="h-6 px-2 text-xs"
+              aria-label={`Voir les détails de ${title}`}
             >
-              🔍
+              🔍 Détails
             </Button>
           )}
         </div>

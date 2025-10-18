@@ -19,7 +19,7 @@ export function Card({ className, children, ...props }: CardProps) {
 
 export function CardHeader({ className, children, ...props }: CardProps) {
   return (
-    <div className={cn('flex flex-col space-y-1.5 p-6', className)} {...props}>
+    <div className={cn('flex flex-col space-y-1.5 p-4 sm:p-6', className)} {...props}>
       {children}
     </div>
   );
@@ -43,7 +43,7 @@ export function CardDescription({ className, children, ...props }: CardProps) {
 
 export function CardContent({ className, children, ...props }: CardProps) {
   return (
-    <div className={cn('p-6 pt-0', className)} {...props}>
+    <div className={cn('p-4 sm:p-6 pt-0', className)} {...props}>
       {children}
     </div>
   );
