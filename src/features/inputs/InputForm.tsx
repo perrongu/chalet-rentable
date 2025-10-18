@@ -2,16 +2,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Ca
 import { Input } from '../../components/ui/Input';
 import { RangeInput } from '../../components/ui/RangeInput';
 import { Select } from '../../components/ui/Select';
+import { Button } from '../../components/ui/Button';
 import { useProject } from '../../store/ProjectContext';
 import type { ExpenseLine, InputWithSource } from '../../types';
 import { ExpenseType, ExpenseCategory, PaymentFrequency } from '../../types';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { generateUUID } from '../../lib/utils';
 
 export function InputForm() {
   const { dispatch, getCurrentInputs, getCurrentKPIs } = useProject();
   const inputs = getCurrentInputs();
   const kpis = getCurrentKPIs();
+  const [showMunicipalAssessmentInfo, setShowMunicipalAssessmentInfo] = useState(false);
 
   // Grouper les dépenses par catégorie
   const expensesByCategory = useMemo(() => {
@@ -262,6 +264,41 @@ export function InputForm() {
               min={0}
               step={1000}
             />
+            <div className="relative">
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-sm font-medium text-gray-700">
+                    Évaluation municipale ($)
+                  </label>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowMunicipalAssessmentInfo(true)}
+                    className="h-6 px-2 text-xs"
+                    aria-label="Voir les détails sur l'évaluation municipale"
+                  >
+                    🔍 Détails
+                  </Button>
+                </div>
+                <input
+                  type="number"
+                  value={inputs.financing.municipalAssessment?.value || ''}
+                  onChange={(e) => {
+                    const newValue = e.target.value === '' ? undefined : { value: Number(e.target.value) };
+                    updateFinancing('municipalAssessment', newValue as any);
+                  }}
+                  min={0}
+                  step={1000}
+                  placeholder="Optionnel - prix d'achat par défaut"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Laisser vide pour utiliser le prix d'achat
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <RangeInput
               label="Mise de fonds ($)"
               value={inputs.financing.downPayment}
@@ -319,13 +356,26 @@ export function InputForm() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <RangeInput
-              label="Droits de mutation ($)"
-              value={inputs.acquisitionFees.transferDuties}
-              onChange={(value) => updateAcquisitionFees('transferDuties', value)}
-              min={0}
-              step={100}
-            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Droits de mutation ($)
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  readOnly
+                  value={kpis.transferDuties.toLocaleString('fr-CA', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
+                  })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700 cursor-not-allowed"
+                  title="Valeur calculée automatiquement"
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Calculé selon le barème progressif QC
+              </p>
+            </div>
             <RangeInput
               label="Frais de notaire ($)"
               value={inputs.acquisitionFees.notaryFees}
@@ -343,6 +393,79 @@ export function InputForm() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Modal d'information sur l'évaluation municipale */}
+      {showMunicipalAssessmentInfo && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <Card className="max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle>Évaluation municipale</CardTitle>
+                <Button variant="ghost" size="sm" onClick={() => setShowMunicipalAssessmentInfo(false)}>
+                  ✕
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <h4 className="font-medium mb-2">À quoi sert l'évaluation municipale ?</h4>
+                <p className="text-sm text-gray-700">
+                  L'évaluation municipale est utilisée pour calculer les <strong>droits de mutation</strong> (taxe de bienvenue) 
+                  lors de l'achat d'une propriété au Québec.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-medium mb-2">Comment est-elle utilisée ?</h4>
+                <p className="text-sm text-gray-700 mb-2">
+                  Les droits de mutation sont calculés sur la <strong>valeur la plus élevée</strong> entre :
+                </p>
+                <ul className="list-disc list-inside text-sm text-gray-700 space-y-1 ml-2">
+                  <li>Le prix d'achat de la propriété</li>
+                  <li>L'évaluation municipale</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-medium mb-2">Barème des droits de mutation (Québec)</h4>
+                <div className="bg-gray-100 p-3 rounded text-sm space-y-1">
+                  <div>• 0,5% sur la tranche jusqu'à 52 800 $</div>
+                  <div>• 1,0% sur la tranche de 52 800 $ à 264 000 $</div>
+                  <div>• 1,5% sur la tranche au-delà de 264 000 $</div>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-medium mb-2">Exemple de calcul</h4>
+                <div className="bg-blue-50 p-3 rounded text-sm space-y-2">
+                  <div>
+                    <strong>Prix d'achat :</strong> 340 000 $<br />
+                    <strong>Évaluation municipale :</strong> 600 000 $
+                  </div>
+                  <div>
+                    <strong>Base de calcul :</strong> max(340 000 $, 600 000 $) = <span className="font-bold text-blue-700">600 000 $</span>
+                  </div>
+                  <div>
+                    <strong>Droits de mutation :</strong><br />
+                    52 800 $ × 0,5% = 264 $<br />
+                    (264 000 $ - 52 800 $) × 1,0% = 2 112 $<br />
+                    (600 000 $ - 264 000 $) × 1,5% = 5 040 $<br />
+                    <strong className="text-blue-700">Total : 7 416 $</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-medium mb-2">Que faire si je ne connais pas l'évaluation municipale ?</h4>
+                <p className="text-sm text-gray-700">
+                  Vous pouvez laisser ce champ vide. Dans ce cas, le calculateur utilisera automatiquement 
+                  le <strong>prix d'achat</strong> comme base de calcul pour les droits de mutation.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

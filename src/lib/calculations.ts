@@ -267,6 +267,64 @@ export function calculateAnnualDebtService(
 // FRAIS D'ACQUISITION
 // ============================================================================
 
+export function calculateTransferDuties(
+  purchasePrice: number,
+  municipalAssessment?: number,
+  sources?: SourceInfo[]
+): { value: number; trace: CalculationTrace } {
+  // Utiliser le maximum entre le prix d'achat et l'évaluation municipale
+  // Si évaluation municipale n'est pas fournie, utiliser le prix d'achat
+  const baseAmount = municipalAssessment !== undefined && municipalAssessment > 0
+    ? Math.max(purchasePrice, municipalAssessment)
+    : purchasePrice;
+
+  let transferDuties = 0;
+  const tier1 = 52800; // Premier palier
+  const tier2 = 264000; // Deuxième palier
+  
+  // Barème progressif québécois:
+  // 0.5% jusqu'à 52 800$
+  // 1.0% de 52 800$ à 264 000$
+  // 1.5% au-delà de 264 000$
+  
+  if (baseAmount <= tier1) {
+    transferDuties = baseAmount * 0.005;
+  } else if (baseAmount <= tier2) {
+    transferDuties = (tier1 * 0.005) + ((baseAmount - tier1) * 0.01);
+  } else {
+    transferDuties = (tier1 * 0.005) + ((tier2 - tier1) * 0.01) + ((baseAmount - tier2) * 0.015);
+  }
+
+  transferDuties = round(transferDuties);
+
+  const variables: Record<string, number | string> = {
+    'Prix d\'achat ($)': purchasePrice,
+  };
+
+  if (municipalAssessment !== undefined && municipalAssessment > 0) {
+    variables['Évaluation municipale ($)'] = municipalAssessment;
+    variables['Montant de base ($)'] = baseAmount;
+    variables['Note'] = baseAmount === purchasePrice 
+      ? 'Prix d\'achat ≥ Évaluation municipale' 
+      : 'Évaluation municipale ≥ Prix d\'achat';
+  } else {
+    variables['Note'] = 'Évaluation municipale non fournie, utilisation du prix d\'achat';
+  }
+
+  return {
+    value: transferDuties,
+    trace: {
+      formula: 'Droits de mutation (barème progressif QC):\n' +
+               '- 0,5% jusqu\'à 52 800$\n' +
+               '- 1,0% de 52 800$ à 264 000$\n' +
+               '- 1,5% au-delà de 264 000$',
+      variables,
+      result: transferDuties,
+      sources,
+    },
+  };
+}
+
 export function calculateTotalAcquisitionFees(
   transferDuties: number,
   notaryFees: number,
@@ -532,13 +590,15 @@ export function calculateKPIs(inputs: ProjectInputs): KPIResults {
   const daysPerYear = inputs.revenue.daysPerYear || 365;
 
   const purchasePrice = extractValue(inputs.financing.purchasePrice);
+  const municipalAssessment = inputs.financing.municipalAssessment 
+    ? extractValue(inputs.financing.municipalAssessment) 
+    : undefined;
   const downPayment = extractValue(inputs.financing.downPayment);
   const interestRate = extractValue(inputs.financing.interestRate);
   const amortization = extractValue(inputs.financing.amortizationYears);
   const frequency = inputs.financing.paymentFrequency;
   const appreciationRate = extractValue(inputs.financing.annualAppreciationRate);
 
-  const transferDuties = extractValue(inputs.acquisitionFees.transferDuties);
   const notaryFees = extractValue(inputs.acquisitionFees.notaryFees);
   const otherFees = extractValue(inputs.acquisitionFees.other);
 
@@ -560,8 +620,12 @@ export function calculateKPIs(inputs: ProjectInputs): KPIResults {
     extractSource(inputs.financing.annualAppreciationRate),
   ].filter(Boolean) as SourceInfo[];
 
+  const transferDutiesSources = [
+    extractSource(inputs.financing.purchasePrice),
+    inputs.financing.municipalAssessment ? extractSource(inputs.financing.municipalAssessment) : undefined,
+  ].filter(Boolean) as SourceInfo[];
+
   const feesSources = [
-    extractSource(inputs.acquisitionFees.transferDuties),
     extractSource(inputs.acquisitionFees.notaryFees),
     extractSource(inputs.acquisitionFees.other),
   ].filter(Boolean) as SourceInfo[];
@@ -583,11 +647,16 @@ export function calculateKPIs(inputs: ProjectInputs): KPIResults {
     frequency,
     financingSources
   );
+  const transferDuties = calculateTransferDuties(
+    purchasePrice,
+    municipalAssessment,
+    transferDutiesSources
+  );
   const totalAcquisitionFees = calculateTotalAcquisitionFees(
-    transferDuties,
+    transferDuties.value,
     notaryFees,
     otherFees,
-    feesSources
+    [...transferDutiesSources, ...feesSources]
   );
   const initialInvestment = calculateInitialInvestment(
     downPayment,
@@ -630,6 +699,7 @@ export function calculateKPIs(inputs: ProjectInputs): KPIResults {
     loanAmount: loanAmount.value,
     periodicPayment: periodicPayment.value,
     annualDebtService: annualDebtService.value,
+    transferDuties: transferDuties.value,
     totalAcquisitionFees: totalAcquisitionFees.value,
     initialInvestment: initialInvestment.value,
     annualCashflow: annualCashflow.value,
@@ -655,6 +725,7 @@ export function calculateKPIs(inputs: ProjectInputs): KPIResults {
       loanAmount: loanAmount.trace,
       periodicPayment: periodicPayment.trace,
       annualDebtService: annualDebtService.trace,
+      transferDuties: transferDuties.trace,
       totalAcquisitionFees: totalAcquisitionFees.trace,
       initialInvestment: initialInvestment.trace,
       annualCashflow: annualCashflow.trace,

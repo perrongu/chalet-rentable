@@ -65,6 +65,7 @@ export type PaymentFrequency = typeof PaymentFrequency[keyof typeof PaymentFrequ
 
 export interface FinancingInputs {
   purchasePrice: InputWithSource<number>;
+  municipalAssessment?: InputWithSource<number>; // Évaluation municipale (optionnelle, utilise prix d'achat si vide)
   downPayment: InputWithSource<number>; // Montant ou sera calculé depuis downPaymentPercent
   downPaymentPercent?: InputWithSource<number>; // Alternative en %
   interestRate: InputWithSource<number>; // Taux annuel en %
@@ -135,6 +136,7 @@ export interface KPIResults {
   annualDebtService: number;
 
   // Investissement
+  transferDuties: number; // Droits de mutation (calculés)
   totalAcquisitionFees: number;
   initialInvestment: number; // Mise de fonds + frais
 

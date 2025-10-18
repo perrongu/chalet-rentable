@@ -106,6 +106,7 @@ function createDefaultProject(): Project {
         value: 550000,
         range: { min: 500000, max: 600000, default: 550000, useRange: true }
       },
+      municipalAssessment: undefined, // Optionnel, utilise prix d'achat si non défini
       downPayment: { value: 27500 },
       interestRate: { 
         value: 5.5,
@@ -255,6 +256,12 @@ function loadProjectFromStorage(): Project {
             };
           } else {
             f.annualAppreciationRate = migrateInputWithSource(f.annualAppreciationRate);
+          }
+          // Initialiser municipalAssessment si non existant
+          if (f.municipalAssessment !== undefined && f.municipalAssessment !== null) {
+            f.municipalAssessment = migrateInputWithSource(f.municipalAssessment);
+          } else {
+            f.municipalAssessment = undefined;
           }
         }
         
