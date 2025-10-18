@@ -4,32 +4,19 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/Tabs';
+import { Spinner } from '../../components/ui/Spinner';
 import { useProject } from '../../store/ProjectContext';
 import type {
   OptimizationConfig,
   OptimizationVariable,
   OptimizationConstraint,
   KPIResults,
+  OptimizationResult,
 } from '../../types';
 import { OptimizationObjective, ConstraintOperator } from '../../types';
 import { runOptimization } from '../../lib/optimizer';
-import { formatCurrency, formatPercent, formatNumber } from '../../lib/utils';
-
-const availableParameters = [
-  { path: 'revenue.averageDailyRate', label: 'Tarif moyen par nuitée' },
-  { path: 'revenue.occupancyRate', label: 'Taux d\'occupation' },
-  { path: 'financing.purchasePrice', label: 'Prix d\'achat' },
-  { path: 'financing.downPayment', label: 'Mise de fonds' },
-  { path: 'financing.interestRate', label: 'Taux d\'intérêt' },
-  { path: 'financing.amortizationYears', label: 'Amortissement' },
-];
-
-const kpiOptions: Array<{ value: keyof KPIResults; label: string }> = [
-  { value: 'annualCashflow', label: 'Cashflow annuel' },
-  { value: 'cashOnCash', label: 'Cash-on-Cash' },
-  { value: 'capRate', label: 'Cap Rate' },
-  { value: 'annualRevenue', label: 'Revenus annuels' },
-];
+import { formatCurrency, formatPercent, formatNumber, generateUUID } from '../../lib/utils';
+import { AVAILABLE_PARAMETERS, KPI_OPTIONS, ERROR_MESSAGES } from '../../lib/constants';
 
 export function Optimizer() {
   const { getCurrentInputs } = useProject();
@@ -39,13 +26,13 @@ export function Optimizer() {
   const [targetMetric, setTargetMetric] = useState<keyof KPIResults>('annualCashflow');
   const [variables, setVariables] = useState<OptimizationVariable[]>([]);
   const [constraints, setConstraints] = useState<OptimizationConstraint[]>([]);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<OptimizationResult | null>(null);
   const [isRunning, setIsRunning] = useState(false);
 
   const addVariable = () => {
     const newVar: OptimizationVariable = {
-      parameter: availableParameters[0].path,
-      label: availableParameters[0].label,
+      parameter: AVAILABLE_PARAMETERS[0].path,
+      label: AVAILABLE_PARAMETERS[0].label,
       min: 0,
       max: 1000,
       locked: false,
@@ -59,7 +46,7 @@ export function Optimizer() {
     
     // Mettre à jour le label si le paramètre change
     if (updates.parameter) {
-      const param = availableParameters.find((p) => p.path === updates.parameter);
+      const param = AVAILABLE_PARAMETERS.find((p) => p.path === updates.parameter);
       if (param) {
         newVars[index].label = param.label;
       }
@@ -74,7 +61,7 @@ export function Optimizer() {
 
   const addConstraint = () => {
     const newConstraint: OptimizationConstraint = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       metric: 'annualCashflow',
       operator: ConstraintOperator.GREATER_THAN,
       value: 0,
@@ -98,9 +85,9 @@ export function Optimizer() {
     setResult(null);
 
     const config: OptimizationConfig = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       name: 'Optimisation',
-      objective: objective as any,
+      objective: objective as OptimizationObjective,
       targetMetric,
       variables,
       constraints,
@@ -113,6 +100,9 @@ export function Optimizer() {
       await new Promise((resolve) => setTimeout(resolve, 100));
       const optimizationResult = runOptimization(getCurrentInputs(), config);
       setResult(optimizationResult);
+    } catch (error) {
+      console.error('Erreur lors de l\'optimisation:', error);
+      alert(ERROR_MESSAGES.OPTIMIZATION_FAILED);
     } finally {
       setIsRunning(false);
     }
@@ -157,7 +147,7 @@ export function Optimizer() {
                     label="Métrique cible"
                     value={targetMetric}
                     onChange={(e) => setTargetMetric(e.target.value as keyof KPIResults)}
-                    options={kpiOptions}
+                    options={KPI_OPTIONS}
                   />
                 </div>
 
@@ -177,7 +167,7 @@ export function Optimizer() {
                             label="Paramètre"
                             value={variable.parameter}
                             onChange={(e) => updateVariable(index, { parameter: e.target.value })}
-                            options={availableParameters.map((p) => ({
+                            options={AVAILABLE_PARAMETERS.map((p) => ({
                               value: p.path,
                               label: p.label,
                             }))}
@@ -235,7 +225,7 @@ export function Optimizer() {
                                 metric: e.target.value as keyof KPIResults,
                               })
                             }
-                            options={kpiOptions}
+                            options={KPI_OPTIONS}
                           />
                           <Select
                             label="Opérateur"
@@ -278,9 +268,10 @@ export function Optimizer() {
                 <Button
                   onClick={runOptimizationAnalysis}
                   disabled={variables.length === 0 || isRunning}
-                  className="w-full"
+                  className="w-full flex items-center justify-center space-x-2"
                 >
-                  {isRunning ? 'Optimisation en cours...' : 'Lancer l\'optimisation'}
+                  {isRunning && <Spinner size="sm" />}
+                  <span>{isRunning ? 'Optimisation en cours...' : 'Lancer l\'optimisation'}</span>
                 </Button>
 
                 {/* Résultats */}
@@ -290,7 +281,7 @@ export function Optimizer() {
                       Résultats ({result.iterations} itérations en {result.duration}ms)
                     </h4>
                     <div className="space-y-3">
-                      {result.solutions.map((solution: any, index: number) => (
+                      {result.solutions.map((solution, index: number) => (
                         <div
                           key={index}
                           className={`border rounded-lg p-4 ${
@@ -316,7 +307,7 @@ export function Optimizer() {
                             {Object.entries(solution.values).map(([param, value]) => (
                               <div key={param} className="flex justify-between">
                                 <span className="text-gray-600">
-                                  {availableParameters.find((p) => p.path === param)?.label}:
+                                  {AVAILABLE_PARAMETERS.find((p) => p.path === param)?.label}:
                                 </span>
                                 <span className="font-medium">{formatNumber(value as number, 2)}</span>
                               </div>

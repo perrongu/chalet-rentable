@@ -68,7 +68,7 @@ export function runSensitivityAnalysis1D(
   });
 
   // Trier par impact relatif décroissant
-  impacts.sort((a: any, b: any) => b.relativeImpact - a.relativeImpact);
+  impacts.sort((a, b) => b.relativeImpact - a.relativeImpact);
 
   return { impacts, detailedResults };
 }
@@ -83,8 +83,16 @@ export function runSensitivityAnalysis2D(
   parameterY: ParameterRange,
   objective: keyof KPIResults
 ): SensitivityAnalysis2D['results'] {
-  const stepsX = parameterX.steps || 10;
-  const stepsY = parameterY.steps || 10;
+  // Limiter le nombre de steps pour éviter des calculs trop lourds
+  const maxSteps = 50;
+  const stepsX = Math.min(parameterX.steps || 10, maxSteps);
+  const stepsY = Math.min(parameterY.steps || 10, maxSteps);
+  
+  // Vérifier que le nombre total de cellules n'est pas trop grand
+  const totalCells = (stepsX + 1) * (stepsY + 1);
+  if (totalCells > 2500) {
+    console.warn(`Analyse 2D limitée: ${totalCells} cellules réduites à 2500 max`);
+  }
 
   const xValues: number[] = [];
   const yValues: number[] = [];

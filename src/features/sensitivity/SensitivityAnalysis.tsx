@@ -4,31 +4,13 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/Tabs';
+import { Spinner } from '../../components/ui/Spinner';
 import { useProject } from '../../store/ProjectContext';
-import type { KPIResults, ParameterRange, ProjectInputs } from '../../types';
+import type { KPIResults, ParameterRange, ProjectInputs, SensitivityAnalysis1D, SensitivityAnalysis2D } from '../../types';
 import { runSensitivityAnalysis1D, runSensitivityAnalysis2D } from '../../lib/sensitivity';
 import { TornadoChart } from './TornadoChart';
 import { HeatmapChart } from './HeatmapChart';
-
-// Labels pour les paramètres connus
-const parameterLabels: Record<string, string> = {
-  'revenue.averageDailyRate': 'Tarif moyen par nuitée',
-  'revenue.occupancyRate': 'Taux d\'occupation',
-  'financing.purchasePrice': 'Prix d\'achat',
-  'financing.downPayment': 'Mise de fonds',
-  'financing.interestRate': 'Taux d\'intérêt',
-  'financing.amortizationYears': 'Amortissement',
-  'acquisitionFees.notaryFees': 'Frais de notaire',
-  'acquisitionFees.other': 'Autres frais d\'acquisition',
-};
-
-const kpiOptions: Array<{ value: keyof KPIResults; label: string }> = [
-  { value: 'annualCashflow', label: 'Cashflow annuel' },
-  { value: 'cashOnCash', label: 'Cash-on-Cash' },
-  { value: 'capRate', label: 'Cap Rate' },
-  { value: 'annualRevenue', label: 'Revenus annuels' },
-  { value: 'totalExpenses', label: 'Dépenses totales' },
-];
+import { PARAMETER_LABELS, KPI_OPTIONS, ERROR_MESSAGES } from '../../lib/constants';
 
 // Fonction pour récupérer les paramètres disponibles avec plages
 function getAvailableParameters(inputs: ProjectInputs): Array<{ path: string; label: string; min: number; max: number; default: number }> {
@@ -39,7 +21,7 @@ function getAvailableParameters(inputs: ProjectInputs): Array<{ path: string; la
     const r = inputs.revenue.averageDailyRate.range;
     parameters.push({
       path: 'revenue.averageDailyRate',
-      label: parameterLabels['revenue.averageDailyRate'],
+      label: PARAMETER_LABELS['revenue.averageDailyRate'],
       min: r.min,
       max: r.max,
       default: r.default,
@@ -50,7 +32,7 @@ function getAvailableParameters(inputs: ProjectInputs): Array<{ path: string; la
     const r = inputs.revenue.occupancyRate.range;
     parameters.push({
       path: 'revenue.occupancyRate',
-      label: parameterLabels['revenue.occupancyRate'],
+      label: PARAMETER_LABELS['revenue.occupancyRate'],
       min: r.min,
       max: r.max,
       default: r.default,
@@ -62,7 +44,7 @@ function getAvailableParameters(inputs: ProjectInputs): Array<{ path: string; la
     const r = inputs.financing.purchasePrice.range;
     parameters.push({
       path: 'financing.purchasePrice',
-      label: parameterLabels['financing.purchasePrice'],
+      label: PARAMETER_LABELS['financing.purchasePrice'],
       min: r.min,
       max: r.max,
       default: r.default,
@@ -73,7 +55,7 @@ function getAvailableParameters(inputs: ProjectInputs): Array<{ path: string; la
     const r = inputs.financing.downPayment.range;
     parameters.push({
       path: 'financing.downPayment',
-      label: parameterLabels['financing.downPayment'],
+      label: PARAMETER_LABELS['financing.downPayment'],
       min: r.min,
       max: r.max,
       default: r.default,
@@ -84,7 +66,7 @@ function getAvailableParameters(inputs: ProjectInputs): Array<{ path: string; la
     const r = inputs.financing.interestRate.range;
     parameters.push({
       path: 'financing.interestRate',
-      label: parameterLabels['financing.interestRate'],
+      label: PARAMETER_LABELS['financing.interestRate'],
       min: r.min,
       max: r.max,
       default: r.default,
@@ -95,7 +77,7 @@ function getAvailableParameters(inputs: ProjectInputs): Array<{ path: string; la
     const r = inputs.financing.amortizationYears.range;
     parameters.push({
       path: 'financing.amortizationYears',
-      label: parameterLabels['financing.amortizationYears'],
+      label: PARAMETER_LABELS['financing.amortizationYears'],
       min: r.min,
       max: r.max,
       default: r.default,
@@ -107,7 +89,7 @@ function getAvailableParameters(inputs: ProjectInputs): Array<{ path: string; la
     const r = inputs.acquisitionFees.notaryFees.range;
     parameters.push({
       path: 'acquisitionFees.notaryFees',
-      label: parameterLabels['acquisitionFees.notaryFees'],
+      label: PARAMETER_LABELS['acquisitionFees.notaryFees'],
       min: r.min,
       max: r.max,
       default: r.default,
@@ -118,7 +100,7 @@ function getAvailableParameters(inputs: ProjectInputs): Array<{ path: string; la
     const r = inputs.acquisitionFees.other.range;
     parameters.push({
       path: 'acquisitionFees.other',
-      label: parameterLabels['acquisitionFees.other'],
+      label: PARAMETER_LABELS['acquisitionFees.other'],
       min: r.min,
       max: r.max,
       default: r.default,
@@ -153,7 +135,8 @@ export function SensitivityAnalysis() {
   const [objective1D, setObjective1D] = useState<keyof KPIResults>('annualCashflow');
   const [selectedParams, setSelectedParams] = useState<string[]>([]);
   const [paramRanges, setParamRanges] = useState<Record<string, { min: number; max: number }>>({});
-  const [results1D, setResults1D] = useState<any>(null);
+  const [results1D, setResults1D] = useState<SensitivityAnalysis1D['results'] | null>(null);
+  const [isRunning1D, setIsRunning1D] = useState(false);
 
   // État pour analyse 2D - initialiser avec les premiers paramètres disponibles
   const [objective2D, setObjective2D] = useState<keyof KPIResults>('annualCashflow');
@@ -167,7 +150,8 @@ export function SensitivityAnalysis() {
     min: availableParameters[1]?.min || availableParameters[0]?.min || 0,
     max: availableParameters[1]?.max || availableParameters[0]?.max || 100,
   }));
-  const [results2D, setResults2D] = useState<any>(null);
+  const [results2D, setResults2D] = useState<SensitivityAnalysis2D['results'] | null>(null);
+  const [isRunning2D, setIsRunning2D] = useState(false);
 
   const toggleParameter = (path: string) => {
     if (selectedParams.includes(path)) {
@@ -188,21 +172,34 @@ export function SensitivityAnalysis() {
     }
   };
 
-  const runAnalysis1D = () => {
-    const parameters: ParameterRange[] = selectedParams.map((path) => {
-      const param = availableParameters.find((p) => p.path === path);
-      return {
-        parameter: path,
-        label: param?.label || path,
-        min: paramRanges[path].min,
-        base: param?.default || 0,
-        max: paramRanges[path].max,
-        steps: 10,
-      };
-    });
+  const runAnalysis1D = async () => {
+    setIsRunning1D(true);
+    setResults1D(null);
+    
+    try {
+      // Petite pause pour permettre l'affichage du spinner
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
+      const parameters: ParameterRange[] = selectedParams.map((path) => {
+        const param = availableParameters.find((p) => p.path === path);
+        return {
+          parameter: path,
+          label: param?.label || path,
+          min: paramRanges[path].min,
+          base: param?.default || 0,
+          max: paramRanges[path].max,
+          steps: 10,
+        };
+      });
 
-    const result = runSensitivityAnalysis1D(inputs, parameters, objective1D);
-    setResults1D(result);
+      const result = runSensitivityAnalysis1D(inputs, parameters, objective1D);
+      setResults1D(result);
+    } catch (error) {
+      console.error('Erreur lors de l\'analyse 1D:', error);
+      alert(ERROR_MESSAGES.SENSITIVITY_1D_FAILED);
+    } finally {
+      setIsRunning1D(false);
+    }
   };
 
   const updateParamX = (newPath: string) => {
@@ -221,30 +218,43 @@ export function SensitivityAnalysis() {
     }
   };
 
-  const runAnalysis2D = () => {
-    const paramX_data = availableParameters.find((p) => p.path === paramX);
-    const paramY_data = availableParameters.find((p) => p.path === paramY);
+  const runAnalysis2D = async () => {
+    setIsRunning2D(true);
+    setResults2D(null);
     
-    const parameterX: ParameterRange = {
-      parameter: paramX,
-      label: paramX_data?.label || paramX,
-      min: rangeX.min,
-      base: paramX_data?.default || 0,
-      max: rangeX.max,
-      steps: 15,
-    };
+    try {
+      // Petite pause pour permettre l'affichage du spinner
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
+      const paramX_data = availableParameters.find((p) => p.path === paramX);
+      const paramY_data = availableParameters.find((p) => p.path === paramY);
+      
+      const parameterX: ParameterRange = {
+        parameter: paramX,
+        label: paramX_data?.label || paramX,
+        min: rangeX.min,
+        base: paramX_data?.default || 0,
+        max: rangeX.max,
+        steps: 15,
+      };
 
-    const parameterY: ParameterRange = {
-      parameter: paramY,
-      label: paramY_data?.label || paramY,
-      min: rangeY.min,
-      base: paramY_data?.default || 0,
-      max: rangeY.max,
-      steps: 15,
-    };
+      const parameterY: ParameterRange = {
+        parameter: paramY,
+        label: paramY_data?.label || paramY,
+        min: rangeY.min,
+        base: paramY_data?.default || 0,
+        max: rangeY.max,
+        steps: 15,
+      };
 
-    const result = runSensitivityAnalysis2D(inputs, parameterX, parameterY, objective2D);
-    setResults2D(result);
+      const result = runSensitivityAnalysis2D(inputs, parameterX, parameterY, objective2D);
+      setResults2D(result);
+    } catch (error) {
+      console.error('Erreur lors de l\'analyse 2D:', error);
+      alert(ERROR_MESSAGES.SENSITIVITY_2D_FAILED);
+    } finally {
+      setIsRunning2D(false);
+    }
   };
 
   return (
@@ -267,7 +277,7 @@ export function SensitivityAnalysis() {
                   label="Objectif à analyser"
                   value={objective1D}
                   onChange={(e) => setObjective1D(e.target.value as keyof KPIResults)}
-                  options={kpiOptions}
+                  options={KPI_OPTIONS}
                 />
 
                 <div>
@@ -323,8 +333,13 @@ export function SensitivityAnalysis() {
                   </div>
                 </div>
 
-                <Button onClick={runAnalysis1D} disabled={selectedParams.length === 0}>
-                  Lancer l'analyse
+                <Button 
+                  onClick={runAnalysis1D} 
+                  disabled={selectedParams.length === 0 || isRunning1D}
+                  className="flex items-center justify-center space-x-2"
+                >
+                  {isRunning1D && <Spinner size="sm" />}
+                  <span>{isRunning1D ? 'Analyse en cours...' : 'Lancer l\'analyse'}</span>
                 </Button>
 
                 {results1D && (
@@ -342,7 +357,7 @@ export function SensitivityAnalysis() {
                   label="Objectif à analyser"
                   value={objective2D}
                   onChange={(e) => setObjective2D(e.target.value as keyof KPIResults)}
-                  options={kpiOptions}
+                  options={KPI_OPTIONS}
                 />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -407,7 +422,14 @@ export function SensitivityAnalysis() {
                   </div>
                 </div>
 
-                <Button onClick={runAnalysis2D}>Lancer l'analyse</Button>
+                <Button 
+                  onClick={runAnalysis2D}
+                  disabled={isRunning2D}
+                  className="flex items-center justify-center space-x-2"
+                >
+                  {isRunning2D && <Spinner size="sm" />}
+                  <span>{isRunning2D ? 'Analyse en cours...' : 'Lancer l\'analyse'}</span>
+                </Button>
 
                 {results2D && (
                   <div className="mt-6">

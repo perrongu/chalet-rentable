@@ -8,6 +8,7 @@ import type {
   SensitivityAnalysis1D,
   SensitivityAnalysis2D,
 } from '../types';
+import { arrayToCSVLine, formatDateShort } from './utils';
 
 // ============================================================================
 // EXPORT JSON (PROJET COMPLET)
@@ -158,7 +159,7 @@ export function exportHeatmapToExcel(
 }
 
 // ============================================================================
-// EXPORT CSV
+// EXPORT CSV (RFC 4180 compliant)
 // ============================================================================
 
 export function exportToCSV(
@@ -169,8 +170,8 @@ export function exportToCSV(
 
   const headers = Object.keys(data[0]);
   const csvContent = [
-    headers.join(','),
-    ...data.map((row) => headers.map((h) => row[h]).join(',')),
+    arrayToCSVLine(headers),
+    ...data.map((row) => arrayToCSVLine(headers.map((h) => row[h]))),
   ].join('\n');
 
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -246,7 +247,7 @@ export async function exportReportToPDF(
 
   // Date
   pdf.setFontSize(9);
-  pdf.text(`Date: ${new Date().toLocaleDateString('fr-CA')}`, margin, yPosition);
+  pdf.text(`Date: ${formatDateShort(new Date())}`, margin, yPosition);
   yPosition += 10;
 
   // Résumé des KPIs par scénario
@@ -315,10 +316,13 @@ export async function exportReportToPDF(
 
 export async function saveProjectFile(project: Project): Promise<void> {
   try {
-    // @ts-ignore - File System Access API
-    if ('showSaveFilePicker' in window) {
-      // @ts-ignore
-      const handle = await window.showSaveFilePicker({
+    // Vérifier si l'API File System Access est supportée
+    const isSupported = typeof window !== 'undefined' && 
+                       'showSaveFilePicker' in window &&
+                       typeof (window as any).showSaveFilePicker === 'function';
+    
+    if (isSupported) {
+      const handle = await (window as any).showSaveFilePicker({
         suggestedName: `${project.name.replace(/[^a-z0-9]/gi, '_')}.json`,
         types: [
           {
@@ -345,10 +349,13 @@ export async function saveProjectFile(project: Project): Promise<void> {
 
 export async function loadProjectFile(): Promise<Project | null> {
   try {
-    // @ts-ignore
-    if ('showOpenFilePicker' in window) {
-      // @ts-ignore
-      const [handle] = await window.showOpenFilePicker({
+    // Vérifier si l'API File System Access est supportée
+    const isSupported = typeof window !== 'undefined' && 
+                       'showOpenFilePicker' in window &&
+                       typeof (window as any).showOpenFilePicker === 'function';
+    
+    if (isSupported) {
+      const [handle] = await (window as any).showOpenFilePicker({
         types: [
           {
             description: 'Projet Chalet JSON',

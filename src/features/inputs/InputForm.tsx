@@ -6,6 +6,7 @@ import { useProject } from '../../store/ProjectContext';
 import type { ExpenseLine, InputWithSource } from '../../types';
 import { ExpenseType, ExpenseCategory, PaymentFrequency } from '../../types';
 import { useMemo } from 'react';
+import { generateUUID } from '../../lib/utils';
 
 export function InputForm() {
   const { dispatch, getCurrentInputs, getCurrentKPIs } = useProject();
@@ -49,18 +50,13 @@ export function InputForm() {
     });
   };
 
-  const updateAcquisitionFees = (field: string, value: InputWithSource<number> | number) => {
-    // Si c'est un nombre simple (pour transferDuties), le convertir en InputWithSource
-    const finalValue = typeof value === 'number' 
-      ? { ...inputs.acquisitionFees[field as keyof typeof inputs.acquisitionFees], value }
-      : value;
-    
+  const updateAcquisitionFees = (field: string, value: InputWithSource<number>) => {
     dispatch({
       type: 'UPDATE_BASE_INPUTS',
       payload: {
         acquisitionFees: {
           ...inputs.acquisitionFees,
-          [field]: finalValue,
+          [field]: value,
         },
       },
     });
@@ -68,7 +64,7 @@ export function InputForm() {
 
   const addExpenseLine = (category?: ExpenseCategory) => {
     const newLine: ExpenseLine = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       name: 'Nouvelle dépense',
       type: ExpenseType.FIXED_ANNUAL,
       amount: { value: 0 },
@@ -313,11 +309,10 @@ export function InputForm() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <Input
-              type="number"
+            <RangeInput
               label="Droits de mutation ($)"
-              value={inputs.acquisitionFees.transferDuties.value}
-              onChange={(e) => updateAcquisitionFees('transferDuties', Number(e.target.value))}
+              value={inputs.acquisitionFees.transferDuties}
+              onChange={(value) => updateAcquisitionFees('transferDuties', value)}
               min={0}
               step={100}
             />

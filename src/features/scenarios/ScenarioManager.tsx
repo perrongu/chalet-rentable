@@ -5,7 +5,7 @@ import { Input } from '../../components/ui/Input';
 import { useProject } from '../../store/ProjectContext';
 import type { Scenario } from '../../types';
 import { calculateKPIs } from '../../lib/calculations';
-import { formatCurrency, formatPercent } from '../../lib/utils';
+import { formatCurrency, formatPercent, generateUUID, formatDateShort } from '../../lib/utils';
 import {
   BarChart,
   Bar,
@@ -27,7 +27,7 @@ export function ScenarioManager() {
     if (!newScenarioName.trim()) return;
 
     const newScenario: Scenario = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       name: newScenarioName,
       description: '',
       isBase: false,
@@ -44,7 +44,7 @@ export function ScenarioManager() {
   const duplicateScenario = (scenario: Scenario) => {
     const newScenario: Scenario = {
       ...scenario,
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       name: `${scenario.name} (copie)`,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -130,7 +130,7 @@ export function ScenarioManager() {
                         <p className="text-sm text-gray-600 mt-1">{scenario.description}</p>
                       )}
                       <p className="text-xs text-gray-400 mt-1">
-                        Créé le {scenario.createdAt.toLocaleDateString('fr-CA')}
+                        Créé le {formatDateShort(scenario.createdAt)}
                       </p>
                     </div>
                     <div className="flex space-x-2">

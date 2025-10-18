@@ -23,11 +23,14 @@ export function RangeInput({
   const useRange = value.range?.useRange ?? false;
   const [error, setError] = useState<string>('');
 
-  // Validation de la valeur par défaut
+  // Validation de la valeur par défaut et cohérence min/max
   useEffect(() => {
     if (useRange && value.range) {
       const { min, max, default: defaultVal } = value.range;
-      if (defaultVal < min || defaultVal > max) {
+      
+      if (min >= max) {
+        setError('Le minimum doit être inférieur au maximum');
+      } else if (defaultVal < min || defaultVal > max) {
         setError('La valeur par défaut doit être entre min et max');
       } else {
         setError('');
@@ -36,17 +39,44 @@ export function RangeInput({
       setError('');
     }
   }, [useRange, value.range]);
+  
+  // Validation des limites globales
+  const validateValue = (val: number): string | undefined => {
+    if (globalMin !== undefined && val < globalMin) {
+      return `La valeur doit être ≥ ${globalMin}`;
+    }
+    if (globalMax !== undefined && val > globalMax) {
+      return `La valeur doit être ≤ ${globalMax}`;
+    }
+    return undefined;
+  };
 
   const toggleUseRange = () => {
     if (!useRange) {
       // Activer le mode plage
       const currentValue = value.value;
+      
+      // Si la valeur est 0 ou très proche de 0, utiliser des valeurs par défaut raisonnables
+      let min: number, max: number, defaultVal: number;
+      
+      if (Math.abs(currentValue) < 0.01) {
+        // Valeur ~0 : utiliser des valeurs par défaut selon le contexte
+        min = globalMin ?? 0;
+        max = globalMax ?? 100;
+        defaultVal = currentValue;
+      } else {
+        // Valeur normale : utiliser ±20%
+        min = currentValue * 0.8;
+        max = currentValue * 1.2;
+        defaultVal = currentValue;
+      }
+      
       onChange({
         ...value,
         range: {
-          min: currentValue * 0.8,
-          max: currentValue * 1.2,
-          default: currentValue,
+          min,
+          max,
+          default: defaultVal,
           useRange: true,
         },
       });
@@ -62,6 +92,15 @@ export function RangeInput({
   const updateRangeField = (field: keyof RangeValue, newValue: number | boolean) => {
     if (!value.range) return;
 
+    // Validation avant mise à jour
+    if (typeof newValue === 'number') {
+      const validationError = validateValue(newValue);
+      if (validationError) {
+        setError(validationError);
+        return;
+      }
+    }
+
     const updatedRange = { ...value.range, [field]: newValue };
     onChange({
       ...value,
@@ -70,6 +109,14 @@ export function RangeInput({
   };
 
   const updateExactValue = (newValue: number) => {
+    // Validation avant mise à jour
+    const validationError = validateValue(newValue);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+    
+    setError('');
     onChange({
       ...value,
       value: newValue,

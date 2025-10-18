@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback, useRef } from 'react';
 import type { ReactNode } from 'react';
 import type {
   Project,
@@ -11,6 +11,7 @@ import type {
 } from '../types';
 import { ExpenseType, ExpenseCategory, PaymentFrequency } from '../types';
 import { calculateKPIs } from '../lib/calculations';
+import { generateUUID, debounce } from '../lib/utils';
 
 // ============================================================================
 // INITIAL STATE
@@ -130,7 +131,7 @@ function createDefaultProject(): Project {
   };
 
   return {
-    id: crypto.randomUUID(),
+    id: generateUUID(),
     name: 'Nouveau Projet',
     description: '',
     baseInputs,
@@ -187,25 +188,50 @@ function loadProjectFromStorage(): Project {
     if (stored) {
       const project = JSON.parse(stored);
       
+      // Logging du versioning
+      console.log(`[Migration] Chargement projet version: ${project.version || 'legacy'}`);
+      const needsMigration = !project.version || project.version !== '1.0.0';
+      
+      if (needsMigration) {
+        console.log('[Migration] Migration des données nécessaire');
+      }
+      
       // Migration des données
       if (project.baseInputs) {
         // Migrer les revenus
         if (project.baseInputs.revenue) {
-          project.baseInputs.revenue.averageDailyRate = migrateInputWithSource(
-            project.baseInputs.revenue.averageDailyRate
-          );
-          project.baseInputs.revenue.occupancyRate = migrateInputWithSource(
-            project.baseInputs.revenue.occupancyRate
-          );
+          const oldAdr = project.baseInputs.revenue.averageDailyRate;
+          const oldOcc = project.baseInputs.revenue.occupancyRate;
+          
+          project.baseInputs.revenue.averageDailyRate = migrateInputWithSource(oldAdr);
+          project.baseInputs.revenue.occupancyRate = migrateInputWithSource(oldOcc);
+          
+          if (typeof oldAdr === 'number' || typeof oldOcc === 'number') {
+            console.log('[Migration] Revenus migrés vers InputWithSource');
+          }
         }
         
         // Migrer les dépenses
         if (project.baseInputs.expenses) {
-          project.baseInputs.expenses = project.baseInputs.expenses.map((expense: any) => ({
-            ...expense,
-            amount: migrateInputWithSource(expense.amount),
-            category: migrateExpenseCategory(expense.category),
-          }));
+          let expensesMigrated = 0;
+          project.baseInputs.expenses = project.baseInputs.expenses.map((expense: any) => {
+            const hadOldCategory = expense.category && !Object.values(ExpenseCategory).includes(expense.category);
+            const hadOldAmount = typeof expense.amount === 'number';
+            
+            if (hadOldCategory || hadOldAmount) {
+              expensesMigrated++;
+            }
+            
+            return {
+              ...expense,
+              amount: migrateInputWithSource(expense.amount),
+              category: migrateExpenseCategory(expense.category),
+            };
+          });
+          
+          if (expensesMigrated > 0) {
+            console.log(`[Migration] ${expensesMigrated} dépenses migrées`);
+          }
         }
         
         // Migrer le financement
@@ -234,11 +260,22 @@ function loadProjectFromStorage(): Project {
         s.updatedAt = new Date(s.updatedAt);
       });
       
+      // Assurer que la version est à jour
+      if (!project.version) {
+        project.version = '1.0.0';
+        console.log('[Migration] Version définie à 1.0.0');
+      }
+      
+      console.log('[Migration] Projet chargé avec succès');
       return project;
     }
   } catch (error) {
-    console.error('Error loading project from storage:', error);
+    console.error('[Migration] Erreur lors du chargement:', error);
+    if (error instanceof SyntaxError) {
+      console.error('[Migration] JSON invalide - reset nécessaire');
+    }
   }
+  console.log('[Migration] Création d\'un nouveau projet par défaut');
   return createDefaultProject();
 }
 
@@ -438,17 +475,31 @@ const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 export function ProjectProvider({ children }: { children: ReactNode }) {
   const [project, dispatch] = useReducer(projectReducer, null, loadProjectFromStorage);
 
-  // Autosave
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(project));
-      } catch (error) {
-        console.error('Error saving to localStorage:', error);
+  // Autosave avec debounce
+  const saveToStorage = useCallback((projectToSave: Project) => {
+    try {
+      const serialized = JSON.stringify(projectToSave);
+      localStorage.setItem(STORAGE_KEY, serialized);
+    } catch (error) {
+      console.error('Error saving to localStorage:', error);
+      
+      // Gestion des erreurs spécifiques
+      if (error instanceof Error) {
+        if (error.name === 'QuotaExceededError') {
+          console.error('localStorage quota exceeded. Consider clearing old data.');
+          // TODO: Ajouter notification utilisateur
+        } else if (error.name === 'SecurityError') {
+          console.error('localStorage access denied. Check browser settings.');
+        }
       }
-    }, AUTOSAVE_DELAY);
+    }
+  }, []);
 
-    return () => clearTimeout(timer);
+  // Utiliser useRef pour le debounce afin de le créer une seule fois
+  const debouncedSaveRef = useRef(debounce(saveToStorage, AUTOSAVE_DELAY));
+
+  useEffect(() => {
+    debouncedSaveRef.current(project);
   }, [project]);
 
   // Fonction pour récupérer les inputs du scénario actif

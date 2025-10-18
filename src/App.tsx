@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { ProjectProvider, useProject } from './store/ProjectContext';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './components/ui/Tabs';
 import { Button } from './components/ui/Button';
@@ -100,12 +100,13 @@ function InspectionModal({
 }
 
 function AppContent() {
-  const { project, getCurrentKPIs } = useProject();
+  const { project, getCurrentKPIs, getCurrentInputs, dispatch } = useProject();
   const [inspectingMetric, setInspectingMetric] = useState<string | null>(null);
 
   const handleSave = async () => {
     try {
       await saveProjectFile(project);
+      alert('Projet sauvegardé avec succès');
     } catch (error) {
       console.error('Error saving project:', error);
       alert('Erreur lors de la sauvegarde du projet');
@@ -116,8 +117,8 @@ function AppContent() {
     try {
       const loadedProject = await loadProjectFile();
       if (loadedProject) {
-        // Charger le projet via le dispatch
-        window.location.reload(); // Simple reload pour l'instant
+        dispatch({ type: 'LOAD_PROJECT', payload: loadedProject });
+        alert('Projet chargé avec succès');
       }
     } catch (error) {
       console.error('Error loading project:', error);
@@ -125,34 +126,40 @@ function AppContent() {
     }
   };
 
-  const kpis = getCurrentKPIs();
+  // Mémoiser les KPIs pour éviter recalculs inutiles
+  const inputs = getCurrentInputs();
+  const kpis = useMemo(() => {
+    return getCurrentKPIs();
+  }, [inputs, getCurrentKPIs]);
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-40" role="banner">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
                 Analyse de Rentabilité - Chalet Locatif
               </h1>
-              <p className="text-sm text-gray-600 mt-1">{project.name}</p>
+              <p className="text-sm text-gray-600 mt-1" aria-label="Nom du projet">{project.name}</p>
             </div>
-            <div className="flex space-x-2">
-              <Button variant="outline" onClick={handleLoad}>
-                📂 Ouvrir
-              </Button>
-              <Button variant="outline" onClick={handleSave}>
-                💾 Enregistrer
-              </Button>
-            </div>
+            <nav aria-label="Actions principales">
+              <div className="flex space-x-2">
+                <Button variant="outline" onClick={handleLoad} aria-label="Ouvrir un projet">
+                  📂 Ouvrir
+                </Button>
+                <Button variant="outline" onClick={handleSave} aria-label="Enregistrer le projet">
+                  💾 Enregistrer
+                </Button>
+              </div>
+            </nav>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" role="main">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Inputs & Navigation */}
           <div className="lg:col-span-2 space-y-6">
@@ -163,6 +170,10 @@ function AppContent() {
                 <TabsTrigger value="sensitivity">Sensibilité</TabsTrigger>
                 <TabsTrigger value="optimization">Optimisation</TabsTrigger>
               </TabsList>
+
+              <div className="sr-only" role="status" aria-live="polite">
+                Affichage de l'onglet actif
+              </div>
 
               <TabsContent value="inputs">
                 <InputForm />
@@ -183,7 +194,7 @@ function AppContent() {
           </div>
 
           {/* Right Column - KPI Dashboard */}
-          <div className="lg:col-span-1">
+          <aside className="lg:col-span-1" aria-label="Indicateurs de performance">
             <div className="sticky top-24">
               <Card>
                 <CardHeader>
@@ -194,7 +205,7 @@ function AppContent() {
                 </CardContent>
               </Card>
             </div>
-          </div>
+          </aside>
         </div>
       </main>
 

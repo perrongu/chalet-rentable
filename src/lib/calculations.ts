@@ -343,7 +343,24 @@ export function calculateCashOnCash(
   initialInvestment: number,
   sources?: SourceInfo[]
 ): { value: number; trace: CalculationTrace } {
-  const coc = initialInvestment > 0 ? round((annualCashflow / initialInvestment) * 100, 2) : 0;
+  // Éviter division par zéro
+  if (initialInvestment <= 0) {
+    return {
+      value: 0,
+      trace: {
+        formula: 'Cash-on-Cash (%) = (Cashflow annuel / Investissement initial) × 100',
+        variables: {
+          'Cashflow annuel ($)': annualCashflow,
+          'Investissement initial ($)': initialInvestment,
+          'Note': 'Division par zéro évitée - investissement initial invalide',
+        },
+        result: 0,
+        sources,
+      },
+    };
+  }
+  
+  const coc = round((annualCashflow / initialInvestment) * 100, 2);
 
   return {
     value: coc,
@@ -366,7 +383,28 @@ export function calculateCapRate(
   sources?: SourceInfo[]
 ): { value: number; trace: CalculationTrace } {
   const noi = annualRevenue - totalExpenses; // Net Operating Income
-  const capRate = purchasePrice > 0 ? round((noi / purchasePrice) * 100, 2) : 0;
+  
+  // Éviter division par zéro
+  if (purchasePrice <= 0) {
+    return {
+      value: 0,
+      trace: {
+        formula:
+          'Cap Rate (%) = (NOI / Prix d\'achat) × 100\noù NOI = Revenus - Dépenses (excluant service de la dette)',
+        variables: {
+          'Revenus annuels ($)': annualRevenue,
+          'Dépenses totales ($)': totalExpenses,
+          'NOI ($)': round(noi),
+          'Prix d\'achat ($)': purchasePrice,
+          'Note': 'Division par zéro évitée - prix d\'achat invalide',
+        },
+        result: 0,
+        sources,
+      },
+    };
+  }
+  
+  const capRate = round((noi / purchasePrice) * 100, 2);
 
   return {
     value: capRate,
@@ -501,6 +539,15 @@ export function calculateKPIs(inputs: ProjectInputs): KPIResults {
 // UTILITAIRE POUR RÉCUPÉRER UNE VALEUR PAR CHEMIN
 // ============================================================================
 
+// Parser un segment de path pour extraire le nom et l'index si c'est un tableau
+function parsePathSegment(segment: string): { name: string; index: number | null } {
+  const match = segment.match(/^(.+?)\[(\d+)\]$/);
+  if (match) {
+    return { name: match[1], index: parseInt(match[2], 10) };
+  }
+  return { name: segment, index: null };
+}
+
 export function getValueByPath(inputs: ProjectInputs, path: string): number {
   const parts = path.split('.');
   let current: any = inputs;
@@ -509,7 +556,17 @@ export function getValueByPath(inputs: ProjectInputs, path: string): number {
     if (current === undefined || current === null) {
       return 0;
     }
-    current = current[part];
+    
+    const { name, index } = parsePathSegment(part);
+    current = current[name];
+    
+    if (index !== null) {
+      if (Array.isArray(current) && index < current.length) {
+        current = current[index];
+      } else {
+        return 0;
+      }
+    }
   }
 
   return extractValue(current);
@@ -517,18 +574,40 @@ export function getValueByPath(inputs: ProjectInputs, path: string): number {
 
 export function setValueByPath(inputs: ProjectInputs, path: string, value: number): ProjectInputs {
   const parts = path.split('.');
-  const newInputs = JSON.parse(JSON.stringify(inputs)); // Deep clone
+  // Utiliser structuredClone si disponible, sinon fallback sur JSON
+  const newInputs = typeof structuredClone !== 'undefined' 
+    ? structuredClone(inputs) 
+    : JSON.parse(JSON.stringify(inputs));
   let current: any = newInputs;
 
   for (let i = 0; i < parts.length - 1; i++) {
-    current = current[parts[i]];
+    const { name, index } = parsePathSegment(parts[i]);
+    current = current[name];
+    
+    if (index !== null && Array.isArray(current)) {
+      current = current[index];
+    }
   }
 
   const lastPart = parts[parts.length - 1];
-  if (typeof current[lastPart] === 'object' && 'value' in current[lastPart]) {
-    current[lastPart].value = value;
+  const { name: lastName, index: lastIndex } = parsePathSegment(lastPart);
+  
+  if (lastIndex !== null) {
+    // C'est un tableau
+    if (Array.isArray(current[lastName]) && lastIndex < current[lastName].length) {
+      if (typeof current[lastName][lastIndex] === 'object' && 'value' in current[lastName][lastIndex]) {
+        current[lastName][lastIndex].value = value;
+      } else {
+        current[lastName][lastIndex] = value;
+      }
+    }
   } else {
-    current[lastPart] = value;
+    // C'est un objet simple
+    if (typeof current[lastName] === 'object' && 'value' in current[lastName]) {
+      current[lastName].value = value;
+    } else {
+      current[lastName] = value;
+    }
   }
 
   return newInputs;

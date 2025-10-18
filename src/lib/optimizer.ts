@@ -43,7 +43,7 @@ export function runOptimization(
 ): OptimizationResult {
   const startTime = Date.now();
   const solutions: OptimizationSolution[] = [];
-  const maxIterations = config.maxIterations || 10000;
+  const maxIterations = Math.min(config.maxIterations || 10000, 50000); // Limite de sécurité
   const topK = config.topK || 10;
 
   // Filtrer les variables non verrouillées
