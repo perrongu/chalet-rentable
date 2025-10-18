@@ -92,7 +92,11 @@ export function InputForm() {
     });
   };
 
-  const deleteExpenseLine = (id: string) => {
+  const deleteExpenseLine = (id: string, name: string) => {
+    if (!window.confirm(`Confirmer la suppression de "${name}" ?`)) {
+      return;
+    }
+    
     dispatch({
       type: 'UPDATE_BASE_INPUTS',
       payload: {
@@ -195,9 +199,10 @@ export function InputForm() {
                       </div>
                       <div className="col-span-2 flex items-center justify-center">
                         <button
-                          onClick={() => deleteExpenseLine(line.id)}
+                          onClick={() => deleteExpenseLine(line.id, line.name)}
                           className="text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
                           title="Supprimer"
+                          aria-label={`Supprimer ${line.name}`}
                         >
                           <svg
                             xmlns="http://www.w3.org/2000/svg"

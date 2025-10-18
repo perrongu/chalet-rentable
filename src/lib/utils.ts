@@ -127,3 +127,42 @@ export function formatDateLong(date: Date | string): string {
 export function formatDateTime(date: Date | string): string {
   return formatDate(date, 'Pp');
 }
+
+// ============================================================================
+// SANITIZATION XSS
+// ============================================================================
+
+/**
+ * Échappe les caractères HTML dangereux pour prévenir les attaques XSS
+ * @param unsafe - La chaîne potentiellement dangereuse
+ * @returns La chaîne échappée et sécurisée
+ */
+export function escapeHtml(unsafe: string): string {
+  const htmlEscapeMap: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;',
+    '/': '&#x2F;',
+  };
+  
+  return unsafe.replace(/[&<>"'\/]/g, (char) => htmlEscapeMap[char] || char);
+}
+
+/**
+ * Sanitize une chaîne pour l'utiliser dans un contexte HTML
+ * Supprime les scripts et autres contenus dangereux
+ * @param input - La chaîne à sanitizer
+ * @returns La chaîne nettoyée
+ */
+export function sanitizeForDisplay(input: string): string {
+  // Supprimer les balises script et autres contenus dangereux
+  const cleaned = input
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+    .replace(/javascript:/gi, '')
+    .replace(/on\w+\s*=\s*["'][^"']*["']/gi, ''); // Supprimer les event handlers
+  
+  return escapeHtml(cleaned);
+}

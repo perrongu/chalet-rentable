@@ -6,6 +6,7 @@ import type {
   SourceInfo,
 } from '../types';
 import { ExpenseType, PaymentFrequency } from '../types';
+import { TRANSFER_DUTIES_TIERS } from './constants';
 
 // ============================================================================
 // UTILITAIRES
@@ -279,20 +280,19 @@ export function calculateTransferDuties(
     : purchasePrice;
 
   let transferDuties = 0;
-  const tier1 = 52800; // Premier palier
-  const tier2 = 264000; // Deuxième palier
+  const { TIER1_LIMIT, TIER2_LIMIT, TIER1_RATE, TIER2_RATE, TIER3_RATE } = TRANSFER_DUTIES_TIERS;
   
   // Barème progressif québécois:
   // 0.5% jusqu'à 52 800$
   // 1.0% de 52 800$ à 264 000$
   // 1.5% au-delà de 264 000$
   
-  if (baseAmount <= tier1) {
-    transferDuties = baseAmount * 0.005;
-  } else if (baseAmount <= tier2) {
-    transferDuties = (tier1 * 0.005) + ((baseAmount - tier1) * 0.01);
+  if (baseAmount <= TIER1_LIMIT) {
+    transferDuties = baseAmount * TIER1_RATE;
+  } else if (baseAmount <= TIER2_LIMIT) {
+    transferDuties = (TIER1_LIMIT * TIER1_RATE) + ((baseAmount - TIER1_LIMIT) * TIER2_RATE);
   } else {
-    transferDuties = (tier1 * 0.005) + ((tier2 - tier1) * 0.01) + ((baseAmount - tier2) * 0.015);
+    transferDuties = (TIER1_LIMIT * TIER1_RATE) + ((TIER2_LIMIT - TIER1_LIMIT) * TIER2_RATE) + ((baseAmount - TIER2_LIMIT) * TIER3_RATE);
   }
 
   transferDuties = round(transferDuties);
@@ -376,17 +376,19 @@ export function calculateInitialInvestment(
 export function calculateAnnualCashflow(
   annualRevenue: number,
   totalExpenses: number,
+  annualDebtService: number,
   sources?: SourceInfo[]
 ): { value: number; trace: CalculationTrace } {
-  const cashflow = round(annualRevenue - totalExpenses);
+  const cashflow = round(annualRevenue - totalExpenses - annualDebtService);
 
   return {
     value: cashflow,
     trace: {
-      formula: 'Cashflow annuel = Revenus bruts - Dépenses totales',
+      formula: 'Cashflow annuel = Revenus bruts - Dépenses totales - Service de la dette',
       variables: {
         'Revenus annuels bruts ($)': annualRevenue,
         'Dépenses totales ($)': totalExpenses,
+        'Service de la dette annuel ($)': annualDebtService,
       },
       result: cashflow,
       sources,
@@ -665,7 +667,8 @@ export function calculateKPIs(inputs: ProjectInputs): KPIResults {
   );
   const annualCashflow = calculateAnnualCashflow(
     annualRevenue.value,
-    expenses.total
+    expenses.total,
+    annualDebtService.value
   );
   const principalPaidFirstYear = calculatePrincipalPaidFirstYear(
     loanAmount.value,

@@ -4,11 +4,11 @@ import html2canvas from 'html2canvas';
 import type {
   Project,
   KPIResults,
-  Scenario,
   SensitivityAnalysis1D,
   SensitivityAnalysis2D,
 } from '../types';
 import { arrayToCSVLine, formatDateShort } from './utils';
+import { sanitizeProject } from './validation';
 
 // ============================================================================
 // EXPORT JSON (PROJET COMPLET)
@@ -19,26 +19,25 @@ export function exportProjectToJSON(project: Project): string {
 }
 
 export function importProjectFromJSON(jsonString: string): Project {
-  const project = JSON.parse(jsonString);
+  const parsed = JSON.parse(jsonString);
   
-  // Convertir les dates string en objets Date
-  project.createdAt = new Date(project.createdAt);
-  project.updatedAt = new Date(project.updatedAt);
+  // Valider et sanitizer avec Zod
+  const sanitized = sanitizeProject(parsed);
   
-  project.scenarios.forEach((scenario: Scenario) => {
-    scenario.createdAt = new Date(scenario.createdAt);
-    scenario.updatedAt = new Date(scenario.updatedAt);
-  });
+  if (!sanitized) {
+    throw new Error('Le fichier de projet est invalide ou corrompu');
+  }
   
-  project.sensitivityAnalyses1D.forEach((analysis: SensitivityAnalysis1D) => {
-    analysis.createdAt = new Date(analysis.createdAt);
-  });
+  // Convertir les dates des résultats d'optimisation
+  if (sanitized.optimizations?.results) {
+    Object.values(sanitized.optimizations.results).forEach((result: any) => {
+      if (result.completedAt) {
+        result.completedAt = new Date(result.completedAt);
+      }
+    });
+  }
   
-  project.sensitivityAnalyses2D.forEach((analysis: SensitivityAnalysis2D) => {
-    analysis.createdAt = new Date(analysis.createdAt);
-  });
-  
-  return project;
+  return sanitized;
 }
 
 export function downloadJSON(project: Project, filename: string = 'projet-chalet.json') {

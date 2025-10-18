@@ -133,6 +133,7 @@ export function RangeInput({
             checked={useRange}
             onChange={toggleUseRange}
             className="mr-1"
+            aria-label={`Activer plage min/max pour ${label}`}
           />
           Plage min/max
         </label>
@@ -151,6 +152,7 @@ export function RangeInput({
                 max={globalMax}
                 step={step}
                 className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                aria-label={`Valeur minimale pour ${label}`}
               />
             </div>
             <div>
@@ -163,6 +165,7 @@ export function RangeInput({
                 max={value.range.max}
                 step={step}
                 className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                aria-label={`Valeur par défaut pour ${label}`}
               />
             </div>
             <div>
@@ -175,10 +178,11 @@ export function RangeInput({
                 max={globalMax}
                 step={step}
                 className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                aria-label={`Valeur maximale pour ${label}`}
               />
             </div>
           </div>
-          {error && <p className="text-xs text-red-600">{error}</p>}
+          {error && <p className="text-xs text-red-600" role="alert">{error}</p>}
         </div>
       ) : (
         <input
@@ -189,6 +193,7 @@ export function RangeInput({
           max={globalMax}
           step={step}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          aria-label={label}
         />
       )}
     </div>

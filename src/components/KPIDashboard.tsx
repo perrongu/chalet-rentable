@@ -33,7 +33,12 @@ function MetricCard({ title, value, color = 'blue', onInspect }: MetricCardProps
   };
 
   return (
-    <Card className={`${colorClasses[color]} border-2`}>
+    <Card 
+      className={`${colorClasses[color]} border-2`}
+      role="article"
+      aria-label={`Métrique ${title}: ${value}`}
+      tabIndex={0}
+    >
       <CardHeader className="pb-2">
         <CardTitle className="text-xs font-medium text-gray-600 leading-tight">{title}</CardTitle>
       </CardHeader>
@@ -41,6 +46,7 @@ function MetricCard({ title, value, color = 'blue', onInspect }: MetricCardProps
         <div className="space-y-1">
           <div 
             className={`text-sm md:text-base lg:text-lg xl:text-xl font-bold ${textColorClasses[color]} leading-tight`}
+            aria-live="polite"
           >
             {value}
           </div>

@@ -9,6 +9,7 @@ import { SensitivityAnalysis } from './features/sensitivity/SensitivityAnalysis'
 import { Optimizer } from './features/optimization/Optimizer';
 import { saveProjectFile, loadProjectFile } from './lib/exports';
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/Card';
+import { sanitizeForDisplay } from './lib/utils';
 
 function InspectionModal({
   metric,
@@ -68,13 +69,13 @@ function InspectionModal({
                     {source.source && (
                       <div>
                         <span className="text-gray-600">Source: </span>
-                        <span>{source.source}</span>
+                        <span>{sanitizeForDisplay(source.source)}</span>
                       </div>
                     )}
                     {source.remarks && (
                       <div>
                         <span className="text-gray-600">Remarques: </span>
-                        <span>{source.remarks}</span>
+                        <span>{sanitizeForDisplay(source.remarks)}</span>
                       </div>
                     )}
                   </div>

@@ -12,6 +12,7 @@ import type {
 import { ExpenseType, ExpenseCategory, PaymentFrequency } from '../types';
 import { calculateKPIs } from '../lib/calculations';
 import { generateUUID, debounce } from '../lib/utils';
+import { validateProject } from '../lib/validation';
 
 // ============================================================================
 // INITIAL STATE
@@ -192,7 +193,17 @@ function loadProjectFromStorage(): Project {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
-      const project = JSON.parse(stored);
+      const parsed = JSON.parse(stored);
+      
+      // Validation du schéma avec Zod
+      const validationResult = validateProject(parsed);
+      
+      if (!validationResult.success) {
+        console.error('[Validation] Schéma du projet invalide:', validationResult.error);
+        console.error('[Validation] Tentative de migration...');
+      }
+      
+      const project = validationResult.success ? validationResult.data : parsed;
       
       // Logging du versioning
       console.log(`[Migration] Chargement projet version: ${project.version || 'legacy'}`);
@@ -498,7 +509,8 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   const [project, dispatch] = useReducer(projectReducer, null, loadProjectFromStorage);
 
   // Autosave avec debounce
-  const saveToStorage = useCallback((projectToSave: Project) => {
+  // Utiliser useRef pour persister la fonction de save
+  const saveToStorageRef = useRef((projectToSave: Project) => {
     try {
       const serialized = JSON.stringify(projectToSave);
       localStorage.setItem(STORAGE_KEY, serialized);
@@ -509,23 +521,26 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       if (error instanceof Error) {
         if (error.name === 'QuotaExceededError') {
           console.error('localStorage quota exceeded. Consider clearing old data.');
-          // TODO: Ajouter notification utilisateur
         } else if (error.name === 'SecurityError') {
           console.error('localStorage access denied. Check browser settings.');
         }
       }
     }
-  }, []);
+  });
 
-  // Utiliser useRef pour le debounce afin de le créer une seule fois
-  const debouncedSaveRef = useRef(debounce(saveToStorage, AUTOSAVE_DELAY));
+  // Créer le debounce une seule fois
+  const debouncedSave = useRef(
+    debounce((project: Project) => {
+      saveToStorageRef.current(project);
+    }, AUTOSAVE_DELAY)
+  ).current;
 
   useEffect(() => {
-    debouncedSaveRef.current(project);
-  }, [project]);
+    debouncedSave(project);
+  }, [project, debouncedSave]);
 
-  // Fonction pour récupérer les inputs du scénario actif
-  const getCurrentInputs = (): ProjectInputs => {
+  // Fonction pour récupérer les inputs du scénario actif (mémorisée)
+  const getCurrentInputs = useCallback((): ProjectInputs => {
     const activeScenario = project.scenarios.find((s) => s.id === project.activeScenarioId);
 
     if (!activeScenario || activeScenario.isBase) {
@@ -537,12 +552,12 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       ...project.baseInputs,
       ...activeScenario.overrides,
     } as ProjectInputs;
-  };
+  }, [project.scenarios, project.activeScenarioId, project.baseInputs]);
 
-  // Fonction pour calculer les KPIs du scénario actif
-  const getCurrentKPIs = () => {
+  // Fonction pour calculer les KPIs du scénario actif (mémorisée)
+  const getCurrentKPIs = useCallback(() => {
     return calculateKPIs(getCurrentInputs());
-  };
+  }, [getCurrentInputs]);
 
   return (
     <ProjectContext.Provider value={{ project, dispatch, getCurrentInputs, getCurrentKPIs }}>
