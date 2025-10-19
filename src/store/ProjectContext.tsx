@@ -11,7 +11,7 @@ import type {
 } from '../types';
 import { ExpenseType, ExpenseCategory, PaymentFrequency } from '../types';
 import { calculateKPIs } from '../lib/calculations';
-import { generateUUID, debounce } from '../lib/utils';
+import { generateUUID, debounce, deepMerge, deepClone } from '../lib/utils';
 import { validateProject } from '../lib/validation';
 
 // ============================================================================
@@ -21,7 +21,7 @@ import { validateProject } from '../lib/validation';
 const STORAGE_KEY = 'chalet-rentable-project';
 const AUTOSAVE_DELAY = 2000; // 2 secondes
 
-function createDefaultProject(): Project {
+export function createDefaultProject(): Project {
   const now = new Date();
   const baseInputs: ProjectInputs = {
     name: 'Mon Projet',
@@ -292,6 +292,26 @@ function loadProjectFromStorage(): Project {
         s.createdAt = new Date(s.createdAt);
         s.updatedAt = new Date(s.updatedAt);
       });
+
+      // Assainissement des scénarios: garantir un seul scénario "base" avec id === 'base'
+      const hasBaseId = project.scenarios.some((s: Scenario) => s.id === 'base');
+      if (!hasBaseId && project.scenarios.length > 0) {
+        const oldFirstId = project.scenarios[0].id;
+        project.scenarios[0].id = 'base';
+        if (project.activeScenarioId === oldFirstId) {
+          project.activeScenarioId = 'base';
+        }
+      }
+      // Forcer le drapeau isBase à partir de l'id
+      project.scenarios = project.scenarios.map((s: Scenario) => ({
+        ...s,
+        isBase: s.id === 'base',
+      }));
+      // Si l'actif est inexistant, fallback sur 'base'
+      const activeExists = project.scenarios.some((s: Scenario) => s.id === project.activeScenarioId);
+      if (!activeExists) {
+        project.activeScenarioId = 'base';
+      }
       
       // Assurer que la version est à jour
       if (!project.version) {
@@ -544,14 +564,12 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     const activeScenario = project.scenarios.find((s) => s.id === project.activeScenarioId);
 
     if (!activeScenario || activeScenario.isBase) {
-      return project.baseInputs;
+      // Toujours retourner un clone profond pour éviter toute mutation accidentelle cross-scenarios
+      return deepClone(project.baseInputs);
     }
 
-    // Merger les overrides avec les inputs de base
-    return {
-      ...project.baseInputs,
-      ...activeScenario.overrides,
-    } as ProjectInputs;
+    // Merger les overrides avec les inputs de base (deep merge)
+    return deepMerge(deepClone(project.baseInputs), activeScenario.overrides || {}) as ProjectInputs;
   }, [project.scenarios, project.activeScenarioId, project.baseInputs]);
 
   // Fonction pour calculer les KPIs du scénario actif (mémorisée)

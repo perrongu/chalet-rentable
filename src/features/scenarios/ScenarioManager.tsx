@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { useProject } from '../../store/ProjectContext';
+import { useProject, createDefaultProject } from '../../store/ProjectContext';
 import type { Scenario } from '../../types';
 import { calculateKPIs } from '../../lib/calculations';
-import { formatCurrency, formatPercent, generateUUID, formatDateShort } from '../../lib/utils';
+import { formatCurrency, formatPercent, generateUUID, formatDateShort, deepMerge, deepClone } from '../../lib/utils';
 import {
   BarChart,
   Bar,
@@ -22,16 +22,20 @@ export function ScenarioManager() {
   const [showNewScenarioForm, setShowNewScenarioForm] = useState(false);
   const [newScenarioName, setNewScenarioName] = useState('');
   const [showComparison, setShowComparison] = useState(false);
+  const [editingScenarioId, setEditingScenarioId] = useState<string | null>(null);
+  const [editingScenarioName, setEditingScenarioName] = useState('');
 
   const createScenario = () => {
     if (!newScenarioName.trim()) return;
 
+    // Utiliser les valeurs d'usine d'un nouveau projet comme overrides
+    const defaults = createDefaultProject().baseInputs;
     const newScenario: Scenario = {
       id: generateUUID(),
       name: newScenarioName,
       description: '',
       isBase: false,
-      overrides: {},
+      overrides: deepClone(defaults),
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -42,10 +46,17 @@ export function ScenarioManager() {
   };
 
   const duplicateScenario = (scenario: Scenario) => {
+    // Résoudre les inputs du scénario source au moment T
+    const resolved = scenario.isBase
+      ? project.baseInputs
+      : deepMerge(project.baseInputs, scenario.overrides || {} as any);
+
     const newScenario: Scenario = {
-      ...scenario,
       id: generateUUID(),
       name: `${scenario.name} (copie)`,
+      description: scenario.description || '',
+      isBase: false,
+      overrides: deepClone(resolved), // snapshot indépendant
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -63,11 +74,35 @@ export function ScenarioManager() {
     dispatch({ type: 'SET_ACTIVE_SCENARIO', payload: id });
   };
 
+  const startRenaming = (scenario: Scenario) => {
+    setEditingScenarioId(scenario.id);
+    setEditingScenarioName(scenario.name);
+  };
+
+  const saveRename = () => {
+    if (!editingScenarioName.trim() || !editingScenarioId) return;
+
+    dispatch({
+      type: 'UPDATE_SCENARIO',
+      payload: {
+        id: editingScenarioId,
+        updates: { name: editingScenarioName.trim() },
+      },
+    });
+    setEditingScenarioId(null);
+    setEditingScenarioName('');
+  };
+
+  const cancelRename = () => {
+    setEditingScenarioId(null);
+    setEditingScenarioName('');
+  };
+
   // Données pour la comparaison
   const comparisonData = project.scenarios.map((scenario) => {
     const inputs = scenario.isBase
       ? project.baseInputs
-      : { ...project.baseInputs, ...scenario.overrides };
+      : deepMerge(project.baseInputs, scenario.overrides || {} as any);
     const kpis = calculateKPIs(inputs);
 
     return {
@@ -112,20 +147,41 @@ export function ScenarioManager() {
                   }`}
                 >
                   <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="font-medium">
-                        {scenario.name}
-                        {scenario.isBase && (
-                          <span className="ml-2 text-xs bg-gray-200 px-2 py-1 rounded">
-                            Base
-                          </span>
-                        )}
-                        {isActive && (
-                          <span className="ml-2 text-xs bg-blue-200 px-2 py-1 rounded">
-                            Actif
-                          </span>
-                        )}
-                      </h4>
+                    <div className="flex-1">
+                      {editingScenarioId === scenario.id ? (
+                        <div className="flex items-center space-x-2 mb-2">
+                          <Input
+                            value={editingScenarioName}
+                            onChange={(e) => setEditingScenarioName(e.target.value)}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') saveRename();
+                              if (e.key === 'Escape') cancelRename();
+                            }}
+                            className="max-w-xs"
+                            autoFocus
+                          />
+                          <Button size="sm" onClick={saveRename}>
+                            Valider
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={cancelRename}>
+                            Annuler
+                          </Button>
+                        </div>
+                      ) : (
+                        <h4 className="font-medium">
+                          {scenario.name}
+                          {scenario.isBase && (
+                            <span className="ml-2 text-xs bg-gray-200 px-2 py-1 rounded">
+                              Base
+                            </span>
+                          )}
+                          {isActive && (
+                            <span className="ml-2 text-xs bg-blue-200 px-2 py-1 rounded">
+                              Actif
+                            </span>
+                          )}
+                        </h4>
+                      )}
                       {scenario.description && (
                         <p className="text-sm text-gray-600 mt-1">{scenario.description}</p>
                       )}
@@ -143,6 +199,13 @@ export function ScenarioManager() {
                           Activer
                         </Button>
                       )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => startRenaming(scenario)}
+                      >
+                        Renommer
+                      </Button>
                       <Button
                         variant="outline"
                         size="sm"
