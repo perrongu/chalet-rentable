@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { ProjectProvider, useProject } from './store/ProjectContext';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './components/ui/Tabs';
 import { Button } from './components/ui/Button';
@@ -10,6 +10,7 @@ import { Optimizer } from './features/optimization/Optimizer';
 import { saveProjectFile, loadProjectFile } from './lib/exports';
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/Card';
 import { sanitizeForDisplay } from './lib/utils';
+import { ConfirmDialog } from './components/ui/ConfirmDialog';
 
 function InspectionModal({
   metric,
@@ -101,12 +102,17 @@ function InspectionModal({
 }
 
 function AppContent() {
-  const { project, getCurrentKPIs, getCurrentInputs, dispatch } = useProject();
+  const { project, getCurrentKPIs, getCurrentInputs, dispatch, hasUnsavedChanges } = useProject();
   const [inspectingMetric, setInspectingMetric] = useState<string | null>(null);
+  const [isEditingProjectName, setIsEditingProjectName] = useState(false);
+  const [projectNameInput, setProjectNameInput] = useState(project.name);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingAction, setPendingAction] = useState<'new' | 'load' | null>(null);
 
   const handleSave = async () => {
     try {
       await saveProjectFile(project);
+      dispatch({ type: 'MARK_AS_SAVED' });
       alert('Projet sauvegardé avec succès');
     } catch (error) {
       console.error('Error saving project:', error);
@@ -115,10 +121,20 @@ function AppContent() {
   };
 
   const handleLoad = async () => {
+    if (hasUnsavedChanges()) {
+      setPendingAction('load');
+      setShowConfirmDialog(true);
+      return;
+    }
+    await performLoad();
+  };
+
+  const performLoad = async () => {
     try {
       const loadedProject = await loadProjectFile();
       if (loadedProject) {
         dispatch({ type: 'LOAD_PROJECT', payload: loadedProject });
+        dispatch({ type: 'MARK_AS_SAVED' });
         alert('Projet chargé avec succès');
       }
     } catch (error) {
@@ -127,11 +143,83 @@ function AppContent() {
     }
   };
 
+  const handleNewProject = () => {
+    if (hasUnsavedChanges()) {
+      setPendingAction('new');
+      setShowConfirmDialog(true);
+      return;
+    }
+    performNewProject();
+  };
+
+  const performNewProject = () => {
+    dispatch({ type: 'RESET_PROJECT' });
+    dispatch({ type: 'MARK_AS_SAVED' });
+  };
+
+  const handleConfirmSave = async () => {
+    setShowConfirmDialog(false);
+    await handleSave();
+    if (pendingAction === 'new') {
+      performNewProject();
+    } else if (pendingAction === 'load') {
+      await performLoad();
+    }
+    setPendingAction(null);
+  };
+
+  const handleConfirmDiscard = async () => {
+    setShowConfirmDialog(false);
+    if (pendingAction === 'new') {
+      performNewProject();
+    } else if (pendingAction === 'load') {
+      await performLoad();
+    }
+    setPendingAction(null);
+  };
+
+  const handleConfirmCancel = () => {
+    setShowConfirmDialog(false);
+    setPendingAction(null);
+  };
+
+  const handleProjectNameClick = () => {
+    setIsEditingProjectName(true);
+    setProjectNameInput(project.name);
+  };
+
+  const handleProjectNameBlur = () => {
+    setIsEditingProjectName(false);
+    if (projectNameInput.trim() && projectNameInput !== project.name) {
+      dispatch({ type: 'UPDATE_PROJECT_INFO', payload: { name: projectNameInput.trim() } });
+    } else {
+      setProjectNameInput(project.name);
+    }
+  };
+
+  const handleProjectNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleProjectNameBlur();
+    } else if (e.key === 'Escape') {
+      setIsEditingProjectName(false);
+      setProjectNameInput(project.name);
+    }
+  };
+
+  // Garder le nom du projet à jour
+  useEffect(() => {
+    if (!isEditingProjectName) {
+      setProjectNameInput(project.name);
+    }
+  }, [project.name, isEditingProjectName]);
+
   // Mémoiser les KPIs pour éviter recalculs inutiles
   const inputs = getCurrentInputs();
   const kpis = useMemo(() => {
     return getCurrentKPIs();
   }, [inputs, getCurrentKPIs]);
+
+  const activeScenario = project.scenarios.find(s => s.id === project.activeScenarioId);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -143,10 +231,47 @@ function AppContent() {
               <h1 className="text-2xl font-bold text-gray-900">
                 Analyse de Rentabilité - Chalet Locatif
               </h1>
-              <p className="text-sm text-gray-600 mt-1" aria-label="Nom du projet">{project.name}</p>
+              <div className="flex items-center gap-3 mt-1">
+                {isEditingProjectName ? (
+                  <input
+                    type="text"
+                    value={projectNameInput}
+                    onChange={(e) => setProjectNameInput(e.target.value)}
+                    onBlur={handleProjectNameBlur}
+                    onKeyDown={handleProjectNameKeyDown}
+                    className="text-sm text-gray-600 border border-blue-400 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    autoFocus
+                    aria-label="Modifier le nom du projet"
+                  />
+                ) : (
+                  <p
+                    className="text-sm text-gray-600 cursor-pointer hover:text-gray-800 hover:underline"
+                    onClick={handleProjectNameClick}
+                    aria-label="Nom du projet (cliquer pour modifier)"
+                    title="Cliquer pour modifier"
+                  >
+                    {project.name}
+                  </p>
+                )}
+                {activeScenario && (
+                  <span
+                    className={`text-xs px-2 py-1 rounded-full ${
+                      activeScenario.isBase
+                        ? 'bg-gray-200 text-gray-700'
+                        : 'bg-blue-100 text-blue-700'
+                    }`}
+                    aria-label="Scénario actif"
+                  >
+                    Scénario : {activeScenario.name}
+                  </span>
+                )}
+              </div>
             </div>
             <nav aria-label="Actions principales">
               <div className="flex space-x-2">
+                <Button variant="outline" onClick={handleNewProject} aria-label="Nouveau projet">
+                  ✨ Nouveau
+                </Button>
                 <Button variant="outline" onClick={handleLoad} aria-label="Ouvrir un projet">
                   📂 Ouvrir
                 </Button>
@@ -217,6 +342,16 @@ function AppContent() {
           onClose={() => setInspectingMetric(null)}
         />
       )}
+
+      {/* Dialogue de confirmation */}
+      <ConfirmDialog
+        isOpen={showConfirmDialog}
+        title="Changements non sauvegardés"
+        message="Voulez-vous enregistrer les modifications avant de continuer ?"
+        onCancel={handleConfirmCancel}
+        onDiscard={handleConfirmDiscard}
+        onSave={handleConfirmSave}
+      />
     </div>
   );
 }

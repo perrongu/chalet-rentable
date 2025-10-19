@@ -9,11 +9,84 @@ import { ExpenseType, ExpenseCategory, PaymentFrequency } from '../../types';
 import { useMemo, useState } from 'react';
 import { generateUUID } from '../../lib/utils';
 
+// Composant pour afficher un indicateur de modification
+function OverrideIndicator({ baseValue, tooltip }: { baseValue: any; tooltip?: string }) {
+  const formatValue = (val: any): string => {
+    if (val === null || val === undefined) return 'non défini';
+    if (typeof val === 'object' && 'value' in val) return String(val.value);
+    return String(val);
+  };
+
+  return (
+    <span
+      className="inline-flex items-center ml-2 text-xs text-orange-600 font-medium"
+      title={tooltip || `Valeur du scénario de base : ${formatValue(baseValue)}`}
+    >
+      🔄
+    </span>
+  );
+}
+
 export function InputForm() {
-  const { dispatch, getCurrentInputs, getCurrentKPIs } = useProject();
+  const { project, dispatch, getCurrentInputs, getCurrentKPIs } = useProject();
   const inputs = getCurrentInputs();
   const kpis = getCurrentKPIs();
   const [showMunicipalAssessmentInfo, setShowMunicipalAssessmentInfo] = useState(false);
+  
+  // Vérifier si on est dans le scénario de base
+  const activeScenario = project.scenarios.find((s) => s.id === project.activeScenarioId);
+  const isBaseScenario = activeScenario?.isBase || false;
+
+  // Fonction pour obtenir la valeur de base
+  const getBaseValue = (path: string[]): any => {
+    let current = project.baseInputs as any;
+    for (const key of path) {
+      if (current[key] === undefined) return undefined;
+      current = current[key];
+    }
+    return current;
+  };
+
+  // Fonction pour obtenir la valeur dans les overrides
+  const getOverrideValue = (path: string[]): any => {
+    if (!activeScenario?.overrides) return undefined;
+    
+    let current = activeScenario.overrides as any;
+    for (const key of path) {
+      if (current[key] === undefined) return undefined;
+      current = current[key];
+    }
+    return current;
+  };
+
+  // Fonction pour comparer deux valeurs (incluant les objets InputWithSource)
+  const areValuesEqual = (val1: any, val2: any): boolean => {
+    if (val1 === val2) return true;
+    if (val1 == null || val2 == null) return false;
+    
+    // Si les deux sont des objets
+    if (typeof val1 === 'object' && typeof val2 === 'object') {
+      // Comparer les objets InputWithSource
+      if ('value' in val1 && 'value' in val2) {
+        return JSON.stringify(val1) === JSON.stringify(val2);
+      }
+    }
+    
+    return false;
+  };
+
+  // Fonction pour vérifier si un champ est overridé et différent de la base
+  const isFieldOverridden = (path: string[]): boolean => {
+    if (isBaseScenario) return false;
+    
+    const overrideValue = getOverrideValue(path);
+    if (overrideValue === undefined) return false;
+    
+    const baseValue = getBaseValue(path);
+    
+    // Comparer les valeurs - si elles sont égales, pas d'override effectif
+    return !areValuesEqual(overrideValue, baseValue);
+  };
 
   // Grouper les dépenses par catégorie
   const expensesByCategory = useMemo(() => {
@@ -29,39 +102,99 @@ export function InputForm() {
   }, [inputs.expenses]);
 
   const updateRevenue = (field: string, value: InputWithSource<number> | number) => {
-    dispatch({
-      type: 'UPDATE_BASE_INPUTS',
-      payload: {
-        revenue: {
-          ...inputs.revenue,
-          [field]: value,
+    if (isBaseScenario) {
+      const updatedRevenue = {
+        ...inputs.revenue,
+        [field]: value,
+      };
+      dispatch({
+        type: 'UPDATE_BASE_INPUTS',
+        payload: { revenue: updatedRevenue } as any,
+      });
+    } else {
+      // Pour les scénarios, merger avec les overrides existants, pas avec les inputs actuels
+      const currentOverrideRevenue = (activeScenario?.overrides as any)?.revenue || {};
+      const updatedRevenue = {
+        ...currentOverrideRevenue,
+        [field]: value,
+      };
+      dispatch({
+        type: 'UPDATE_SCENARIO',
+        payload: {
+          id: project.activeScenarioId,
+          updates: {
+            overrides: {
+              ...activeScenario?.overrides,
+              revenue: updatedRevenue,
+            },
+          },
         },
-      } as any,
-    });
+      });
+    }
   };
 
   const updateFinancing = (field: string, value: InputWithSource<number> | number | PaymentFrequency) => {
-    dispatch({
-      type: 'UPDATE_BASE_INPUTS',
-      payload: {
-        financing: {
-          ...inputs.financing,
-          [field]: value,
+    if (isBaseScenario) {
+      const updatedFinancing = {
+        ...inputs.financing,
+        [field]: value,
+      };
+      dispatch({
+        type: 'UPDATE_BASE_INPUTS',
+        payload: { financing: updatedFinancing } as any,
+      });
+    } else {
+      // Pour les scénarios, merger avec les overrides existants, pas avec les inputs actuels
+      const currentOverrideFinancing = (activeScenario?.overrides as any)?.financing || {};
+      const updatedFinancing = {
+        ...currentOverrideFinancing,
+        [field]: value,
+      };
+      dispatch({
+        type: 'UPDATE_SCENARIO',
+        payload: {
+          id: project.activeScenarioId,
+          updates: {
+            overrides: {
+              ...activeScenario?.overrides,
+              financing: updatedFinancing,
+            },
+          },
         },
-      } as any,
-    });
+      });
+    }
   };
 
   const updateAcquisitionFees = (field: string, value: InputWithSource<number>) => {
-    dispatch({
-      type: 'UPDATE_BASE_INPUTS',
-      payload: {
-        acquisitionFees: {
-          ...inputs.acquisitionFees,
-          [field]: value,
+    if (isBaseScenario) {
+      const updatedAcquisitionFees = {
+        ...inputs.acquisitionFees,
+        [field]: value,
+      };
+      dispatch({
+        type: 'UPDATE_BASE_INPUTS',
+        payload: { acquisitionFees: updatedAcquisitionFees },
+      });
+    } else {
+      // Pour les scénarios, merger avec les overrides existants, pas avec les inputs actuels
+      const currentOverrideAcquisitionFees = (activeScenario?.overrides as any)?.acquisitionFees || {};
+      const updatedAcquisitionFees = {
+        ...currentOverrideAcquisitionFees,
+        [field]: value,
+      };
+      dispatch({
+        type: 'UPDATE_SCENARIO',
+        payload: {
+          id: project.activeScenarioId,
+          updates: {
+            overrides: {
+              ...activeScenario?.overrides,
+              acquisitionFees: updatedAcquisitionFees,
+            },
+          },
         },
-      },
-    });
+      });
+    }
   };
 
   const addExpenseLine = (category?: ExpenseCategory) => {
@@ -72,24 +205,55 @@ export function InputForm() {
       amount: { value: 0 },
       category: category || ExpenseCategory.AUTRE,
     };
+    
+    // Pour les expenses, on utilise les inputs actuels car c'est une liste complète
+    const updatedExpenses = [...inputs.expenses, newLine];
 
-    dispatch({
-      type: 'UPDATE_BASE_INPUTS',
-      payload: {
-        expenses: [...inputs.expenses, newLine],
-      },
-    });
+    if (isBaseScenario) {
+      dispatch({
+        type: 'UPDATE_BASE_INPUTS',
+        payload: { expenses: updatedExpenses },
+      });
+    } else {
+      dispatch({
+        type: 'UPDATE_SCENARIO',
+        payload: {
+          id: project.activeScenarioId,
+          updates: {
+            overrides: {
+              ...activeScenario?.overrides,
+              expenses: updatedExpenses,
+            },
+          },
+        },
+      });
+    }
   };
 
   const updateExpenseLine = (id: string, updates: Partial<ExpenseLine>) => {
-    dispatch({
-      type: 'UPDATE_BASE_INPUTS',
-      payload: {
-        expenses: inputs.expenses.map((line) =>
-          line.id === id ? { ...line, ...updates } : line
-        ),
-      },
-    });
+    const updatedExpenses = inputs.expenses.map((line) =>
+      line.id === id ? { ...line, ...updates } : line
+    );
+    
+    if (isBaseScenario) {
+      dispatch({
+        type: 'UPDATE_BASE_INPUTS',
+        payload: { expenses: updatedExpenses },
+      });
+    } else {
+      dispatch({
+        type: 'UPDATE_SCENARIO',
+        payload: {
+          id: project.activeScenarioId,
+          updates: {
+            overrides: {
+              ...activeScenario?.overrides,
+              expenses: updatedExpenses,
+            },
+          },
+        },
+      });
+    }
   };
 
   const deleteExpenseLine = (id: string, name: string) => {
@@ -97,12 +261,27 @@ export function InputForm() {
       return;
     }
     
-    dispatch({
-      type: 'UPDATE_BASE_INPUTS',
-      payload: {
-        expenses: inputs.expenses.filter((line) => line.id !== id),
-      },
-    });
+    const updatedExpenses = inputs.expenses.filter((line) => line.id !== id);
+    
+    if (isBaseScenario) {
+      dispatch({
+        type: 'UPDATE_BASE_INPUTS',
+        payload: { expenses: updatedExpenses },
+      });
+    } else {
+      dispatch({
+        type: 'UPDATE_SCENARIO',
+        payload: {
+          id: project.activeScenarioId,
+          updates: {
+            overrides: {
+              ...activeScenario?.overrides,
+              expenses: updatedExpenses,
+            },
+          },
+        },
+      });
+    }
   };
 
   return (
@@ -114,21 +293,39 @@ export function InputForm() {
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <RangeInput
-              label="Tarif moyen par nuitée ($)"
-              value={inputs.revenue.averageDailyRate}
-              onChange={(value) => updateRevenue('averageDailyRate', value)}
-              min={0}
-              step={10}
-            />
-            <RangeInput
-              label="Taux d'occupation (%)"
-              value={inputs.revenue.occupancyRate}
-              onChange={(value) => updateRevenue('occupancyRate', value)}
-              min={0}
-              max={100}
-              step={1}
-            />
+            <div>
+              <RangeInput
+                label={
+                  <span>
+                    Tarif moyen par nuitée ($)
+                    {isFieldOverridden(['revenue', 'averageDailyRate']) && (
+                      <OverrideIndicator baseValue={getBaseValue(['revenue', 'averageDailyRate'])} />
+                    )}
+                  </span>
+                }
+                value={inputs.revenue.averageDailyRate}
+                onChange={(value) => updateRevenue('averageDailyRate', value)}
+                min={0}
+                step={10}
+              />
+            </div>
+            <div>
+              <RangeInput
+                label={
+                  <span>
+                    Taux d'occupation (%)
+                    {isFieldOverridden(['revenue', 'occupancyRate']) && (
+                      <OverrideIndicator baseValue={getBaseValue(['revenue', 'occupancyRate'])} />
+                    )}
+                  </span>
+                }
+                value={inputs.revenue.occupancyRate}
+                onChange={(value) => updateRevenue('occupancyRate', value)}
+                min={0}
+                max={100}
+                step={1}
+              />
+            </div>
           </div>
           <div className="text-sm text-gray-600 pt-1 border-t">
             Revenu annuel estimé:{' '}
@@ -262,18 +459,30 @@ export function InputForm() {
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <RangeInput
-              label="Prix d'achat ($)"
-              value={inputs.financing.purchasePrice}
-              onChange={(value) => updateFinancing('purchasePrice', value)}
-              min={0}
-              step={1000}
-            />
+            <div>
+              <RangeInput
+                label={
+                  <span>
+                    Prix d'achat ($)
+                    {isFieldOverridden(['financing', 'purchasePrice']) && (
+                      <OverrideIndicator baseValue={getBaseValue(['financing', 'purchasePrice'])} />
+                    )}
+                  </span>
+                }
+                value={inputs.financing.purchasePrice}
+                onChange={(value) => updateFinancing('purchasePrice', value)}
+                min={0}
+                step={1000}
+              />
+            </div>
             <div className="relative">
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="text-sm font-medium text-gray-700">
                     Évaluation municipale ($)
+                    {isFieldOverridden(['financing', 'municipalAssessment']) && (
+                      <OverrideIndicator baseValue={getBaseValue(['financing', 'municipalAssessment'])} />
+                    )}
                   </label>
                   <Button
                     variant="ghost"
@@ -304,52 +513,97 @@ export function InputForm() {
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <RangeInput
-              label="Mise de fonds ($)"
-              value={inputs.financing.downPayment}
-              onChange={(value) => updateFinancing('downPayment', value)}
-              min={0}
-              step={1000}
-            />
+            <div>
+              <RangeInput
+                label={
+                  <span>
+                    Mise de fonds ($)
+                    {isFieldOverridden(['financing', 'downPayment']) && (
+                      <OverrideIndicator baseValue={getBaseValue(['financing', 'downPayment'])} />
+                    )}
+                  </span>
+                }
+                value={inputs.financing.downPayment}
+                onChange={(value) => updateFinancing('downPayment', value)}
+                min={0}
+                step={1000}
+              />
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <RangeInput
-              label="Taux d'intérêt (%)"
-              value={inputs.financing.interestRate}
-              onChange={(value) => updateFinancing('interestRate', value)}
-              min={0}
-              max={20}
-              step={0.1}
-            />
-            <RangeInput
-              label="Amortissement (années)"
-              value={inputs.financing.amortizationYears}
-              onChange={(value) => updateFinancing('amortizationYears', value)}
-              min={1}
-              max={50}
-              step={1}
-            />
-            <Select
-              label="Fréquence de paiement"
-              value={inputs.financing.paymentFrequency}
-              onChange={(e) => updateFinancing('paymentFrequency', e.target.value as PaymentFrequency)}
-              options={[
-                { value: PaymentFrequency.MONTHLY, label: 'Mensuel' },
-                { value: PaymentFrequency.BI_WEEKLY, label: 'Aux 2 semaines' },
-                { value: PaymentFrequency.WEEKLY, label: 'Hebdomadaire' },
-                { value: PaymentFrequency.ANNUAL, label: 'Annuel' },
-              ]}
-            />
+            <div>
+              <RangeInput
+                label={
+                  <span>
+                    Taux d'intérêt (%)
+                    {isFieldOverridden(['financing', 'interestRate']) && (
+                      <OverrideIndicator baseValue={getBaseValue(['financing', 'interestRate'])} />
+                    )}
+                  </span>
+                }
+                value={inputs.financing.interestRate}
+                onChange={(value) => updateFinancing('interestRate', value)}
+                min={0}
+                max={20}
+                step={0.1}
+              />
+            </div>
+            <div>
+              <RangeInput
+                label={
+                  <span>
+                    Amortissement (années)
+                    {isFieldOverridden(['financing', 'amortizationYears']) && (
+                      <OverrideIndicator baseValue={getBaseValue(['financing', 'amortizationYears'])} />
+                    )}
+                  </span>
+                }
+                value={inputs.financing.amortizationYears}
+                onChange={(value) => updateFinancing('amortizationYears', value)}
+                min={1}
+                max={50}
+                step={1}
+              />
+            </div>
+            <div>
+              <Select
+                label={
+                  <span>
+                    Fréquence de paiement
+                    {isFieldOverridden(['financing', 'paymentFrequency']) && (
+                      <OverrideIndicator baseValue={getBaseValue(['financing', 'paymentFrequency'])} />
+                    )}
+                  </span>
+                }
+                value={inputs.financing.paymentFrequency}
+                onChange={(e) => updateFinancing('paymentFrequency', e.target.value as PaymentFrequency)}
+                options={[
+                  { value: PaymentFrequency.MONTHLY, label: 'Mensuel' },
+                  { value: PaymentFrequency.BI_WEEKLY, label: 'Aux 2 semaines' },
+                  { value: PaymentFrequency.WEEKLY, label: 'Hebdomadaire' },
+                  { value: PaymentFrequency.ANNUAL, label: 'Annuel' },
+                ]}
+              />
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <RangeInput
-              label="Taux d'appréciation annuel (%)"
-              value={inputs.financing.annualAppreciationRate}
-              onChange={(value) => updateFinancing('annualAppreciationRate', value)}
-              min={0}
-              max={20}
-              step={0.1}
-            />
+            <div>
+              <RangeInput
+                label={
+                  <span>
+                    Taux d'appréciation annuel (%)
+                    {isFieldOverridden(['financing', 'annualAppreciationRate']) && (
+                      <OverrideIndicator baseValue={getBaseValue(['financing', 'annualAppreciationRate'])} />
+                    )}
+                  </span>
+                }
+                value={inputs.financing.annualAppreciationRate}
+                onChange={(value) => updateFinancing('annualAppreciationRate', value)}
+                min={0}
+                max={20}
+                step={0.1}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -381,20 +635,38 @@ export function InputForm() {
                 Calculé selon le barème progressif QC
               </p>
             </div>
-            <RangeInput
-              label="Frais de notaire ($)"
-              value={inputs.acquisitionFees.notaryFees}
-              onChange={(value) => updateAcquisitionFees('notaryFees', value)}
-              min={0}
-              step={100}
-            />
-            <RangeInput
-              label="Autres frais ($)"
-              value={inputs.acquisitionFees.other}
-              onChange={(value) => updateAcquisitionFees('other', value)}
-              min={0}
-              step={100}
-            />
+            <div>
+              <RangeInput
+                label={
+                  <span>
+                    Frais de notaire ($)
+                    {isFieldOverridden(['acquisitionFees', 'notaryFees']) && (
+                      <OverrideIndicator baseValue={getBaseValue(['acquisitionFees', 'notaryFees'])} />
+                    )}
+                  </span>
+                }
+                value={inputs.acquisitionFees.notaryFees}
+                onChange={(value) => updateAcquisitionFees('notaryFees', value)}
+                min={0}
+                step={100}
+              />
+            </div>
+            <div>
+              <RangeInput
+                label={
+                  <span>
+                    Autres frais ($)
+                    {isFieldOverridden(['acquisitionFees', 'other']) && (
+                      <OverrideIndicator baseValue={getBaseValue(['acquisitionFees', 'other'])} />
+                    )}
+                  </span>
+                }
+                value={inputs.acquisitionFees.other}
+                onChange={(value) => updateAcquisitionFees('other', value)}
+                min={0}
+                step={100}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>

@@ -353,7 +353,8 @@ type ProjectAction =
   | { type: 'UPDATE_OPTIMIZATION_CONFIG'; payload: { id: string; updates: Partial<OptimizationConfig> } }
   | { type: 'DELETE_OPTIMIZATION_CONFIG'; payload: string }
   | { type: 'SET_OPTIMIZATION_RESULT'; payload: { configId: string; result: OptimizationResult } }
-  | { type: 'RESET_PROJECT' };
+  | { type: 'RESET_PROJECT' }
+  | { type: 'MARK_AS_SAVED' };
 
 // ============================================================================
 // REDUCER
@@ -503,6 +504,10 @@ function projectReducer(state: Project, action: ProjectAction): Project {
     case 'RESET_PROJECT':
       return createDefaultProject();
 
+    case 'MARK_AS_SAVED':
+      // Cette action ne modifie pas le state, elle est gérée dans le provider
+      return state;
+
     default:
       return state;
   }
@@ -517,6 +522,7 @@ interface ProjectContextType {
   dispatch: React.Dispatch<ProjectAction>;
   getCurrentInputs: () => ProjectInputs;
   getCurrentKPIs: () => ReturnType<typeof calculateKPIs>;
+  hasUnsavedChanges: () => boolean;
 }
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
@@ -527,6 +533,9 @@ const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
 export function ProjectProvider({ children }: { children: ReactNode }) {
   const [project, dispatch] = useReducer(projectReducer, null, loadProjectFromStorage);
+  
+  // Référence au dernier état sauvegardé (pour détecter les changements non sauvegardés)
+  const lastSavedStateRef = useRef<string>(JSON.stringify(project));
 
   // Autosave avec debounce
   // Utiliser useRef pour persister la fonction de save
@@ -559,6 +568,20 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     debouncedSave(project);
   }, [project, debouncedSave]);
 
+  // Wrapper du dispatch pour gérer MARK_AS_SAVED
+  const wrappedDispatch = useCallback((action: ProjectAction) => {
+    if (action.type === 'MARK_AS_SAVED') {
+      lastSavedStateRef.current = JSON.stringify(project);
+    }
+    dispatch(action);
+  }, [project]);
+
+  // Fonction pour vérifier s'il y a des changements non sauvegardés
+  const hasUnsavedChanges = useCallback((): boolean => {
+    const currentState = JSON.stringify(project);
+    return currentState !== lastSavedStateRef.current;
+  }, [project]);
+
   // Fonction pour récupérer les inputs du scénario actif (mémorisée)
   const getCurrentInputs = useCallback((): ProjectInputs => {
     const activeScenario = project.scenarios.find((s) => s.id === project.activeScenarioId);
@@ -578,7 +601,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   }, [getCurrentInputs]);
 
   return (
-    <ProjectContext.Provider value={{ project, dispatch, getCurrentInputs, getCurrentKPIs }}>
+    <ProjectContext.Provider value={{ project, dispatch: wrappedDispatch, getCurrentInputs, getCurrentKPIs, hasUnsavedChanges }}>
       {children}
     </ProjectContext.Provider>
   );

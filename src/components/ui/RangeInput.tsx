@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import type { InputWithSource, RangeValue } from '../../types';
 
 interface RangeInputProps {
-  label: string;
+  label: string | ReactNode;
   value: InputWithSource<number>;
   onChange: (value: InputWithSource<number>) => void;
   min?: number; // Validation globale
@@ -22,6 +23,9 @@ export function RangeInput({
 }: RangeInputProps) {
   const useRange = value.range?.useRange ?? false;
   const [error, setError] = useState<string>('');
+
+  // Extraire le texte du label pour les aria-label
+  const labelText = typeof label === 'string' ? label : '';
 
   // Validation de la valeur par défaut et cohérence min/max
   useEffect(() => {
@@ -133,7 +137,7 @@ export function RangeInput({
             checked={useRange}
             onChange={toggleUseRange}
             className="mr-1"
-            aria-label={`Activer plage min/max pour ${label}`}
+            aria-label={`Activer plage min/max pour ${labelText}`}
           />
           Plage min/max
         </label>
@@ -152,7 +156,7 @@ export function RangeInput({
                 max={globalMax}
                 step={step}
                 className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                aria-label={`Valeur minimale pour ${label}`}
+                aria-label={`Valeur minimale pour ${labelText}`}
               />
             </div>
             <div>
@@ -165,7 +169,7 @@ export function RangeInput({
                 max={value.range.max}
                 step={step}
                 className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                aria-label={`Valeur par défaut pour ${label}`}
+                aria-label={`Valeur par défaut pour ${labelText}`}
               />
             </div>
             <div>
@@ -178,7 +182,7 @@ export function RangeInput({
                 max={globalMax}
                 step={step}
                 className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                aria-label={`Valeur maximale pour ${label}`}
+                aria-label={`Valeur maximale pour ${labelText}`}
               />
             </div>
           </div>
@@ -193,7 +197,7 @@ export function RangeInput({
           max={globalMax}
           step={step}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          aria-label={label}
+          aria-label={labelText}
         />
       )}
     </div>

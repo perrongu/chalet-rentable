@@ -62,6 +62,38 @@ export function deepClone<T>(obj: T): T {
 }
 
 // ============================================================================
+// DEEP MERGE
+// ============================================================================
+
+export function deepMerge<T extends Record<string, any>>(target: T, source: Partial<T>): T {
+  const result = { ...target };
+  
+  for (const key in source) {
+    if (source.hasOwnProperty(key)) {
+      const sourceValue = source[key];
+      const targetValue = result[key];
+      
+      // Si les deux valeurs sont des objets (et pas des arrays ou null), merger récursivement
+      if (
+        sourceValue &&
+        typeof sourceValue === 'object' &&
+        !Array.isArray(sourceValue) &&
+        targetValue &&
+        typeof targetValue === 'object' &&
+        !Array.isArray(targetValue)
+      ) {
+        result[key] = deepMerge(targetValue, sourceValue);
+      } else {
+        // Sinon, remplacer la valeur
+        result[key] = sourceValue as any;
+      }
+    }
+  }
+  
+  return result;
+}
+
+// ============================================================================
 // DEBOUNCE
 // ============================================================================
 

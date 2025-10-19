@@ -1,8 +1,9 @@
 import React from 'react';
+import type { ReactNode } from 'react';
 import { cn } from '../../lib/utils';
 
 interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
-  label?: string;
+  label?: string | ReactNode;
   options: Array<{ value: string | number; label: string }>;
 }
 
