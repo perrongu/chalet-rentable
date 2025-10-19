@@ -462,6 +462,8 @@ export function SensitivityAnalysis() {
                       objective={objective2D}
                       labelX={availableParameters.find((p) => p.path === paramX)?.label || paramX}
                       labelY={availableParameters.find((p) => p.path === paramY)?.label || paramY}
+                      paramPathX={paramX}
+                      paramPathY={paramY}
                     />
                   </div>
                 )}
