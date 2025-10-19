@@ -373,6 +373,27 @@ export function calculateInitialInvestment(
 // MÉTRIQUES DE RENTABILITÉ
 // ============================================================================
 
+export function calculateNOI(
+  annualRevenue: number,
+  totalExpenses: number,
+  sources?: SourceInfo[]
+): { value: number; trace: CalculationTrace } {
+  const noi = round(annualRevenue - totalExpenses);
+
+  return {
+    value: noi,
+    trace: {
+      formula: 'NOI (Net Operating Income) = Revenus annuels bruts - Dépenses opérationnelles',
+      variables: {
+        'Revenus annuels bruts ($)': annualRevenue,
+        'Dépenses opérationnelles ($)': totalExpenses,
+      },
+      result: noi,
+      sources,
+    },
+  };
+}
+
 export function calculateAnnualCashflow(
   annualRevenue: number,
   totalExpenses: number,
@@ -636,6 +657,7 @@ export function calculateKPIs(inputs: ProjectInputs): KPIResults {
   const nightsSold = calculateNightsSold(occupancy, daysPerYear);
   const annualRevenue = calculateAnnualRevenue(adr, nightsSold.value, revenueSources);
   const expenses = calculateExpenses(inputs.expenses, annualRevenue.value);
+  const noi = calculateNOI(annualRevenue.value, expenses.total);
   const loanAmount = calculateLoanAmount(purchasePrice, downPayment, financingSources);
   const periodicPayment = calculatePeriodicPayment(
     loanAmount.value,
@@ -684,11 +706,11 @@ export function calculateKPIs(inputs: ProjectInputs): KPIResults {
   );
   
   // Calculs des ROI
+  const totalAnnualProfit = annualCashflow.value + principalPaidFirstYear.value + propertyAppreciation.value;
   const cashflowROI = calculateROI(annualCashflow.value, initialInvestment.value, 'Cashflow');
   const capitalizationROI = calculateROI(principalPaidFirstYear.value, initialInvestment.value, 'Capitalisation');
   const appreciationROI = calculateROI(propertyAppreciation.value, initialInvestment.value, 'Plus-value');
-  const totalProfit = annualCashflow.value + principalPaidFirstYear.value + propertyAppreciation.value;
-  const totalROI = calculateROI(totalProfit, initialInvestment.value, 'Total');
+  const totalROI = calculateROI(totalAnnualProfit, initialInvestment.value, 'Total');
   
   const cashOnCash = calculateCashOnCash(annualCashflow.value, initialInvestment.value);
   const capRate = calculateCapRate(annualRevenue.value, expenses.total, purchasePrice);
@@ -699,6 +721,7 @@ export function calculateKPIs(inputs: ProjectInputs): KPIResults {
     annualRevenue: annualRevenue.value,
     totalExpenses: expenses.total,
     expensesByCategory: expenses.byCategory,
+    noi: noi.value,
     loanAmount: loanAmount.value,
     periodicPayment: periodicPayment.value,
     annualDebtService: annualDebtService.value,
@@ -708,6 +731,7 @@ export function calculateKPIs(inputs: ProjectInputs): KPIResults {
     annualCashflow: annualCashflow.value,
     principalPaidFirstYear: principalPaidFirstYear.value,
     propertyAppreciation: propertyAppreciation.value,
+    totalAnnualProfit: totalAnnualProfit,
     cashflowROI: cashflowROI.value,
     capitalizationROI: capitalizationROI.value,
     appreciationROI: appreciationROI.value,
@@ -725,6 +749,7 @@ export function calculateKPIs(inputs: ProjectInputs): KPIResults {
         result: expenses.total,
         sources: expenses.sources.length > 0 ? expenses.sources : undefined,
       },
+      noi: noi.trace,
       loanAmount: loanAmount.trace,
       periodicPayment: periodicPayment.trace,
       annualDebtService: annualDebtService.trace,
@@ -734,6 +759,15 @@ export function calculateKPIs(inputs: ProjectInputs): KPIResults {
       annualCashflow: annualCashflow.trace,
       principalPaidFirstYear: principalPaidFirstYear.trace,
       propertyAppreciation: propertyAppreciation.trace,
+      totalAnnualProfit: {
+        formula: 'Profit total annuel = Cashflow + Capitalisation + Plus-value',
+        variables: {
+          'Cashflow annuel ($)': annualCashflow.value,
+          'Capitalisation ($)': principalPaidFirstYear.value,
+          'Plus-value ($)': propertyAppreciation.value,
+        },
+        result: totalAnnualProfit,
+      },
       cashflowROI: cashflowROI.trace,
       capitalizationROI: capitalizationROI.trace,
       appreciationROI: appreciationROI.trace,

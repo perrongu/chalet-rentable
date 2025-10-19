@@ -70,10 +70,13 @@ function MetricCard({ title, value, color = 'blue', onInspect }: MetricCardProps
 export function KPIDashboard({ kpis, onInspect }: KPIDashboardProps) {
   const cocColor = kpis.cashOnCash >= 8 ? 'green' : kpis.cashOnCash >= 5 ? 'orange' : 'red';
   const capRateColor = kpis.capRate >= 6 ? 'green' : kpis.capRate >= 4 ? 'orange' : 'red';
+  const noiColor = kpis.noi >= 0 ? 'green' : 'red';
+  const cashflowColor = kpis.annualCashflow >= 0 ? 'green' : 'red';
+  const profitColor = kpis.totalAnnualProfit >= 0 ? 'green' : 'red';
 
   return (
     <div className="space-y-6">
-      {/* Section Revenus */}
+      {/* 1. REVENUS BRUTS */}
       <div>
         <h3 className="text-lg font-semibold mb-3">Revenus bruts</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -92,9 +95,9 @@ export function KPIDashboard({ kpis, onInspect }: KPIDashboardProps) {
         </div>
       </div>
 
-      {/* Section Dépenses */}
+      {/* 2. MOINS : DÉPENSES OPÉRATIONNELLES */}
       <div>
-        <h3 className="text-lg font-semibold mb-3">Dépenses</h3>
+        <h3 className="text-lg font-semibold mb-3">− Dépenses opérationnelles</h3>
         <div className="grid grid-cols-1 gap-4">
           <MetricCard
             title="Dépenses totales"
@@ -120,9 +123,22 @@ export function KPIDashboard({ kpis, onInspect }: KPIDashboardProps) {
         )}
       </div>
 
-      {/* Section Financement */}
+      {/* 3. ÉGALE : NOI */}
+      <div className="border-t-2 border-gray-200 pt-6">
+        <h3 className="text-lg font-semibold mb-3">= NOI (Net Operating Income)</h3>
+        <div className="grid grid-cols-1 gap-4">
+          <MetricCard
+            title="Revenu net d'exploitation"
+            value={formatCurrency(kpis.noi)}
+            color={noiColor}
+            onInspect={() => onInspect?.('noi')}
+          />
+        </div>
+      </div>
+
+      {/* 4. MOINS : SERVICE DE LA DETTE */}
       <div>
-        <h3 className="text-lg font-semibold mb-3">Financement</h3>
+        <h3 className="text-lg font-semibold mb-3">− Service de la dette</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <MetricCard
             title="Montant du prêt"
@@ -137,7 +153,7 @@ export function KPIDashboard({ kpis, onInspect }: KPIDashboardProps) {
             onInspect={() => onInspect?.('periodicPayment')}
           />
           <MetricCard
-            title="Service de la dette annuel"
+            title="Service annuel de la dette"
             value={formatCurrency(kpis.annualDebtService)}
             color="purple"
             onInspect={() => onInspect?.('annualDebtService')}
@@ -145,37 +161,65 @@ export function KPIDashboard({ kpis, onInspect }: KPIDashboardProps) {
         </div>
       </div>
 
-      {/* Section Investissement */}
-      <div>
-        <h3 className="text-lg font-semibold mb-3">Investissement</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* 5. ÉGALE : CASHFLOW ANNUEL */}
+      <div className="border-t-2 border-gray-200 pt-6">
+        <h3 className="text-lg font-semibold mb-3">= Cashflow annuel</h3>
+        <div className="grid grid-cols-1 gap-4">
           <MetricCard
-            title="Frais d'acquisition"
-            value={formatCurrency(kpis.totalAcquisitionFees)}
-            color="orange"
-            onInspect={() => onInspect?.('totalAcquisitionFees')}
-          />
-          <MetricCard
-            title="Investissement initial"
-            value={formatCurrency(kpis.initialInvestment)}
-            color="orange"
-            onInspect={() => onInspect?.('initialInvestment')}
+            title="Liquidités disponibles"
+            value={formatCurrency(kpis.annualCashflow)}
+            color={cashflowColor}
+            onInspect={() => onInspect?.('annualCashflow')}
           />
         </div>
       </div>
 
-      {/* Section Rentabilité */}
+      {/* 6. PLUS : AUTRES SOURCES DE PROFIT */}
       <div>
-        <h3 className="text-lg font-semibold mb-3">Rentabilité</h3>
+        <h3 className="text-lg font-semibold mb-3">+ Gains non-liquides</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <MetricCard
+            title="Capitalisation"
+            value={formatCurrency(kpis.principalPaidFirstYear)}
+            color="green"
+            onInspect={() => onInspect?.('principalPaidFirstYear')}
+          />
+          <MetricCard
+            title="Plus-value"
+            value={formatCurrency(kpis.propertyAppreciation)}
+            color="green"
+            onInspect={() => onInspect?.('propertyAppreciation')}
+          />
+        </div>
+      </div>
+
+      {/* 7. ÉGALE : PROFIT TOTAL ANNUEL */}
+      <div className="border-t-2 border-gray-200 pt-6">
+        <h3 className="text-lg font-semibold mb-3">= Profit total annuel</h3>
+        <div className="grid grid-cols-1 gap-4">
+          <MetricCard
+            title="Enrichissement total"
+            value={formatCurrency(kpis.totalAnnualProfit)}
+            color={profitColor}
+            onInspect={() => onInspect?.('totalAnnualProfit')}
+          />
+        </div>
+      </div>
+
+      {/* 8. ANALYSE DE RENTABILITÉ */}
+      <div className="border-t-2 border-gray-200 pt-6">
+        <h3 className="text-lg font-semibold mb-3">Analyse de rentabilité</h3>
+        
+        {/* Tableau ROI simplifié */}
         <Card className="border-2 border-gray-200">
           <CardContent className="pt-6">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b-2 border-gray-300">
-                    <th className="text-left py-2 px-3 font-semibold text-gray-700">Rendement</th>
-                    <th className="text-right py-2 px-3 font-semibold text-gray-700">Profit $</th>
-                    <th className="text-right py-2 px-3 font-semibold text-gray-700">ROI %</th>
+                    <th className="text-left py-2 px-3 font-semibold text-gray-700">Composante</th>
+                    <th className="text-right py-2 px-3 font-semibold text-gray-700">Montant</th>
+                    <th className="text-right py-2 px-3 font-semibold text-gray-700">ROI</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -216,9 +260,16 @@ export function KPIDashboard({ kpis, onInspect }: KPIDashboardProps) {
                     <td className="text-right py-3 px-3 font-medium">{formatPercent(kpis.appreciationROI)}</td>
                   </tr>
                   <tr className="bg-yellow-100 border-t-2 border-gray-300">
-                    <td className="py-3 px-3 font-bold">Total</td>
+                    <td className="py-3 px-3 font-bold">
+                      <button
+                        onClick={() => onInspect?.('totalAnnualProfit')}
+                        className="text-left hover:underline focus:outline-none focus:underline font-bold"
+                      >
+                        Total
+                      </button>
+                    </td>
                     <td className="text-right py-3 px-3 font-bold">
-                      {formatCurrency(kpis.annualCashflow + kpis.principalPaidFirstYear + kpis.propertyAppreciation)}
+                      {formatCurrency(kpis.totalAnnualProfit)}
                     </td>
                     <td className="text-right py-3 px-3 font-bold">{formatPercent(kpis.totalROI)}</td>
                   </tr>
@@ -228,7 +279,7 @@ export function KPIDashboard({ kpis, onInspect }: KPIDashboardProps) {
           </CardContent>
         </Card>
         
-        {/* Métriques supplémentaires */}
+        {/* Métriques clés */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <MetricCard
             title="Cash-on-Cash"
@@ -244,7 +295,27 @@ export function KPIDashboard({ kpis, onInspect }: KPIDashboardProps) {
           />
         </div>
       </div>
+
+      {/* 9. INVESTISSEMENT REQUIS */}
+      <div className="border-t-2 border-gray-200 pt-6">
+        <h3 className="text-lg font-semibold mb-3">Investissement requis</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <MetricCard
+            title="Frais d'acquisition"
+            value={formatCurrency(kpis.totalAcquisitionFees)}
+            color="orange"
+            onInspect={() => onInspect?.('totalAcquisitionFees')}
+          />
+          <MetricCard
+            title="Investissement initial total"
+            value={formatCurrency(kpis.initialInvestment)}
+            color="orange"
+            onInspect={() => onInspect?.('initialInvestment')}
+          />
+        </div>
+      </div>
     </div>
   );
 }
+
 

@@ -130,6 +130,9 @@ export interface KPIResults {
   totalExpenses: number;
   expensesByCategory: Record<string, number>;
 
+  // NOI (Net Operating Income)
+  noi: number; // Revenus - Dépenses opérationnelles
+
   // Financement
   loanAmount: number;
   periodicPayment: number;
@@ -148,6 +151,7 @@ export interface KPIResults {
   // Rendement détaillé
   principalPaidFirstYear: number; // Capital remboursé la première année (capitalisation)
   propertyAppreciation: number; // Plus-value annuelle de la propriété
+  totalAnnualProfit: number; // Profit total = Cashflow + Capitalisation + Plus-value
   cashflowROI: number; // ROI du cashflow en %
   capitalizationROI: number; // ROI de la capitalisation en %
   appreciationROI: number; // ROI de la plus-value en %
