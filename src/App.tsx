@@ -6,7 +6,6 @@ import { KPIDashboard } from './components/KPIDashboard';
 import { InputForm } from './features/inputs/InputForm';
 import { ScenarioManager } from './features/scenarios/ScenarioManager';
 import { SensitivityAnalysis } from './features/sensitivity/SensitivityAnalysis';
-import { Optimizer } from './features/optimization/Optimizer';
 import { saveProjectFile, loadProjectFile } from './lib/exports';
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/Card';
 import { sanitizeForDisplay } from './lib/utils';
@@ -294,7 +293,6 @@ function AppContent() {
                 <TabsTrigger value="inputs">Paramètres</TabsTrigger>
                 <TabsTrigger value="scenarios">Scénarios</TabsTrigger>
                 <TabsTrigger value="sensitivity">Sensibilité</TabsTrigger>
-                <TabsTrigger value="optimization">Optimisation</TabsTrigger>
               </TabsList>
 
               <div className="sr-only" role="status" aria-live="polite">
@@ -311,10 +309,6 @@ function AppContent() {
 
               <TabsContent value="sensitivity">
                 <SensitivityAnalysis />
-              </TabsContent>
-
-              <TabsContent value="optimization">
-                <Optimizer />
               </TabsContent>
             </Tabs>
           </div>

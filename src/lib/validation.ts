@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ExpenseType, ExpenseCategory, PaymentFrequency, OptimizationObjective, ConstraintOperator } from '../types';
+import { ExpenseType, ExpenseCategory, PaymentFrequency } from '../types';
 
 // ============================================================================
 // SCHÉMAS DE BASE
@@ -135,46 +135,6 @@ const SensitivityAnalysis2DSchema = z.object({
 });
 
 // ============================================================================
-// SCHÉMAS D'OPTIMISATION
-// ============================================================================
-
-const OptimizationVariableSchema = z.object({
-  parameter: z.string(),
-  label: z.string(),
-  min: z.number(),
-  max: z.number(),
-  step: z.number().optional(),
-  locked: z.boolean().optional(),
-});
-
-const OptimizationConstraintSchema = z.object({
-  id: z.string(),
-  metric: kpiKeys,
-  operator: z.nativeEnum(ConstraintOperator),
-  value: z.number(),
-  label: z.string().optional(),
-});
-
-const OptimizationConfigSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  objective: z.nativeEnum(OptimizationObjective),
-  targetMetric: kpiKeys,
-  variables: z.array(OptimizationVariableSchema),
-  constraints: z.array(OptimizationConstraintSchema),
-  maxIterations: z.number().optional(),
-  topK: z.number().optional(),
-});
-
-const OptimizationResultSchema = z.object({
-  configId: z.string(),
-  solutions: z.array(z.any()), // OptimizationSolution - complexe
-  iterations: z.number(),
-  duration: z.number(),
-  completedAt: z.coerce.date(),
-});
-
-// ============================================================================
 // SCHÉMA PRINCIPAL DU PROJET
 // ============================================================================
 
@@ -187,10 +147,6 @@ export const ProjectSchema = z.object({
   activeScenarioId: z.string(),
   sensitivityAnalyses1D: z.array(SensitivityAnalysis1DSchema),
   sensitivityAnalyses2D: z.array(SensitivityAnalysis2DSchema),
-  optimizations: z.object({
-    configs: z.array(OptimizationConfigSchema),
-    results: z.record(z.string(), OptimizationResultSchema),
-  }),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
   version: z.string(),

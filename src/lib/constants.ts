@@ -90,14 +90,14 @@ export const AVAILABLE_PARAMETERS = [
 // ============================================================================
 
 export const LIMITS = {
-  MAX_OPTIMIZATION_ITERATIONS: 50000,
-  DEFAULT_OPTIMIZATION_ITERATIONS: 10000,
   MAX_SENSITIVITY_STEPS: 50,
   DEFAULT_SENSITIVITY_STEPS_1D: 10,
   DEFAULT_SENSITIVITY_STEPS_2D: 15,
   MAX_SENSITIVITY_2D_CELLS: 2500, // 50x50
   AUTOSAVE_DELAY_MS: 2000,
-  DEFAULT_TOP_K_SOLUTIONS: 10,
+  DEFAULT_MONTE_CARLO_ITERATIONS: 5000,
+  MIN_MONTE_CARLO_ITERATIONS: 100,
+  MAX_MONTE_CARLO_ITERATIONS: 50000,
 } as const;
 
 // ============================================================================
@@ -133,9 +133,10 @@ export const FILE_TYPES = {
 // ============================================================================
 
 export const ERROR_MESSAGES = {
-  OPTIMIZATION_FAILED: 'Erreur lors de l\'optimisation. Vérifiez les paramètres et réessayez.',
   SENSITIVITY_1D_FAILED: 'Erreur lors de l\'analyse de sensibilité. Vérifiez les paramètres.',
   SENSITIVITY_2D_FAILED: 'Erreur lors de l\'analyse de sensibilité 2D. Vérifiez les paramètres.',
+  MONTE_CARLO_FAILED: 'Erreur lors de la simulation Monte Carlo. Vérifiez les paramètres.',
+  MONTE_CARLO_NO_RANGES: 'Aucun paramètre avec plage définie (useRange=true). Activez des plages dans les paramètres.',
   SAVE_FAILED: 'Erreur lors de la sauvegarde du projet',
   LOAD_FAILED: 'Erreur lors du chargement du projet',
   STORAGE_QUOTA_EXCEEDED: 'Espace de stockage local dépassé. Veuillez libérer de l\'espace.',

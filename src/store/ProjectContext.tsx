@@ -6,8 +6,6 @@ import type {
   ProjectInputs,
   SensitivityAnalysis1D,
   SensitivityAnalysis2D,
-  OptimizationConfig,
-  OptimizationResult,
 } from '../types';
 import { ExpenseType, ExpenseCategory, PaymentFrequency } from '../types';
 import { calculateKPIs } from '../lib/calculations';
@@ -146,10 +144,6 @@ export function createDefaultProject(): Project {
     activeScenarioId: 'base',
     sensitivityAnalyses1D: [],
     sensitivityAnalyses2D: [],
-    optimizations: {
-      configs: [],
-      results: {},
-    },
     createdAt: now,
     updatedAt: now,
     version: '1.0.0',
@@ -349,10 +343,6 @@ type ProjectAction =
   | { type: 'DELETE_SENSITIVITY_1D'; payload: string }
   | { type: 'ADD_SENSITIVITY_2D'; payload: SensitivityAnalysis2D }
   | { type: 'DELETE_SENSITIVITY_2D'; payload: string }
-  | { type: 'ADD_OPTIMIZATION_CONFIG'; payload: OptimizationConfig }
-  | { type: 'UPDATE_OPTIMIZATION_CONFIG'; payload: { id: string; updates: Partial<OptimizationConfig> } }
-  | { type: 'DELETE_OPTIMIZATION_CONFIG'; payload: string }
-  | { type: 'SET_OPTIMIZATION_RESULT'; payload: { configId: string; result: OptimizationResult } }
   | { type: 'RESET_PROJECT' }
   | { type: 'MARK_AS_SAVED' };
 
@@ -452,52 +442,6 @@ function projectReducer(state: Project, action: ProjectAction): Project {
       return {
         ...state,
         sensitivityAnalyses2D: state.sensitivityAnalyses2D.filter((a) => a.id !== action.payload),
-        updatedAt: now,
-      };
-
-    case 'ADD_OPTIMIZATION_CONFIG':
-      return {
-        ...state,
-        optimizations: {
-          ...state.optimizations,
-          configs: [...state.optimizations.configs, action.payload],
-        },
-        updatedAt: now,
-      };
-
-    case 'UPDATE_OPTIMIZATION_CONFIG':
-      return {
-        ...state,
-        optimizations: {
-          ...state.optimizations,
-          configs: state.optimizations.configs.map((c) =>
-            c.id === action.payload.id ? { ...c, ...action.payload.updates } : c
-          ),
-        },
-        updatedAt: now,
-      };
-
-    case 'DELETE_OPTIMIZATION_CONFIG':
-      const { [action.payload]: _, ...remainingResults } = state.optimizations.results;
-      return {
-        ...state,
-        optimizations: {
-          configs: state.optimizations.configs.filter((c) => c.id !== action.payload),
-          results: remainingResults,
-        },
-        updatedAt: now,
-      };
-
-    case 'SET_OPTIMIZATION_RESULT':
-      return {
-        ...state,
-        optimizations: {
-          ...state.optimizations,
-          results: {
-            ...state.optimizations.results,
-            [action.payload.configId]: action.payload.result,
-          },
-        },
         updatedAt: now,
       };
 

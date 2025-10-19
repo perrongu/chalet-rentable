@@ -8,9 +8,11 @@ import { Spinner } from '../../components/ui/Spinner';
 import { useProject } from '../../store/ProjectContext';
 import type { KPIResults, ParameterRange, ProjectInputs, SensitivityAnalysis1D, SensitivityAnalysis2D } from '../../types';
 import { runSensitivityAnalysis1D, runSensitivityAnalysis2D } from '../../lib/sensitivity';
+import { runMonteCarloAnalysis, type MonteCarloResult } from '../../lib/montecarlo';
 import { TornadoChart } from './TornadoChart';
 import { HeatmapChart } from './HeatmapChart';
-import { PARAMETER_LABELS, KPI_OPTIONS, ERROR_MESSAGES } from '../../lib/constants';
+import { MonteCarloChart } from './MonteCarloChart';
+import { PARAMETER_LABELS, KPI_OPTIONS, ERROR_MESSAGES, LIMITS } from '../../lib/constants';
 
 // Fonction pour récupérer les paramètres disponibles avec plages
 function getAvailableParameters(inputs: ProjectInputs): Array<{ path: string; label: string; min: number; max: number; default: number }> {
@@ -153,6 +155,12 @@ export function SensitivityAnalysis() {
   const [results2D, setResults2D] = useState<SensitivityAnalysis2D['results'] | null>(null);
   const [isRunning2D, setIsRunning2D] = useState(false);
 
+  // État pour analyse Monte Carlo
+  const [objectiveMC, setObjectiveMC] = useState<keyof KPIResults>('annualCashflow');
+  const [iterations, setIterations] = useState<number>(LIMITS.DEFAULT_MONTE_CARLO_ITERATIONS);
+  const [resultsMC, setResultsMC] = useState<MonteCarloResult | null>(null);
+  const [isRunningMC, setIsRunningMC] = useState(false);
+
   const toggleParameter = (path: string) => {
     if (selectedParams.includes(path)) {
       setSelectedParams(selectedParams.filter((p) => p !== path));
@@ -257,6 +265,38 @@ export function SensitivityAnalysis() {
     }
   };
 
+  const runAnalysisMC = async () => {
+    setIsRunningMC(true);
+    setResultsMC(null);
+    
+    try {
+      // Vérifier qu'il y a au moins un paramètre avec useRange=true
+      if (availableParameters.length === 0) {
+        alert(ERROR_MESSAGES.MONTE_CARLO_NO_RANGES);
+        setIsRunningMC(false);
+        return;
+      }
+      
+      // Petite pause pour permettre l'affichage du spinner
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
+      const result = runMonteCarloAnalysis(inputs, {
+        objective: objectiveMC,
+        iterations: Math.max(
+          LIMITS.MIN_MONTE_CARLO_ITERATIONS,
+          Math.min(iterations, LIMITS.MAX_MONTE_CARLO_ITERATIONS)
+        ),
+      });
+      
+      setResultsMC(result);
+    } catch (error) {
+      console.error('Erreur lors de la simulation Monte Carlo:', error);
+      alert(ERROR_MESSAGES.MONTE_CARLO_FAILED);
+    } finally {
+      setIsRunningMC(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -268,6 +308,7 @@ export function SensitivityAnalysis() {
             <TabsList>
               <TabsTrigger value="1d">Analyse 1D (Tornado)</TabsTrigger>
               <TabsTrigger value="2d">Analyse 2D (Heatmap)</TabsTrigger>
+              <TabsTrigger value="montecarlo">Monte Carlo</TabsTrigger>
             </TabsList>
 
             {/* Analyse 1D */}
@@ -466,6 +507,71 @@ export function SensitivityAnalysis() {
                       paramPathY={paramY}
                     />
                   </div>
+                )}
+              </div>
+            </TabsContent>
+
+            {/* Analyse Monte Carlo */}
+            <TabsContent value="montecarlo">
+              <div className="space-y-4">
+                {availableParameters.length === 0 ? (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm text-yellow-800">
+                    Aucun paramètre avec plage définie (useRange=true). Pour utiliser la simulation Monte Carlo, 
+                    activez les plages pour au moins un paramètre dans l'onglet "Paramètres".
+                  </div>
+                ) : (
+                  <>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
+                      <strong>Simulation Monte Carlo:</strong> Analyse stochastique qui échantillonne aléatoirement 
+                      tous les paramètres avec plages selon une distribution normale, puis calcule des milliers 
+                      de scénarios possibles pour estimer la distribution probabiliste du résultat.
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Select
+                        label="Objectif à analyser"
+                        value={objectiveMC}
+                        onChange={(e) => setObjectiveMC(e.target.value as keyof KPIResults)}
+                        options={KPI_OPTIONS}
+                      />
+                      
+                      <Input
+                        type="number"
+                        label={`Nombre d'itérations (${LIMITS.MIN_MONTE_CARLO_ITERATIONS}-${LIMITS.MAX_MONTE_CARLO_ITERATIONS})`}
+                        value={iterations}
+                        onChange={(e) => setIterations(Number(e.target.value))}
+                        min={LIMITS.MIN_MONTE_CARLO_ITERATIONS}
+                        max={LIMITS.MAX_MONTE_CARLO_ITERATIONS}
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <Button 
+                        onClick={runAnalysisMC}
+                        disabled={isRunningMC}
+                        className="flex items-center justify-center space-x-2"
+                      >
+                        {isRunningMC && <Spinner size="sm" />}
+                        <span>{isRunningMC ? 'Simulation en cours...' : 'Lancer la simulation'}</span>
+                      </Button>
+                      
+                      {resultsMC && (
+                        <Button 
+                          onClick={() => setResultsMC(null)} 
+                          disabled={isRunningMC}
+                          className="flex items-center justify-center space-x-2 bg-gray-500 hover:bg-gray-600"
+                        >
+                          <span>Effacer les résultats</span>
+                        </Button>
+                      )}
+                    </div>
+
+                    {resultsMC && (
+                      <div className="mt-6">
+                        <MonteCarloChart results={resultsMC} objective={objectiveMC} />
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </TabsContent>

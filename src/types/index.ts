@@ -216,69 +216,6 @@ export interface SensitivityAnalysis2D {
 }
 
 // ============================================================================
-// OPTIMISATION
-// ============================================================================
-
-export const OptimizationObjective = {
-  MAXIMIZE: 'MAXIMIZE',
-  MINIMIZE: 'MINIMIZE',
-} as const;
-
-export type OptimizationObjective = typeof OptimizationObjective[keyof typeof OptimizationObjective];
-
-export interface OptimizationVariable {
-  parameter: string;
-  label: string;
-  min: number;
-  max: number;
-  step?: number; // Pas pour la recherche (optionnel)
-  locked?: boolean; // Si true, la variable est fixée à sa valeur actuelle
-}
-
-export const ConstraintOperator = {
-  GREATER_THAN: '>=',
-  LESS_THAN: '<=',
-  EQUAL: '==',
-} as const;
-
-export type ConstraintOperator = typeof ConstraintOperator[keyof typeof ConstraintOperator];
-
-export interface OptimizationConstraint {
-  id: string;
-  metric: keyof KPIResults;
-  operator: ConstraintOperator;
-  value: number;
-  label?: string;
-}
-
-export interface OptimizationConfig {
-  id: string;
-  name: string;
-  objective: OptimizationObjective;
-  targetMetric: keyof KPIResults;
-  variables: OptimizationVariable[];
-  constraints: OptimizationConstraint[];
-  maxIterations?: number; // Pour grid search
-  topK?: number; // Nombre de meilleures solutions à retourner (défaut: 10)
-}
-
-export interface OptimizationSolution {
-  rank: number;
-  values: Record<string, number>; // Valeurs des variables
-  kpis: KPIResults;
-  objectiveValue: number;
-  feasible: boolean; // Respecte toutes les contraintes
-}
-
-export interface OptimizationResult {
-  configId: string;
-  solutions: OptimizationSolution[];
-  iterations: number;
-  duration: number; // Durée en ms
-  completedAt: Date;
-}
-
-// ============================================================================
 // PROJET COMPLET
 // ============================================================================
 
@@ -291,10 +228,6 @@ export interface Project {
   activeScenarioId: string;
   sensitivityAnalyses1D: SensitivityAnalysis1D[];
   sensitivityAnalyses2D: SensitivityAnalysis2D[];
-  optimizations: {
-    configs: OptimizationConfig[];
-    results: Record<string, OptimizationResult>; // Key: configId
-  };
   createdAt: Date;
   updatedAt: Date;
   version: string; // Version du format de données

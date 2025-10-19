@@ -28,15 +28,6 @@ export function importProjectFromJSON(jsonString: string): Project {
     throw new Error('Le fichier de projet est invalide ou corrompu');
   }
   
-  // Convertir les dates des résultats d'optimisation
-  if (sanitized.optimizations?.results) {
-    Object.values(sanitized.optimizations.results).forEach((result: any) => {
-      if (result.completedAt) {
-        result.completedAt = new Date(result.completedAt);
-      }
-    });
-  }
-  
   return sanitized;
 }
 
