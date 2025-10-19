@@ -333,14 +333,26 @@ export function SensitivityAnalysis() {
                   </div>
                 </div>
 
-                <Button 
-                  onClick={runAnalysis1D} 
-                  disabled={selectedParams.length === 0 || isRunning1D}
-                  className="flex items-center justify-center space-x-2"
-                >
-                  {isRunning1D && <Spinner size="sm" />}
-                  <span>{isRunning1D ? 'Analyse en cours...' : 'Lancer l\'analyse'}</span>
-                </Button>
+                <div className="flex items-center gap-3">
+                  <Button 
+                    onClick={runAnalysis1D} 
+                    disabled={selectedParams.length === 0 || isRunning1D}
+                    className="flex items-center justify-center space-x-2"
+                  >
+                    {isRunning1D && <Spinner size="sm" />}
+                    <span>{isRunning1D ? 'Analyse en cours...' : 'Lancer l\'analyse'}</span>
+                  </Button>
+                  
+                  {results1D && (
+                    <Button 
+                      onClick={() => setResults1D(null)} 
+                      disabled={isRunning1D}
+                      className="flex items-center justify-center space-x-2 bg-gray-500 hover:bg-gray-600"
+                    >
+                      <span>Effacer les résultats</span>
+                    </Button>
+                  )}
+                </div>
 
                 {results1D && (
                   <div className="mt-6">
@@ -422,14 +434,26 @@ export function SensitivityAnalysis() {
                   </div>
                 </div>
 
-                <Button 
-                  onClick={runAnalysis2D}
-                  disabled={isRunning2D}
-                  className="flex items-center justify-center space-x-2"
-                >
-                  {isRunning2D && <Spinner size="sm" />}
-                  <span>{isRunning2D ? 'Analyse en cours...' : 'Lancer l\'analyse'}</span>
-                </Button>
+                <div className="flex items-center gap-3">
+                  <Button 
+                    onClick={runAnalysis2D}
+                    disabled={isRunning2D}
+                    className="flex items-center justify-center space-x-2"
+                  >
+                    {isRunning2D && <Spinner size="sm" />}
+                    <span>{isRunning2D ? 'Analyse en cours...' : 'Lancer l\'analyse'}</span>
+                  </Button>
+                  
+                  {results2D && (
+                    <Button 
+                      onClick={() => setResults2D(null)} 
+                      disabled={isRunning2D}
+                      className="flex items-center justify-center space-x-2 bg-gray-500 hover:bg-gray-600"
+                    >
+                      <span>Effacer les résultats</span>
+                    </Button>
+                  )}
+                </div>
 
                 {results2D && (
                   <div className="mt-6">

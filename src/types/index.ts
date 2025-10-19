@@ -179,9 +179,15 @@ export interface SensitivityAnalysis1D {
     impacts: Array<{
       parameter: string;
       label: string;
-      impactLow: number; // Impact du min sur l'objectif
-      impactHigh: number; // Impact du max sur l'objectif
+      valueLow: number; // Valeur absolue de l'objectif au min
+      valueHigh: number; // Valeur absolue de l'objectif au max
+      impactLow: number; // Impact du min sur l'objectif (variation)
+      impactHigh: number; // Impact du max sur l'objectif (variation)
       relativeImpact: number; // Impact relatif (pour tri)
+      criticalPoint?: {
+        paramValue: number; // Valeur du paramètre au point critique (objectif = 0)
+        exists: boolean; // true si le point critique existe dans la plage
+      };
     }>;
     detailedResults: Array<{
       parameter: string;
@@ -190,6 +196,7 @@ export interface SensitivityAnalysis1D {
         objectiveValue: number;
       }>;
     }>;
+    baseValue: number; // Valeur de base de l'objectif
   };
   createdAt: Date;
 }

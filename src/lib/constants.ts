@@ -43,6 +43,35 @@ export const KPI_OPTIONS: Array<{ value: keyof KPIResults; label: string }> = [
 ];
 
 // ============================================================================
+// TYPES DE MÉTRIQUES PAR FORMAT
+// ============================================================================
+
+// KPIs en format monétaire ($)
+export const CURRENCY_METRICS: Array<keyof KPIResults> = [
+  'annualRevenue',
+  'totalExpenses',
+  'annualCashflow',
+  'loanAmount',
+  'periodicPayment',
+  'annualDebtService',
+  'transferDuties',
+  'totalAcquisitionFees',
+  'initialInvestment',
+  'principalPaidFirstYear',
+  'propertyAppreciation',
+];
+
+// KPIs en format pourcentage (%)
+export const PERCENTAGE_METRICS: Array<keyof KPIResults> = [
+  'cashOnCash',
+  'capRate',
+  'cashflowROI',
+  'capitalizationROI',
+  'appreciationROI',
+  'totalROI',
+];
+
+// ============================================================================
 // PARAMÈTRES DISPONIBLES POUR OPTIMISATION/SENSIBILITÉ
 // ============================================================================
 

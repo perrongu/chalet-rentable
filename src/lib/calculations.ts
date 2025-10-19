@@ -805,7 +805,12 @@ export function setValueByPath(inputs: ProjectInputs, path: string, value: numbe
     // C'est un tableau
     if (Array.isArray(current[lastName]) && lastIndex < current[lastName].length) {
       if (typeof current[lastName][lastIndex] === 'object' && 'value' in current[lastName][lastIndex]) {
-        current[lastName][lastIndex].value = value;
+        // Si useRange est activé, modifier range.default au lieu de value
+        if ('range' in current[lastName][lastIndex] && current[lastName][lastIndex].range?.useRange) {
+          current[lastName][lastIndex].range.default = value;
+        } else {
+          current[lastName][lastIndex].value = value;
+        }
       } else {
         current[lastName][lastIndex] = value;
       }
@@ -813,7 +818,12 @@ export function setValueByPath(inputs: ProjectInputs, path: string, value: numbe
   } else {
     // C'est un objet simple
     if (typeof current[lastName] === 'object' && 'value' in current[lastName]) {
-      current[lastName].value = value;
+      // Si useRange est activé, modifier range.default au lieu de value
+      if ('range' in current[lastName] && current[lastName].range?.useRange) {
+        current[lastName].range.default = value;
+      } else {
+        current[lastName].value = value;
+      }
     } else {
       current[lastName] = value;
     }

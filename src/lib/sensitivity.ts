@@ -42,15 +42,9 @@ export function runSensitivityAnalysis1D(
       values,
     });
 
-    // Calculer l'impact aux extrêmes
-    const modifiedInputsMin = setValueByPath(baseInputs, param.parameter, param.min);
-    const modifiedInputsMax = setValueByPath(baseInputs, param.parameter, param.max);
-
-    const kpisMin = calculateKPIs(modifiedInputsMin);
-    const kpisMax = calculateKPIs(modifiedInputsMax);
-
-    const valueLow = kpisMin[objective] as number;
-    const valueHigh = kpisMax[objective] as number;
+    // Réutiliser les valeurs déjà calculées (optimisation)
+    const valueLow = values[0].objectiveValue;
+    const valueHigh = values[values.length - 1].objectiveValue;
 
     const impactLow = valueLow - baseValue;
     const impactHigh = valueHigh - baseValue;
@@ -58,19 +52,59 @@ export function runSensitivityAnalysis1D(
     // Impact relatif = plus grande variation en valeur absolue
     const relativeImpact = Math.max(Math.abs(impactLow), Math.abs(impactHigh));
 
+    // Calcul du point critique : trouver où l'objectif = 0
+    let criticalPoint: { paramValue: number; exists: boolean } | undefined;
+    
+    // Chercher un changement de signe dans les valeurs calculées
+    for (let i = 0; i < values.length - 1; i++) {
+      const current = values[i].objectiveValue;
+      const next = values[i + 1].objectiveValue;
+      
+      // Si changement de signe entre deux points (strict, pas égal à 0)
+      if ((current < 0 && next > 0) || (current > 0 && next < 0)) {
+        const currentParam = values[i].paramValue;
+        const nextParam = values[i + 1].paramValue;
+        
+        // Vérifier que la différence n'est pas quasi-nulle (éviter division par zéro)
+        const denominator = next - current;
+        if (Math.abs(denominator) > 1e-10) {
+          // Interpolation linéaire : x = x1 + (0 - y1) * (x2 - x1) / (y2 - y1)
+          const criticalParamValue = currentParam + 
+            (0 - current) * (nextParam - currentParam) / denominator;
+          
+          criticalPoint = {
+            paramValue: criticalParamValue,
+            exists: true,
+          };
+          break;
+        }
+      }
+    }
+    
+    // Si pas de changement de signe trouvé, le point critique n'existe pas dans la plage
+    if (!criticalPoint) {
+      criticalPoint = {
+        paramValue: 0,
+        exists: false,
+      };
+    }
+
     impacts.push({
       parameter: param.parameter,
       label: param.label,
+      valueLow,
+      valueHigh,
       impactLow,
       impactHigh,
       relativeImpact,
+      criticalPoint,
     });
   });
 
   // Trier par impact relatif décroissant
   impacts.sort((a, b) => b.relativeImpact - a.relativeImpact);
 
-  return { impacts, detailedResults };
+  return { impacts, detailedResults, baseValue };
 }
 
 // ============================================================================
