@@ -2,11 +2,9 @@ import type { ProjectionResult } from '../../types';
 import { formatCurrency } from '../../lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import {
-  ComposedChart,
   BarChart,
   AreaChart,
   Bar,
-  Line,
   Area,
   XAxis,
   YAxis,
@@ -51,19 +49,18 @@ export function ProjectionCharts({ projection }: ProjectionChartsProps) {
       {/* Graphique 1: Cashflow */}
       <Card>
         <CardHeader>
-          <CardTitle>Évolution du cashflow</CardTitle>
+          <CardTitle>Évolution du cashflow annuel et cumulé ($) par année</CardTitle>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={400}>
-            <ComposedChart data={cashflowData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+            <AreaChart data={cashflowData} margin={{ top: 20, right: 30, left: 70, bottom: 30 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis
                 dataKey="année"
-                label={{ value: 'Année', position: 'insideBottom', offset: -10 }}
               />
               <YAxis
-                label={{ value: 'Montant ($)', angle: -90, position: 'insideLeft' }}
                 tickFormatter={(value) => formatCurrency(value).replace(/\s/g, '')}
+                width={65}
               />
               <Tooltip
                 formatter={(value: number, name: string) => [formatCurrency(value), name]}
@@ -71,22 +68,25 @@ export function ProjectionCharts({ projection }: ProjectionChartsProps) {
                 contentStyle={{ backgroundColor: 'white', border: '1px solid #ccc', borderRadius: '4px', padding: '8px' }}
               />
               <Legend />
-              <Bar
+              <Area
+                type="monotone"
                 dataKey="Cashflow annuel"
+                stroke="#3b82f6"
                 fill="#3b82f6"
+                fillOpacity={0.6}
                 name="Cashflow annuel"
-                radius={[4, 4, 0, 0]}
+                strokeWidth={2}
               />
-              <Line
+              <Area
                 type="monotone"
                 dataKey="Cashflow cumulé"
                 stroke="#10b981"
-                strokeWidth={3}
+                fill="#10b981"
+                fillOpacity={0.3}
                 name="Cashflow cumulé"
-                dot={{ r: 5, fill: '#10b981', strokeWidth: 2, stroke: '#fff' }}
-                activeDot={{ r: 7 }}
+                strokeWidth={2}
               />
-            </ComposedChart>
+            </AreaChart>
           </ResponsiveContainer>
         </CardContent>
       </Card>
@@ -94,19 +94,18 @@ export function ProjectionCharts({ projection }: ProjectionChartsProps) {
       {/* Graphique 2: Équité et valeur */}
       <Card>
         <CardHeader>
-          <CardTitle>Évolution de l'équité et de la valeur</CardTitle>
+          <CardTitle>Évolution de la valeur, du solde hypothécaire et de l'équité ($) par année</CardTitle>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={400}>
-            <AreaChart data={equityData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+            <AreaChart data={equityData} margin={{ top: 20, right: 30, left: 70, bottom: 30 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis
                 dataKey="année"
-                label={{ value: 'Année', position: 'insideBottom', offset: -10 }}
               />
               <YAxis
-                label={{ value: 'Montant ($)', angle: -90, position: 'insideLeft' }}
                 tickFormatter={(value) => formatCurrency(value).replace(/\s/g, '')}
+                width={65}
               />
               <Tooltip
                 formatter={(value: number, name: string) => [formatCurrency(value), name]}
@@ -149,19 +148,18 @@ export function ProjectionCharts({ projection }: ProjectionChartsProps) {
       {/* Graphique 3: Décomposition du profit */}
       <Card>
         <CardHeader>
-          <CardTitle>Décomposition du profit annuel</CardTitle>
+          <CardTitle>Décomposition du profit annuel ($) : cashflow, capitalisation et plus-value par année</CardTitle>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={400}>
-            <BarChart data={profitData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+            <BarChart data={profitData} margin={{ top: 20, right: 30, left: 70, bottom: 30 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis
                 dataKey="année"
-                label={{ value: 'Année', position: 'insideBottom', offset: -10 }}
               />
               <YAxis
-                label={{ value: 'Montant ($)', angle: -90, position: 'insideLeft' }}
                 tickFormatter={(value) => formatCurrency(value).replace(/\s/g, '')}
+                width={65}
               />
               <Tooltip
                 formatter={(value: number, name: string) => [formatCurrency(value), name]}
