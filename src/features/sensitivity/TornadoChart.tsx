@@ -1,6 +1,7 @@
 import type { SensitivityAnalysis1D, KPIResults } from '../../types';
 import { formatCurrency, formatPercent, formatNumber } from '../../lib/utils';
 import { CURRENCY_METRICS, PERCENTAGE_METRICS } from '../../lib/constants';
+import { CHART_COLORS, hexToRgba } from '../../lib/colors';
 
 interface TornadoChartProps {
   results: SensitivityAnalysis1D['results'];
@@ -94,7 +95,14 @@ export function TornadoChart({ results, objective }: TornadoChartProps) {
                 </td>
                 <td className="text-right py-3 px-4">
                   {impact.criticalPoint?.exists ? (
-                    <span className="inline-flex items-center px-2 py-1 rounded bg-orange-50 text-orange-700 font-medium border border-orange-200 text-xs">
+                    <span 
+                      className="inline-flex items-center px-2 py-1 rounded font-medium border text-xs"
+                      style={{
+                        backgroundColor: hexToRgba(CHART_COLORS.warning, 0.1),
+                        color: CHART_COLORS.warning,
+                        borderColor: hexToRgba(CHART_COLORS.warning, 0.25)
+                      }}
+                    >
                       {formatParamValue(impact.criticalPoint.paramValue, impact.parameter)}
                     </span>
                   ) : (
@@ -156,10 +164,18 @@ export function TornadoChart({ results, objective }: TornadoChartProps) {
                     {/* Ligne du point critique (objectif = 0) */}
                     {criticalPosition !== null && crossesZero && (
                       <div 
-                        className="absolute top-0 bottom-0 w-0.5 bg-orange-500 z-30"
-                        style={{ left: `${criticalPosition}%` }}
+                        className="absolute top-0 bottom-0 w-0.5 z-30"
+                        style={{ 
+                          left: `${criticalPosition}%`,
+                          backgroundColor: CHART_COLORS.warning 
+                        }}
                       >
-                        <div className="absolute -top-7 left-1/2 -translate-x-1/2 text-xs font-medium text-orange-600 whitespace-nowrap bg-white px-1 rounded border border-orange-300">
+                        <div className="absolute -top-7 left-1/2 -translate-x-1/2 text-xs font-medium whitespace-nowrap bg-white px-1 rounded border"
+                          style={{ 
+                            color: CHART_COLORS.warning,
+                            borderColor: CHART_COLORS.warning
+                          }}
+                        >
                           Zéro
                         </div>
                       </div>
@@ -172,20 +188,24 @@ export function TornadoChart({ results, objective }: TornadoChartProps) {
                         {/* Partie négative (rouge) */}
                         {criticalPosition && (
                           <div
-                            className="absolute top-1/2 -translate-y-1/2 h-7 bg-gradient-to-r from-red-500 to-red-400 rounded-l shadow-sm border-2 border-red-600"
+                            className="absolute top-1/2 -translate-y-1/2 h-7 rounded-l shadow-sm border-2"
                             style={{
                               left: `${Math.min(barStart, criticalPosition)}%`,
                               width: `${Math.abs(criticalPosition - barStart)}%`,
+                              background: `linear-gradient(to right, ${CHART_COLORS.negative}, ${CHART_COLORS.negative})`,
+                              borderColor: CHART_COLORS.negative,
                             }}
                           />
                         )}
                         {/* Partie positive (verte) */}
                         {criticalPosition && (
                           <div
-                            className="absolute top-1/2 -translate-y-1/2 h-7 bg-gradient-to-r from-green-400 to-green-500 rounded-r shadow-sm border-2 border-green-600 border-dashed"
+                            className="absolute top-1/2 -translate-y-1/2 h-7 rounded-r shadow-sm border-2 border-dashed"
                             style={{
                               left: `${criticalPosition}%`,
                               width: `${Math.abs((barStart + barWidth) - criticalPosition)}%`,
+                              background: `linear-gradient(to right, ${CHART_COLORS.positive}, ${CHART_COLORS.positive})`,
+                              borderColor: CHART_COLORS.positive,
                             }}
                           />
                         )}
@@ -193,14 +213,15 @@ export function TornadoChart({ results, objective }: TornadoChartProps) {
                     ) : (
                       // Sinon, une seule couleur avec bordure pour accessibilité
                       <div
-                        className={`absolute top-1/2 -translate-y-1/2 h-7 rounded shadow-sm border-2 ${
-                          data.valueLow < 0 
-                            ? 'bg-gradient-to-r from-red-500 to-red-400 border-red-600' 
-                            : 'bg-gradient-to-r from-green-400 to-green-500 border-green-600 border-dashed'
-                        }`}
+                        className="absolute top-1/2 -translate-y-1/2 h-7 rounded shadow-sm border-2"
                         style={{
                           left: `${barStart}%`,
                           width: `${barWidth}%`,
+                          background: data.valueLow < 0 
+                            ? `linear-gradient(to right, ${CHART_COLORS.negative}, ${CHART_COLORS.negative})`
+                            : `linear-gradient(to right, ${CHART_COLORS.positive}, ${CHART_COLORS.positive})`,
+                          borderColor: data.valueLow < 0 ? CHART_COLORS.negative : CHART_COLORS.positive,
+                          borderStyle: data.valueLow < 0 ? 'solid' : 'dashed',
                         }}
                       />
                     )}
@@ -231,7 +252,14 @@ export function TornadoChart({ results, objective }: TornadoChartProps) {
                 {/* Afficher le point critique si existe */}
                 {impact.criticalPoint?.exists && (
                   <div className="mt-2 sm:ml-48 flex items-center gap-2 text-xs">
-                    <span className="inline-flex items-center px-2 py-1 rounded-md bg-orange-50 border border-orange-200 text-orange-700 font-medium">
+                    <span 
+                      className="inline-flex items-center px-2 py-1 rounded-md border font-medium"
+                      style={{
+                        backgroundColor: hexToRgba(CHART_COLORS.warning, 0.1),
+                        color: CHART_COLORS.warning,
+                        borderColor: hexToRgba(CHART_COLORS.warning, 0.25)
+                      }}
+                    >
                       ⚠ Point critique : {formatParamValue(impact.criticalPoint.paramValue, impact.parameter)}
                     </span>
                   </div>
@@ -245,11 +273,23 @@ export function TornadoChart({ results, objective }: TornadoChartProps) {
       {/* Légende */}
       <div className="flex flex-wrap items-center gap-6 text-xs text-gray-600 p-4 bg-gray-50 rounded-lg border border-gray-200">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-4 bg-gradient-to-r from-green-400 to-green-500 rounded shadow-sm border-2 border-green-600 border-dashed"></div>
+          <div 
+            className="w-6 h-4 rounded shadow-sm border-2 border-dashed"
+            style={{ 
+              backgroundColor: CHART_COLORS.positive,
+              borderColor: CHART_COLORS.positive 
+            }}
+          ></div>
           <span className="font-medium">Valeurs positives</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-6 h-4 bg-gradient-to-r from-red-500 to-red-400 rounded shadow-sm border-2 border-red-600"></div>
+          <div 
+            className="w-6 h-4 rounded shadow-sm border-2"
+            style={{ 
+              backgroundColor: CHART_COLORS.negative,
+              borderColor: CHART_COLORS.negative 
+            }}
+          ></div>
           <span className="font-medium">Valeurs négatives</span>
         </div>
         <div className="flex items-center gap-2">
@@ -257,7 +297,10 @@ export function TornadoChart({ results, objective }: TornadoChartProps) {
           <span className="font-medium">Valeur de base</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-0.5 h-4 bg-orange-500"></div>
+          <div 
+            className="w-0.5 h-4"
+            style={{ backgroundColor: CHART_COLORS.warning }}
+          ></div>
           <span className="font-medium">Point critique (objectif = 0)</span>
         </div>
         <div className="flex items-center gap-2">

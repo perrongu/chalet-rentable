@@ -3,6 +3,7 @@ import type { MonteCarloResult } from '../../lib/montecarlo';
 import type { KPIResults } from '../../types';
 import { formatCurrency, formatPercent, formatNumber } from '../../lib/utils';
 import { CURRENCY_METRICS, PERCENTAGE_METRICS } from '../../lib/constants';
+import { CHART_COLORS, hexToRgba } from '../../lib/colors';
 
 interface MonteCarloChartProps {
   results: MonteCarloResult;
@@ -71,9 +72,18 @@ export function MonteCarloChart({ results, objective }: MonteCarloChartProps) {
     <div className="space-y-6">
       {/* Statistiques clés */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div 
+          className="border rounded-lg p-4"
+          style={{ 
+            backgroundColor: hexToRgba(CHART_COLORS.info, 0.1),
+            borderColor: hexToRgba(CHART_COLORS.info, 0.25)
+          }}
+        >
           <div className="text-sm text-gray-600 mb-1">Médiane (P50)</div>
-          <div className="text-xl font-bold text-blue-700">
+          <div 
+            className="text-xl font-bold"
+            style={{ color: CHART_COLORS.info }}
+          >
             {formatValue(results.statistics.median)}
           </div>
         </div>
@@ -85,16 +95,34 @@ export function MonteCarloChart({ results, objective }: MonteCarloChartProps) {
           </div>
         </div>
         
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+        <div 
+          className="border rounded-lg p-4"
+          style={{ 
+            backgroundColor: hexToRgba(CHART_COLORS.success, 0.1),
+            borderColor: hexToRgba(CHART_COLORS.success, 0.25)
+          }}
+        >
           <div className="text-sm text-gray-600 mb-1">P90 (optimiste)</div>
-          <div className="text-xl font-bold text-green-700">
+          <div 
+            className="text-xl font-bold"
+            style={{ color: CHART_COLORS.success }}
+          >
             {formatValue(results.statistics.p90)}
           </div>
         </div>
         
-        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+        <div 
+          className="border rounded-lg p-4"
+          style={{ 
+            backgroundColor: hexToRgba(CHART_COLORS.warning, 0.1),
+            borderColor: hexToRgba(CHART_COLORS.warning, 0.25)
+          }}
+        >
           <div className="text-sm text-gray-600 mb-1">P10 (pessimiste)</div>
-          <div className="text-xl font-bold text-orange-700">
+          <div 
+            className="text-xl font-bold"
+            style={{ color: CHART_COLORS.warning }}
+          >
             {formatValue(results.statistics.p10)}
           </div>
         </div>
@@ -124,10 +152,17 @@ export function MonteCarloChart({ results, objective }: MonteCarloChartProps) {
         
         {histogram.length === 1 ? (
           // Cas spécial: tous les échantillons identiques
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
+          <div 
+            className="border rounded-lg p-4 text-sm"
+            style={{
+              backgroundColor: hexToRgba(CHART_COLORS.info, 0.1),
+              borderColor: hexToRgba(CHART_COLORS.info, 0.25),
+              color: CHART_COLORS.info
+            }}
+          >
             Tous les échantillons ont la même valeur: <strong>{formatValue(histogram[0].min)}</strong>
             <br />
-            <span className="text-xs text-blue-600">
+            <span className="text-xs opacity-80">
               Cela arrive quand aucun paramètre n'a de plage activée ou que les plages sont très étroites.
             </span>
           </div>
@@ -147,12 +182,11 @@ export function MonteCarloChart({ results, objective }: MonteCarloChartProps) {
                   {/* Barre */}
                   <div className="flex-1 h-6 bg-gray-100 rounded relative overflow-hidden">
                     <div
-                      className={`h-full transition-all ${
-                        isMedianBin
-                          ? 'bg-blue-500'
-                          : 'bg-blue-300'
-                      }`}
-                      style={{ width: `${heightPercent}%` }}
+                      className="h-full transition-all"
+                      style={{ 
+                        width: `${heightPercent}%`,
+                        backgroundColor: isMedianBin ? CHART_COLORS.info : `${CHART_COLORS.info}60`
+                      }}
                       aria-label={`${bin.count} échantillons entre ${formatValue(bin.min)} et ${formatValue(bin.max)}`}
                     />
                     {isMedianBin && (
@@ -174,9 +208,20 @@ export function MonteCarloChart({ results, objective }: MonteCarloChartProps) {
       </div>
       
       {/* Interprétation */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="text-sm font-medium text-blue-900 mb-2">Interprétation</h4>
-        <ul className="text-sm text-blue-800 space-y-1">
+      <div 
+        className="border rounded-lg p-4"
+        style={{
+          backgroundColor: hexToRgba(CHART_COLORS.info, 0.1),
+          borderColor: hexToRgba(CHART_COLORS.info, 0.25)
+        }}
+      >
+        <h4 
+          className="text-sm font-medium mb-2"
+          style={{ color: CHART_COLORS.info }}
+        >
+          Interprétation
+        </h4>
+        <ul className="text-sm space-y-1" style={{ color: CHART_COLORS.info }}>
           <li>
             <strong>P10:</strong> Il y a 10% de chances que le résultat soit inférieur à {formatValue(results.statistics.p10)}
           </li>

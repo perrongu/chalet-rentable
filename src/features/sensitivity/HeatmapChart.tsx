@@ -1,6 +1,7 @@
 import type { SensitivityAnalysis2D, KPIResults } from '../../types';
 import { formatCurrency, formatPercent, formatNumber } from '../../lib/utils';
 import { CURRENCY_METRICS, PERCENTAGE_METRICS } from '../../lib/constants';
+import { CHART_COLORS } from '../../lib/colors';
 
 interface HeatmapChartProps {
   results: SensitivityAnalysis2D['results'];
@@ -33,12 +34,12 @@ export function HeatmapChart({ results, objective, labelX, labelY, paramPathX, p
   const ZERO_THRESHOLD = 0.01;
   const isNearZero = (val: number) => Math.abs(val) < maxAbsValue * ZERO_THRESHOLD;
 
-  // Couleurs de base pour le gradient
-  const COLOR_RED_LIGHT = { r: 239, g: 218, b: 218 };  // Rouge pâle
-  const COLOR_RED_DARK = { r: 239, g: 68, b: 68 };     // Rouge saturé
-  const COLOR_GREEN_LIGHT = { r: 220, g: 252, b: 220 }; // Vert pâle
-  const COLOR_GREEN_DARK = { r: 16, g: 185, b: 129 };   // Vert saturé
-  const COLOR_NEAR_ZERO = 'rgb(254, 252, 232)';         // Jaune pâle
+  // Couleurs de base pour le gradient (utiliser les couleurs de la palette)
+  const COLOR_RED_LIGHT = CHART_COLORS.gradient.negativeLight;
+  const COLOR_RED_DARK = CHART_COLORS.gradient.negativeDark;
+  const COLOR_GREEN_LIGHT = CHART_COLORS.gradient.positiveLight;
+  const COLOR_GREEN_DARK = CHART_COLORS.gradient.positiveDark;
+  const COLOR_NEAR_ZERO = CHART_COLORS.nearZero;
 
   const getColor = (value: number) => {
     if (isNearZero(value)) {
@@ -154,9 +155,12 @@ export function HeatmapChart({ results, objective, labelX, labelY, paramPathX, p
                       <td
                         key={i}
                         className={`border px-1 py-0.5 text-[10px] text-center font-medium ${textColor} ${
-                          onBoundary ? 'border-orange-500 border-2' : 'border-gray-300'
+                          onBoundary ? 'border-2' : ''
                         }`}
-                        style={{ backgroundColor: cellColor }}
+                        style={{ 
+                          backgroundColor: cellColor,
+                          borderColor: onBoundary ? CHART_COLORS.warning : undefined
+                        }}
                         title={`${symbol} ${formatValue(value)}`}
                       >
                         <span className="opacity-60 mr-0.5">{symbol}</span>
@@ -174,19 +178,31 @@ export function HeatmapChart({ results, objective, labelX, labelY, paramPathX, p
       <div className="flex flex-wrap items-center gap-4 text-xs bg-gray-50 p-3 rounded-lg border border-gray-200">
         <span className="font-semibold">Légende:</span>
         <div className="flex items-center gap-2">
-          <div className="w-5 h-4 bg-red-500 rounded border border-gray-300"></div>
+          <div 
+            className="w-5 h-4 rounded border border-gray-300"
+            style={{ backgroundColor: CHART_COLORS.negative }}
+          ></div>
           <span>Négatif: {formatValue(minValue)}</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-5 h-4 rounded border border-gray-300" style={{ backgroundColor: 'rgb(254, 252, 232)' }}></div>
+          <div 
+            className="w-5 h-4 rounded border border-gray-300" 
+            style={{ backgroundColor: CHART_COLORS.nearZero }}
+          ></div>
           <span>Proche de 0</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-5 h-4 bg-green-600 rounded border border-gray-300"></div>
+          <div 
+            className="w-5 h-4 rounded border border-gray-300"
+            style={{ backgroundColor: CHART_COLORS.positive }}
+          ></div>
           <span>Positif: {formatValue(maxValue)}</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-5 h-4 border-2 border-orange-500 bg-white rounded"></div>
+          <div 
+            className="w-5 h-4 border-2 bg-white rounded"
+            style={{ borderColor: CHART_COLORS.warning }}
+          ></div>
           <span>Frontière (transition pos/nég)</span>
         </div>
       </div>
