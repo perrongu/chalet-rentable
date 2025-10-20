@@ -120,6 +120,25 @@ function AppContent() {
     }
   };
 
+  const handleExportPDF = async () => {
+    try {
+      const kpis = getCurrentKPIs();
+      const inputs = getCurrentInputs();
+      const { exportProfessionalReportToPDF } = await import('./lib/exports');
+      
+      await exportProfessionalReportToPDF(
+        project,
+        inputs,
+        kpis,
+        activeScenario?.name || 'Base',
+        `rapport-${project.name.replace(/[^a-z0-9]/gi, '_')}.pdf`
+      );
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      alert('Erreur lors de l\'export du rapport PDF');
+    }
+  };
+
   const handleLoad = async () => {
     if (hasUnsavedChanges()) {
       setPendingAction('load');
@@ -277,6 +296,9 @@ function AppContent() {
                 </Button>
                 <Button variant="outline" onClick={handleSave} aria-label="Enregistrer le projet">
                   💾 Enregistrer
+                </Button>
+                <Button variant="outline" onClick={handleExportPDF} aria-label="Exporter rapport PDF">
+                  📄 Rapport PDF
                 </Button>
               </div>
             </nav>

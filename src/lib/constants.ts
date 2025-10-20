@@ -206,6 +206,37 @@ export const DEFAULT_PROJECTION_SETTINGS = {
 export const DEFAULT_ANNUAL_RENOVATION_RATE = 1.0; // 1% pour tenue impeccable
 
 // ============================================================================
+// LABELS DE TYPES DE DÉPENSES (pour réutilisation)
+// ============================================================================
+
+export const EXPENSE_TYPE_LABELS: Record<string, string> = {
+  FIXED_ANNUAL: 'Fixe annuel',
+  FIXED_MONTHLY: 'Fixe mensuel',
+  PERCENTAGE_REVENUE: '% des revenus',
+  PERCENTAGE_PROPERTY_VALUE: '% valeur propriété',
+};
+
+export const PAYMENT_FREQUENCY_LABELS: Record<string, string> = {
+  MONTHLY: 'Mensuel',
+  BI_WEEKLY: 'Aux deux semaines',
+  WEEKLY: 'Hebdomadaire',
+  ANNUAL: 'Annuel',
+};
+
+// ============================================================================
+// ESPACEMENTS PDF
+// ============================================================================
+
+export const PDF_SPACING = {
+  COVER_PAGE_TOP_MARGIN: 40,
+  HEADER_BOTTOM_SPACING: 15,
+  SECTION_SPACING: 10,
+  SUBSECTION_SPACING: 5,
+  PARAGRAPH_SPACING: 3,
+  TABLE_SPACING: 8,
+} as const;
+
+// ============================================================================
 // VERSION
 // ============================================================================
 
