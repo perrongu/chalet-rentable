@@ -98,6 +98,10 @@ export const LIMITS = {
   DEFAULT_MONTE_CARLO_ITERATIONS: 5000,
   MIN_MONTE_CARLO_ITERATIONS: 100,
   MAX_MONTE_CARLO_ITERATIONS: 50000,
+  // Projections
+  DEFAULT_PROJECTION_YEARS: 10,
+  MIN_PROJECTION_YEARS: 1,
+  MAX_PROJECTION_YEARS: 30,
 } as const;
 
 // ============================================================================
@@ -165,6 +169,21 @@ export const TRANSFER_DUTIES_TIERS = {
   TIER2_RATE: 0.01, // 1.0%
   TIER3_RATE: 0.015, // 1.5%
 } as const;
+
+// ============================================================================
+// PARAMÈTRES DE PROJECTION PAR DÉFAUT
+// ============================================================================
+
+export const DEFAULT_PROJECTION_SETTINGS = {
+  REVENUE_ESCALATION_RATE: 2.5, // 2.5% inflation annuelle des revenus
+  EXPENSE_ESCALATION_RATE: 3.0, // 3.0% inflation annuelle des dépenses
+  CAPEX_RATE: 1.0, // 1% de la valeur de la propriété en CAPEX annuel
+  DISCOUNT_RATE: 5.0, // 5% taux d'actualisation pour NPV
+  SALE_COSTS_RATE: 6.0, // 6% frais de vente (courtage, notaire, etc.)
+} as const;
+
+// Taux de rénovations annuelles par défaut
+export const DEFAULT_ANNUAL_RENOVATION_RATE = 1.0; // 1% pour tenue impeccable
 
 // ============================================================================
 // VERSION

@@ -84,7 +84,8 @@ export function calculateAnnualRevenue(
 
 export function calculateExpenses(
   expenseLines: ProjectInputs['expenses'],
-  annualRevenue: number
+  annualRevenue: number,
+  purchasePrice: number
 ): {
   total: number;
   byCategory: Record<string, number>;
@@ -137,6 +138,34 @@ export function calculateExpenses(
           result: annualAmount,
           sources: sourceInfo ? [sourceInfo] : undefined,
         });
+        break;
+
+      case ExpenseType.PERCENTAGE_PROPERTY_VALUE:
+        if (purchasePrice <= 0) {
+          console.warn(`[calculateExpenses] Prix d'achat invalide (${purchasePrice}) pour ${line.name}. Montant = 0.`);
+          annualAmount = 0;
+          traces.push({
+            formula: `${line.name} = Valeur propriété × (Pourcentage / 100)`,
+            variables: {
+              'Valeur propriété ($)': purchasePrice,
+              'Pourcentage (%)': amount,
+              'Avertissement': 'Prix d\'achat invalide - montant = 0',
+            },
+            result: 0,
+            sources: sourceInfo ? [sourceInfo] : undefined,
+          });
+        } else {
+          annualAmount = (purchasePrice * amount) / 100;
+          traces.push({
+            formula: `${line.name} = Valeur propriété × (Pourcentage / 100)`,
+            variables: {
+              'Valeur propriété ($)': purchasePrice,
+              'Pourcentage (%)': amount,
+            },
+            result: annualAmount,
+            sources: sourceInfo ? [sourceInfo] : undefined,
+          });
+        }
         break;
     }
 
@@ -656,7 +685,7 @@ export function calculateKPIs(inputs: ProjectInputs): KPIResults {
   // Calculs en cascade
   const nightsSold = calculateNightsSold(occupancy, daysPerYear);
   const annualRevenue = calculateAnnualRevenue(adr, nightsSold.value, revenueSources);
-  const expenses = calculateExpenses(inputs.expenses, annualRevenue.value);
+  const expenses = calculateExpenses(inputs.expenses, annualRevenue.value, purchasePrice);
   const noi = calculateNOI(annualRevenue.value, expenses.total);
   const loanAmount = calculateLoanAmount(purchasePrice, downPayment, financingSources);
   const periodicPayment = calculatePeriodicPayment(

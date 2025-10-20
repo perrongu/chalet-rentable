@@ -7,7 +7,7 @@ import { useProject } from '../../store/ProjectContext';
 import type { ExpenseLine, InputWithSource } from '../../types';
 import { ExpenseType, ExpenseCategory, PaymentFrequency } from '../../types';
 import { useMemo, useState } from 'react';
-import { generateUUID } from '../../lib/utils';
+import { generateUUID, formatCurrency } from '../../lib/utils';
 
 // Composant pour afficher un indicateur de modification
 function OverrideIndicator({ baseValue, tooltip }: { baseValue: any; tooltip?: string }) {
@@ -197,6 +197,38 @@ export function InputForm() {
     }
   };
 
+  const updateProjectionSettings = (field: string, value: InputWithSource<number>) => {
+    if (isBaseScenario) {
+      const updatedProjectionSettings = {
+        ...(inputs.projectionSettings || {}),
+        [field]: value,
+      };
+      dispatch({
+        type: 'UPDATE_BASE_INPUTS',
+        payload: { projectionSettings: updatedProjectionSettings } as any,
+      });
+    } else {
+      // Pour les scénarios, merger avec les overrides existants, pas avec les inputs actuels
+      const currentOverrideProjectionSettings = (activeScenario?.overrides as any)?.projectionSettings || {};
+      const updatedProjectionSettings = {
+        ...currentOverrideProjectionSettings,
+        [field]: value,
+      };
+      dispatch({
+        type: 'UPDATE_SCENARIO',
+        payload: {
+          id: project.activeScenarioId,
+          updates: {
+            overrides: {
+              ...activeScenario?.overrides,
+              projectionSettings: updatedProjectionSettings,
+            },
+          },
+        },
+      });
+    }
+  };
+
   const addExpenseLine = (category?: ExpenseCategory) => {
     const newLine: ExpenseLine = {
       id: generateUUID(),
@@ -377,6 +409,7 @@ export function InputForm() {
                             { value: ExpenseType.FIXED_ANNUAL, label: 'Annuel' },
                             { value: ExpenseType.FIXED_MONTHLY, label: 'Mensuel' },
                             { value: ExpenseType.PERCENTAGE_REVENUE, label: '% revenus bruts' },
+                            { value: ExpenseType.PERCENTAGE_PROPERTY_VALUE, label: '% valeur propriété' },
                           ]}
                           className="text-sm"
                         />
@@ -423,9 +456,19 @@ export function InputForm() {
                         value={line.amount}
                         onChange={(value) => updateExpenseLine(line.id, { amount: value })}
                         min={0}
-                        step={line.type === ExpenseType.PERCENTAGE_REVENUE ? 0.1 : 10}
+                        step={line.type === ExpenseType.PERCENTAGE_REVENUE || line.type === ExpenseType.PERCENTAGE_PROPERTY_VALUE ? 0.1 : 10}
                         className="text-sm"
                       />
+                      {line.type === ExpenseType.PERCENTAGE_REVENUE && (
+                        <div className="text-xs text-gray-500 mt-1 ml-2">
+                          ≈ {formatCurrency((kpis.annualRevenue * (line.amount.value || 0)) / 100)}/an
+                        </div>
+                      )}
+                      {line.type === ExpenseType.PERCENTAGE_PROPERTY_VALUE && (
+                        <div className="text-xs text-gray-500 mt-1 ml-2">
+                          ≈ {formatCurrency(((inputs.financing.purchasePrice.value || 0) * (line.amount.value || 0)) / 100)}/an
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -602,6 +645,105 @@ export function InputForm() {
                 min={0}
                 max={20}
                 step={0.1}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Section Paramètres de projection */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle>Paramètres de projection multi-années</CardTitle>
+          <p className="text-sm text-gray-600 mt-1">
+            Utilisés dans l'onglet "Projections" pour modéliser l'évolution de l'investissement
+          </p>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div>
+              <RangeInput
+                label={
+                  <span>
+                    Escalade revenus annuelle (%)
+                    {isFieldOverridden(['projectionSettings', 'revenueEscalationRate']) && (
+                      <OverrideIndicator baseValue={getBaseValue(['projectionSettings', 'revenueEscalationRate'])} />
+                    )}
+                  </span>
+                }
+                value={inputs.projectionSettings?.revenueEscalationRate || { value: 2.5 }}
+                onChange={(value) => updateProjectionSettings('revenueEscalationRate', value)}
+                min={0}
+                max={10}
+                step={0.1}
+              />
+            </div>
+            <div>
+              <RangeInput
+                label={
+                  <span>
+                    Escalade dépenses annuelle (%)
+                    {isFieldOverridden(['projectionSettings', 'expenseEscalationRate']) && (
+                      <OverrideIndicator baseValue={getBaseValue(['projectionSettings', 'expenseEscalationRate'])} />
+                    )}
+                  </span>
+                }
+                value={inputs.projectionSettings?.expenseEscalationRate || { value: 3.0 }}
+                onChange={(value) => updateProjectionSettings('expenseEscalationRate', value)}
+                min={0}
+                max={10}
+                step={0.1}
+              />
+            </div>
+            <div>
+              <RangeInput
+                label={
+                  <span>
+                    CAPEX annuel (% valeur)
+                    {isFieldOverridden(['projectionSettings', 'capexRate']) && (
+                      <OverrideIndicator baseValue={getBaseValue(['projectionSettings', 'capexRate'])} />
+                    )}
+                  </span>
+                }
+                value={inputs.projectionSettings?.capexRate || { value: 1.0 }}
+                onChange={(value) => updateProjectionSettings('capexRate', value)}
+                min={0}
+                max={5}
+                step={0.1}
+              />
+            </div>
+            <div>
+              <RangeInput
+                label={
+                  <span>
+                    Taux d'actualisation (%)
+                    {isFieldOverridden(['projectionSettings', 'discountRate']) && (
+                      <OverrideIndicator baseValue={getBaseValue(['projectionSettings', 'discountRate'])} />
+                    )}
+                  </span>
+                }
+                value={inputs.projectionSettings?.discountRate || { value: 5.0 }}
+                onChange={(value) => updateProjectionSettings('discountRate', value)}
+                min={0}
+                max={15}
+                step={0.1}
+              />
+            </div>
+            <div>
+              <RangeInput
+                label={
+                  <span>
+                    Frais de vente (%)
+                    {isFieldOverridden(['projectionSettings', 'saleCostsRate']) && (
+                      <OverrideIndicator baseValue={getBaseValue(['projectionSettings', 'saleCostsRate'])} />
+                    )}
+                  </span>
+                }
+                value={inputs.projectionSettings?.saleCostsRate || { value: 6.0 }}
+                onChange={(value) => updateProjectionSettings('saleCostsRate', value)}
+                min={0}
+                max={15}
+                step={0.5}
               />
             </div>
           </div>

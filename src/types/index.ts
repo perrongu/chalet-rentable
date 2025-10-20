@@ -30,6 +30,7 @@ export const ExpenseType = {
   FIXED_ANNUAL: 'FIXED_ANNUAL', // Montant fixe annuel
   FIXED_MONTHLY: 'FIXED_MONTHLY', // Montant fixe mensuel
   PERCENTAGE_REVENUE: 'PERCENTAGE_REVENUE', // Pourcentage des revenus
+  PERCENTAGE_PROPERTY_VALUE: 'PERCENTAGE_PROPERTY_VALUE', // Pourcentage de la valeur de la propriété
 } as const;
 
 export type ExpenseType = typeof ExpenseType[keyof typeof ExpenseType];
@@ -86,12 +87,21 @@ export interface RevenueInputs {
   daysPerYear?: number; // Par défaut 365
 }
 
+export interface ProjectionSettings {
+  revenueEscalationRate: InputWithSource<number>; // % annuel
+  expenseEscalationRate: InputWithSource<number>; // % annuel
+  capexRate: InputWithSource<number>; // % de la valeur de la propriété annuellement
+  discountRate: InputWithSource<number>; // Taux d'actualisation pour NPV
+  saleCostsRate: InputWithSource<number>; // Frais de vente en % (5-7%)
+}
+
 export interface ProjectInputs {
   name: string;
   revenue: RevenueInputs;
   expenses: ExpenseLine[];
   financing: FinancingInputs;
   acquisitionFees: AcquisitionFees;
+  projectionSettings?: ProjectionSettings;
 }
 
 // ============================================================================
@@ -252,5 +262,82 @@ export interface ChartData {
   type: 'bar' | 'line' | 'tornado' | 'heatmap';
   title: string;
   data: any; // Structure dépend du type de graphique
+}
+
+// ============================================================================
+// PROJECTIONS MULTI-ANNÉES
+// ============================================================================
+
+export interface YearProjection {
+  year: number;
+  revenue: number;
+  expenses: number;
+  capex: number; // Dépenses en capital (rénovations majeures)
+  noi: number; // Net Operating Income (avant service dette)
+  debtService: number;
+  interestPaid: number; // Portion intérêts du service dette
+  principalPaid: number; // Portion capital du service dette
+  cashflow: number;
+  cumulativeCashflow: number;
+  cumulativePrincipalPaid: number;
+  mortgageBalance: number;
+  propertyValue: number;
+  equity: number; // Valeur - Solde hypothèque
+  
+  // Métriques bancaires
+  dscr: number; // Debt Service Coverage Ratio (NOI / Service dette)
+  ltv: number; // Loan to Value (Solde hypothèque / Valeur propriété)
+  
+  // Métriques investisseur
+  appreciation: number;
+  cumulativeAppreciation: number;
+  totalProfit: number; // Cashflow + capitalisation + appréciation
+  cumulativeTotalProfit: number;
+  roiCashflow: number; // ROI basé cashflow vs investissement initial
+  roiTotal: number; // ROI total vs investissement initial
+  roe: number; // Return on Equity (Profit / Équité actuelle)
+  npv: number; // Valeur actuelle nette de ce cashflow
+  
+  // Fiscal (si implémenté)
+  depreciation?: number;
+  taxSavings?: number;
+  afterTaxCashflow?: number;
+  
+  // Scénario de sortie
+  exitValue?: number; // Si vente cette année
+  saleProceeds?: number; // Net après frais de vente
+  netProfit?: number; // Profit net si vente
+}
+
+export interface ExitScenario {
+  year: number;
+  propertyValue: number;
+  salePrice: number; // Après frais de vente (5-7%)
+  mortgageBalance: number;
+  netProceeds: number; // Ce qu'on récupère
+  totalInvested: number; // Initial + CAPEX cumulé
+  netProfit: number;
+  moic: number; // Multiple on Invested Capital
+  irr: number; // TRI jusqu'à cette année
+}
+
+export interface ProjectionResult {
+  years: YearProjection[];
+  
+  // Retour sur investissement
+  paybackPeriodCashflow: number | null; // année où cashflow cumulé > 0
+  paybackPeriodTotal: number | null; // année où profit total cumulé > investissement initial
+  irr: number; // Taux de rendement interne
+  totalReturn: number;
+  averageAnnualReturn: number;
+  averageROE: number; // ROE moyen sur la période
+  
+  // Scénarios de sortie
+  exitScenarios: ExitScenario[]; // Vente à différentes années (5, 10, 15, 20, fin)
+  
+  // Analyse de sensibilité simple
+  breakEvenOccupancy?: number; // Taux occupation min pour cashflow = 0
+  minDSCR: number; // DSCR le plus bas de la période
+  maxLTV: number; // LTV le plus élevé de la période
 }
 

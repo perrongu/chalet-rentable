@@ -11,6 +11,7 @@ import { ExpenseType, ExpenseCategory, PaymentFrequency } from '../types';
 import { calculateKPIs } from '../lib/calculations';
 import { generateUUID, debounce, deepMerge, deepClone } from '../lib/utils';
 import { validateProject } from '../lib/validation';
+import { DEFAULT_ANNUAL_RENOVATION_RATE } from '../lib/constants';
 
 // ============================================================================
 // INITIAL STATE
@@ -99,6 +100,16 @@ export function createDefaultProject(): Project {
         amount: { value: 3000 },
         category: ExpenseCategory.ASSURANCES,
       },
+      {
+        id: '9',
+        name: 'Rénovations annuelles',
+        type: ExpenseType.PERCENTAGE_PROPERTY_VALUE,
+        amount: { 
+          value: DEFAULT_ANNUAL_RENOVATION_RATE,
+          sourceInfo: { source: '', remarks: 'Entretien courant et préventif pour tenue impeccable' }
+        },
+        category: ExpenseCategory.ENTRETIEN,
+      },
     ],
     financing: {
       purchasePrice: { 
@@ -123,6 +134,13 @@ export function createDefaultProject(): Project {
       transferDuties: { value: 6666 },
       notaryFees: { value: 1500 },
       other: { value: 0 },
+    },
+    projectionSettings: {
+      revenueEscalationRate: { value: 2.5, sourceInfo: { source: '', remarks: 'Inflation typique' } },
+      expenseEscalationRate: { value: 3.0, sourceInfo: { source: '', remarks: 'Inflation + coûts croissants' } },
+      capexRate: { value: 1.0, sourceInfo: { source: '', remarks: 'Réserve pour rénovations majeures' } },
+      discountRate: { value: 5.0, sourceInfo: { source: '', remarks: 'Coût d\'opportunité du capital' } },
+      saleCostsRate: { value: 6.0, sourceInfo: { source: '', remarks: 'Courtage + frais notaire' } },
     },
   };
 
