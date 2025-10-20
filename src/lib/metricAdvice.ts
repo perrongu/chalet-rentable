@@ -1,6 +1,7 @@
 import type { MetricAdvice } from '../components/ui/MetricExplanationModal';
 import type { ProjectInputs, ProjectionResult } from '../types';
 import { formatCurrency } from './utils';
+import { ADVICE_THRESHOLDS } from './constants';
 
 // ============================================================================
 // CONSEILS POUR DSCR (Debt Service Coverage Ratio)
@@ -325,10 +326,239 @@ export function getBreakEvenOccupancyAdvice(
 }
 
 // ============================================================================
+// CONSEILS POUR MOIC (Multiple on Invested Capital)
+// ============================================================================
+
+export function getMOICAdvice(
+  moic: number,
+  year: number,
+  inputs: ProjectInputs,
+  _projection?: ProjectionResult
+): MetricAdvice[] {
+  const advice: MetricAdvice[] = [];
+  
+  // Si MOIC est excellent
+  if (moic >= ADVICE_THRESHOLDS.MOIC.EXCELLENT) {
+    advice.push({
+      icon: '🚀',
+      action: 'MOIC excellent !',
+      impact: `Un multiple de ${moic.toFixed(2)}x sur ${year} ans est exceptionnel. Tu génères ${((moic - 1) * 100).toFixed(0)}% de profit sur ton investissement total.`,
+      priority: 'low',
+    });
+    return advice;
+  }
+  
+  // Si MOIC est bon
+  if (moic >= ADVICE_THRESHOLDS.MOIC.GOOD) {
+    advice.push({
+      icon: '✅',
+      action: 'Bon MOIC',
+      impact: `Un multiple de ${moic.toFixed(2)}x est solide. Tu doubles ton investissement sur ${year} ans.`,
+      priority: 'low',
+    });
+    return advice;
+  }
+  
+  // Si MOIC est acceptable mais perfectible
+  if (moic >= ADVICE_THRESHOLDS.MOIC.ACCEPTABLE) {
+    advice.push({
+      icon: '⚠️',
+      action: 'MOIC acceptable mais peut être amélioré',
+      impact: `Avec ${moic.toFixed(2)}x, tu es profitable mais en-dessous du seuil optimal (${ADVICE_THRESHOLDS.MOIC.GOOD}x). Sur ${year} ans, ton profit est de ${((moic - 1) * 100).toFixed(0)}%.`,
+      priority: 'medium',
+    });
+  } else {
+    // MOIC négatif - perte
+    advice.push({
+      icon: '🚨',
+      action: 'MOIC négatif - PERTE',
+      impact: `Avec ${moic.toFixed(2)}x, tu perds de l'argent sur cet investissement. Une vente à l'année ${year} n'est pas rentable.`,
+      priority: 'high',
+    });
+  }
+  
+  // Solutions pour améliorer le MOIC
+  const currentADR = extractValue(inputs.revenue.averageDailyRate);
+  
+  // Solution 1 : Augmenter les revenus
+  const revenueIncreaseNeeded = ADVICE_THRESHOLDS.REVENUE_INCREASE_TARGET;
+  const newADR = currentADR * (1 + revenueIncreaseNeeded / 100);
+  
+  advice.push({
+    icon: '💵',
+    action: 'Augmenter tes revenus',
+    impact: `Passe ton ADR de ${formatCurrency(currentADR)} à ${formatCurrency(newADR)} (+${revenueIncreaseNeeded}%). Cela améliorerait significativement ton MOIC en augmentant tes cashflows cumulés.`,
+    priority: moic < ADVICE_THRESHOLDS.MOIC.ACCEPTABLE ? 'high' : 'medium',
+  });
+  
+  // Solution 2 : Réduire les coûts initiaux
+  const currentDownPayment = extractValue(inputs.financing.downPayment);
+  
+  if (moic < 1.5) { // Entre 1.0 et 2.0
+    advice.push({
+      icon: '💰',
+      action: 'Optimiser ton financement',
+      impact: `Réduis ta mise de fonds initiale (actuellement ${formatCurrency(currentDownPayment)}) pour augmenter ton effet de levier. Attention : cela augmente aussi le risque et peut impacter ton DSCR.`,
+      priority: 'medium',
+    });
+  }
+  
+  // Solution 3 : Vendre plus tard
+  if (year < 10 && moic < ADVICE_THRESHOLDS.MOIC.GOOD) {
+    advice.push({
+      icon: '⏳',
+      action: 'Conserver plus longtemps',
+      impact: `À l'année ${year}, ton MOIC n'a pas atteint son potentiel. Garde la propriété plus longtemps pour accumuler plus de cashflows et bénéficier de l'appréciation.`,
+      priority: 'high',
+    });
+  }
+  
+  // Solution 4 : Réduire les dépenses
+  advice.push({
+    icon: '✂️',
+    action: 'Optimiser les dépenses',
+    impact: 'Réduis tes coûts opérationnels et CAPEX. Chaque dollar économisé améliore directement ton profit net et ton MOIC.',
+    priority: 'medium',
+  });
+  
+  return advice;
+}
+
+// ============================================================================
+// CONSEILS POUR TRI (Taux de Rendement Interne / IRR)
+// ============================================================================
+
+export function getTRIAdvice(
+  irr: number,
+  year: number,
+  inputs: ProjectInputs,
+  _projection?: ProjectionResult
+): MetricAdvice[] {
+  const advice: MetricAdvice[] = [];
+  
+  // Si TRI est excellent
+  if (irr >= ADVICE_THRESHOLDS.TRI.EXCELLENT) {
+    advice.push({
+      icon: '🌟',
+      action: 'TRI exceptionnel !',
+      impact: `Un TRI de ${irr.toFixed(1)}% est remarquable. Tu surpasses largement les indices boursiers et l'immobilier traditionnel.`,
+      priority: 'low',
+    });
+    return advice;
+  }
+  
+  // Si TRI est bon
+  if (irr >= ADVICE_THRESHOLDS.TRI.GOOD) {
+    advice.push({
+      icon: '✅',
+      action: 'Excellent TRI',
+      impact: `${irr.toFixed(1)}% est un excellent rendement. Tu bats la plupart des investissements traditionnels.`,
+      priority: 'low',
+    });
+    return advice;
+  }
+  
+  // Si TRI est acceptable
+  if (irr >= ADVICE_THRESHOLDS.TRI.ACCEPTABLE) {
+    advice.push({
+      icon: '✓',
+      action: 'TRI acceptable',
+      impact: `${irr.toFixed(1)}% est correct mais peut être amélioré. Vise ${ADVICE_THRESHOLDS.TRI.GOOD}%+ pour un investissement locatif court terme optimal.`,
+      priority: 'low',
+    });
+  } else if (irr >= 0) {
+    // TRI faible
+    advice.push({
+      icon: '⚠️',
+      action: 'TRI sous-optimal',
+      impact: `Avec ${irr.toFixed(1)}%, ton rendement annualisé est faible. Tu pourrais obtenir mieux avec des placements moins risqués.`,
+      priority: 'high',
+    });
+  } else {
+    // TRI négatif
+    advice.push({
+      icon: '🚨',
+      action: 'TRI négatif - PERTE',
+      impact: `Un TRI de ${irr.toFixed(1)}% signifie que tu perds de l'argent chaque année. Cet investissement n'est pas viable.`,
+      priority: 'high',
+    });
+  }
+  
+  // Solutions pour améliorer le TRI
+  
+  // Solution 1 : Améliorer les cashflows précoces
+  if (irr < ADVICE_THRESHOLDS.TRI.GOOD) {
+    advice.push({
+      icon: '📈',
+      action: 'Maximiser les cashflows dès le début',
+      impact: 'Le TRI favorise les gains précoces. Augmente ton ADR et ton taux d\'occupation rapidement. Minimise les rénovations post-achat.',
+      priority: 'high',
+    });
+  }
+  
+  // Solution 2 : Optimiser le moment de sortie
+  if (year < 5 && irr < 12) {
+    advice.push({
+      icon: '⏰',
+      action: 'Attendre avant de vendre',
+      impact: `Vendre à l'année ${year} est prématuré. Les premières années sont impactées par les coûts initiaux. Vendre entre 7-12 ans optimise souvent le TRI.`,
+      priority: 'high',
+    });
+  } else if (year > 15 && irr < 12) {
+    advice.push({
+      icon: '🎯',
+      action: 'Envisager une vente plus tôt',
+      impact: `Après ${year} ans, les rendements diminuent. Une vente plus tôt (10-15 ans) pourrait optimiser ton TRI en évitant les CAPEX majeurs.`,
+      priority: 'medium',
+    });
+  }
+  
+  // Solution 3 : Réduire l'investissement initial
+  const currentDownPayment = extractValue(inputs.financing.downPayment);
+  const purchasePrice = extractValue(inputs.financing.purchasePrice);
+  const downPaymentPercent = (currentDownPayment / purchasePrice) * 100;
+  
+  if (downPaymentPercent > 30 && irr < 15) {
+    advice.push({
+      icon: '💰',
+      action: 'Optimiser ton effet de levier',
+      impact: `Ta mise de fonds de ${downPaymentPercent.toFixed(0)}% est élevée. Réduire à 25-30% améliorerait ton TRI en diminuant le capital immobilisé.`,
+      priority: 'medium',
+    });
+  }
+  
+  // Solution 4 : Augmenter les revenus
+  const currentADR = extractValue(inputs.revenue.averageDailyRate);
+  const revenueIncrease = ADVICE_THRESHOLDS.TRI_REVENUE_INCREASE_SUGGESTION;
+  const newADR = currentADR * (1 + revenueIncrease / 100);
+  
+  advice.push({
+    icon: '💵',
+    action: 'Augmenter le tarif journalier',
+    impact: `Passe de ${formatCurrency(currentADR)} à ${formatCurrency(newADR)} (+${revenueIncrease}%). Des revenus plus élevés dès le début boostent significativement le TRI.`,
+    priority: irr < ADVICE_THRESHOLDS.TRI.ACCEPTABLE ? 'high' : 'medium',
+  });
+  
+  // Solution 5 : Négocier le financement
+  const interestRate = extractValue(inputs.financing.interestRate);
+  if (interestRate > 4.5 && irr < ADVICE_THRESHOLDS.TRI.GOOD) {
+    const betterRate = interestRate - 0.5;
+    advice.push({
+      icon: '🏦',
+      action: 'Négocier un meilleur taux',
+      impact: `Ton taux actuel (${interestRate.toFixed(2)}%) pèse sur ton TRI. Un taux à ${betterRate.toFixed(2)}% libérerait plus de cashflow et améliorerait ton rendement.`,
+      priority: 'medium',
+    });
+  }
+  
+  return advice;
+}
+
+// ============================================================================
 // FONCTION UTILITAIRE POUR OBTENIR LES EXPLICATIONS
 // ============================================================================
 
-export function getMetricExplanation(metric: 'dscr' | 'ltv' | 'breakeven'): string {
+export function getMetricExplanation(metric: 'dscr' | 'ltv' | 'breakeven' | 'moic' | 'tri'): string {
   switch (metric) {
     case 'dscr':
       return 'Le DSCR (Debt Service Coverage Ratio) mesure ta capacité à payer ton service de dette. Il compare ton revenu net d\'exploitation (NOI) à tes paiements hypothécaires annuels. Les banques exigent généralement un minimum de 1.25, ce qui signifie que ton NOI doit être au moins 25% supérieur à ton service de dette.';
@@ -338,6 +568,12 @@ export function getMetricExplanation(metric: 'dscr' | 'ltv' | 'breakeven'): stri
     
     case 'breakeven':
       return 'Le taux d\'occupation break-even est le niveau minimum d\'occupation nécessaire pour couvrir tes dépenses et ton service de dette (cashflow = 0). La différence entre ton occupation prévue et ton break-even est ta marge de sécurité. Plus cette marge est grande, plus tu peux absorber des périodes creuses.';
+    
+    case 'moic':
+      return 'Le MOIC (Multiple on Invested Capital) mesure combien de fois tu récupères ton investissement initial. Un MOIC de 2.0x signifie que tu doubles ton argent. Il se calcule en divisant le profit net par l\'investissement total (mise de fonds + CAPEX). C\'est une métrique clé pour évaluer le retour absolu d\'un investissement immobilier.';
+    
+    case 'tri':
+      return 'Le TRI (Taux de Rendement Interne) ou IRR mesure le rendement annualisé de ton investissement en tenant compte de tous les cashflows et du timing. Un TRI de 15% signifie que ton argent croît de 15% par an en moyenne. Le TRI favorise les gains précoces et pénalise les sorties tardives. C\'est LA métrique pour comparer différents investissements.';
   }
 }
 

@@ -9,11 +9,13 @@ import { calculateProjections } from '../../lib/projections';
 import { ProjectionTable } from './ProjectionTable';
 import { ProjectionCharts } from './ProjectionCharts';
 import { formatCurrency, formatPercent, formatNumber } from '../../lib/utils';
-import { LIMITS } from '../../lib/constants';
+import { LIMITS, ADVICE_THRESHOLDS } from '../../lib/constants';
 import {
   getDSCRAdvice,
   getLTVAdvice,
   getBreakEvenOccupancyAdvice,
+  getMOICAdvice,
+  getTRIAdvice,
   getMetricExplanation,
 } from '../../lib/metricAdvice';
 
@@ -23,6 +25,7 @@ export function ProjectionAnalysis() {
 
   const [numberOfYears, setNumberOfYears] = useState<number>(LIMITS.DEFAULT_PROJECTION_YEARS);
   const [openModal, setOpenModal] = useState<'dscr' | 'ltv' | 'breakeven' | null>(null);
+  const [openExitModal, setOpenExitModal] = useState<{ type: 'moic' | 'tri'; year: number } | null>(null);
 
   // Calculer les projections
   const projection = useMemo(() => {
@@ -358,9 +361,9 @@ export function ProjectionAnalysis() {
           <CardTitle>Scénarios de sortie (vente)</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
             <table className="w-full text-sm">
-              <thead>
+              <thead className="sticky top-0 bg-white z-10 shadow-sm">
                 <tr className="border-b-2 border-gray-300">
                   <th className="text-left py-2 px-3">Année</th>
                   <th className="text-right py-2 px-3">Valeur propriété</th>
@@ -373,30 +376,63 @@ export function ProjectionAnalysis() {
                 </tr>
               </thead>
               <tbody>
-                {projection.exitScenarios.map((exit) => (
-                  <tr key={exit.year} className="border-b border-gray-200 hover:bg-gray-50">
-                    <td className="py-3 px-3 font-medium">Année {exit.year}</td>
-                    <td className="text-right py-3 px-3">{formatCurrency(exit.propertyValue)}</td>
-                    <td className="text-right py-3 px-3">{formatCurrency(exit.salePrice)}</td>
-                    <td className="text-right py-3 px-3">{formatCurrency(exit.mortgageBalance)}</td>
-                    <td className="text-right py-3 px-3 font-medium text-blue-700">
-                      {formatCurrency(exit.netProceeds)}
-                    </td>
-                    <td
-                      className={`text-right py-3 px-3 font-medium ${
-                        exit.netProfit >= 0 ? 'text-green-700' : 'text-red-700'
-                      }`}
-                    >
-                      {exit.netProfit >= 0 ? formatCurrency(exit.netProfit) : `(${formatCurrency(Math.abs(exit.netProfit))})`}
-                    </td>
-                    <td className={`text-right py-3 px-3 font-medium ${exit.moic >= 1 ? 'text-green-700' : 'text-red-700'}`}>
-                      {exit.moic.toFixed(2)}x
-                    </td>
-                    <td className={`text-right py-3 px-3 font-medium ${exit.irr >= 5 ? 'text-purple-700' : exit.irr >= 0 ? 'text-blue-700' : 'text-red-700'}`}>
-                      {formatPercent(exit.irr)}
-                    </td>
-                  </tr>
-                ))}
+                {projection.exitScenarios.map((exit) => {
+                  const needsMOICAdvice = exit.moic < ADVICE_THRESHOLDS.MOIC.GOOD;
+                  const needsTRIAdvice = exit.irr < ADVICE_THRESHOLDS.TRI.GOOD;
+                  
+                  return (
+                    <tr key={exit.year} className="border-b border-gray-200 hover:bg-gray-50">
+                      <td className="py-3 px-3 font-medium">Année {exit.year}</td>
+                      <td className="text-right py-3 px-3">{formatCurrency(exit.propertyValue)}</td>
+                      <td className="text-right py-3 px-3">{formatCurrency(exit.salePrice)}</td>
+                      <td className="text-right py-3 px-3">{formatCurrency(exit.mortgageBalance)}</td>
+                      <td className="text-right py-3 px-3 font-medium text-blue-700">
+                        {formatCurrency(exit.netProceeds)}
+                      </td>
+                      <td
+                        className={`text-right py-3 px-3 font-medium ${
+                          exit.netProfit >= 0 ? 'text-green-700' : 'text-red-700'
+                        }`}
+                      >
+                        {exit.netProfit >= 0 ? formatCurrency(exit.netProfit) : `(${formatCurrency(Math.abs(exit.netProfit))})`}
+                      </td>
+                      <td className={`text-right py-3 px-3 ${exit.moic >= ADVICE_THRESHOLDS.MOIC.GOOD ? 'text-green-700' : exit.moic >= ADVICE_THRESHOLDS.MOIC.ACCEPTABLE ? 'text-orange-600' : 'text-red-700'}`}>
+                        <div className="flex items-center justify-end gap-2">
+                          <span className="font-medium">{exit.moic.toFixed(2)}x</span>
+                          {needsMOICAdvice && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setOpenExitModal({ type: 'moic', year: exit.year })}
+                              className="h-5 px-1 text-xs"
+                              aria-label={`Voir les conseils pour améliorer le MOIC de l'année ${exit.year}`}
+                              title="Voir comment améliorer ce MOIC"
+                            >
+                              ⓘ
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                      <td className={`text-right py-3 px-3 ${exit.irr >= ADVICE_THRESHOLDS.TRI.GOOD ? 'text-green-700' : exit.irr >= ADVICE_THRESHOLDS.TRI.ACCEPTABLE ? 'text-orange-600' : exit.irr >= 0 ? 'text-blue-700' : 'text-red-700'}`}>
+                        <div className="flex items-center justify-end gap-2">
+                          <span className="font-medium">{formatPercent(exit.irr)}</span>
+                          {needsTRIAdvice && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setOpenExitModal({ type: 'tri', year: exit.year })}
+                              className="h-5 px-1 text-xs"
+                              aria-label={`Voir les conseils pour améliorer le TRI de l'année ${exit.year}`}
+                              title="Voir comment améliorer ce TRI"
+                            >
+                              ⓘ
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -411,10 +447,12 @@ export function ProjectionAnalysis() {
               <strong>Profit net</strong> : Produit net + Cashflows cumulés - Investissement total
             </p>
             <p>
-              <strong>MOIC</strong> : Multiple on Invested Capital (Profit net / Investissement)
+              <strong>MOIC</strong> : Multiple on Invested Capital (Profit net / Investissement). 
+              Seuil optimal : <span className="text-green-700 font-medium">≥ {ADVICE_THRESHOLDS.MOIC.GOOD}x</span>
             </p>
             <p>
-              <strong>TRI</strong> : Taux de rendement interne jusqu'à cette année
+              <strong>TRI</strong> : Taux de rendement interne jusqu'à cette année. 
+              Seuil optimal : <span className="text-green-700 font-medium">≥ {ADVICE_THRESHOLDS.TRI.GOOD}%</span>
             </p>
           </div>
         </CardContent>
@@ -460,6 +498,34 @@ export function ProjectionAnalysis() {
         explanation={getMetricExplanation('breakeven')}
         advice={getBreakEvenOccupancyAdvice(projection.breakEvenOccupancy || 0, inputs)}
       />
+
+      {/* Modales pour scénarios de sortie */}
+      {openExitModal && (() => {
+        const exit = projection.exitScenarios.find(e => e.year === openExitModal.year);
+        if (!exit) return null;
+        
+        const modalConfig = openExitModal.type === 'moic' 
+          ? {
+              title: `MOIC - Année ${exit.year}`,
+              explanation: getMetricExplanation('moic'),
+              advice: getMOICAdvice(exit.moic, exit.year, inputs, projection),
+            }
+          : {
+              title: `TRI (Taux de Rendement Interne) - Année ${exit.year}`,
+              explanation: getMetricExplanation('tri'),
+              advice: getTRIAdvice(exit.irr, exit.year, inputs, projection),
+            };
+        
+        return (
+          <MetricExplanationModal
+            isOpen={true}
+            onClose={() => setOpenExitModal(null)}
+            title={modalConfig.title}
+            explanation={modalConfig.explanation}
+            advice={modalConfig.advice}
+          />
+        );
+      })()}
     </div>
   );
 }

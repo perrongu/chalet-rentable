@@ -8,7 +8,7 @@ import type {
 } from '../types';
 import { ExpenseType } from '../types';
 import { calculateKPIs } from './calculations';
-import { DEFAULT_PROJECTION_SETTINGS } from './constants';
+import { DEFAULT_PROJECTION_SETTINGS, LIMITS } from './constants';
 
 // ============================================================================
 // UTILITAIRES
@@ -376,7 +376,11 @@ export function calculateProjections(
   }
   
   // Calculer les scénarios de sortie
-  const exitYears = [5, 10, 15, 20, numberOfYears].filter(y => y <= numberOfYears);
+  // Limiter à MAX_EXIT_SCENARIOS pour la performance, tout en affichant les années clés
+  const maxYears = Math.min(numberOfYears, LIMITS.MAX_EXIT_SCENARIOS);
+  const exitYears = numberOfYears > 0 
+    ? Array.from({ length: maxYears }, (_, i) => i + 1)
+    : [1];
   const exitScenarios: ExitScenario[] = exitYears.map(year => {
     const yearData = years[year - 1];
     const salePrice = round(yearData.propertyValue * (1 - saleCostsRate / 100));

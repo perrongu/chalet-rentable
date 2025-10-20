@@ -102,6 +102,7 @@ export const LIMITS = {
   DEFAULT_PROJECTION_YEARS: 10,
   MIN_PROJECTION_YEARS: 1,
   MAX_PROJECTION_YEARS: 30,
+  MAX_EXIT_SCENARIOS: 20, // Limiter pour la performance
 } as const;
 
 // ============================================================================
@@ -119,6 +120,25 @@ export const KPI_THRESHOLDS = {
     medium: 4, // >= 4% = orange
     // < 4% = rouge
   },
+} as const;
+
+// ============================================================================
+// SEUILS POUR LES CONSEILS D'AMÉLIORATION
+// ============================================================================
+
+export const ADVICE_THRESHOLDS = {
+  MOIC: {
+    EXCELLENT: 3.0,
+    GOOD: 2.0,
+    ACCEPTABLE: 1.0,
+  },
+  TRI: {
+    EXCELLENT: 20,
+    GOOD: 15,
+    ACCEPTABLE: 8,
+  },
+  REVENUE_INCREASE_TARGET: 15, // % d'augmentation suggérée pour MOIC
+  TRI_REVENUE_INCREASE_SUGGESTION: 10, // % d'augmentation suggérée pour TRI
 } as const;
 
 // ============================================================================
