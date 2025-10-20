@@ -26,13 +26,11 @@ export function createDefaultProject(): Project {
     name: 'Mon Projet',
     revenue: {
       averageDailyRate: { 
-        value: 215, 
-        range: { min: 150, max: 300, default: 215, useRange: true },
+        value: 280, 
         sourceInfo: { source: '', remarks: '' } 
       },
       occupancyRate: { 
         value: 75, 
-        range: { min: 50, max: 90, default: 75, useRange: true },
         sourceInfo: { source: '', remarks: '' } 
       },
       daysPerYear: 365,
@@ -50,8 +48,7 @@ export function createDefaultProject(): Project {
         name: 'Compagnie de gestion',
         type: ExpenseType.PERCENTAGE_REVENUE,
         amount: { 
-          value: 15,
-          range: { min: 10, max: 20, default: 15, useRange: true }
+          value: 15
         },
         category: ExpenseCategory.GESTION,
       },
@@ -73,7 +70,7 @@ export function createDefaultProject(): Project {
         id: '5',
         name: 'Taxes municipales',
         type: ExpenseType.FIXED_ANNUAL,
-        amount: { value: 3000 },
+        amount: { value: 1500 },
         category: ExpenseCategory.TAXES,
       },
       {
@@ -88,8 +85,7 @@ export function createDefaultProject(): Project {
         name: 'Frais énergie',
         type: ExpenseType.FIXED_MONTHLY,
         amount: { 
-          value: 200,
-          range: { min: 150, max: 250, default: 200, useRange: true }
+          value: 250
         },
         category: ExpenseCategory.UTILITIES,
       },
@@ -113,20 +109,17 @@ export function createDefaultProject(): Project {
     ],
     financing: {
       purchasePrice: { 
-        value: 550000,
-        range: { min: 500000, max: 600000, default: 550000, useRange: true }
+        value: 550000
       },
       municipalAssessment: undefined, // Optionnel, utilise prix d'achat si non défini
       downPayment: { value: 27500 },
       interestRate: { 
-        value: 5.5,
-        range: { min: 4.5, max: 7.0, default: 5.5, useRange: true }
+        value: 5.5
       },
       amortizationYears: { value: 30 },
       paymentFrequency: PaymentFrequency.MONTHLY,
       annualAppreciationRate: { 
         value: 2,
-        range: { min: 0, max: 10, default: 2, useRange: true },
         sourceInfo: { source: '', remarks: '' }
       },
     },
@@ -139,7 +132,7 @@ export function createDefaultProject(): Project {
       revenueEscalationRate: { value: 2.5, sourceInfo: { source: '', remarks: 'Inflation typique' } },
       expenseEscalationRate: { value: 3.0, sourceInfo: { source: '', remarks: 'Inflation + coûts croissants' } },
       capexRate: { value: 1.0, sourceInfo: { source: '', remarks: 'Réserve pour rénovations majeures' } },
-      discountRate: { value: 5.0, sourceInfo: { source: '', remarks: 'Coût d\'opportunité du capital' } },
+      discountRate: { value: 8.0, sourceInfo: { source: '', remarks: 'Coût d\'opportunité du capital' } },
       saleCostsRate: { value: 6.0, sourceInfo: { source: '', remarks: 'Courtage + frais notaire' } },
     },
   };
