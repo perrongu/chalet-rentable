@@ -141,7 +141,7 @@ export function ProjectionTable({ projection }: ProjectionTableProps) {
                       {formatCurrency(year.equity)}
                     </td>
                     <td className={`text-right py-2 px-3 ${isGoodDSCR ? 'text-green-700' : 'text-red-700'}`}>
-                      {formatNumber(year.dscr)}
+                      {formatNumber(year.dscr, 2)}
                     </td>
                     <td className={`text-right py-2 px-3 ${isGoodLTV ? 'text-green-700' : 'text-orange-600'}`}>
                       {formatPercent(year.ltv)}

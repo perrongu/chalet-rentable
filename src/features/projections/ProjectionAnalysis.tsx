@@ -1,19 +1,28 @@
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
+import { Button } from '../../components/ui/Button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/Tabs';
+import { MetricExplanationModal } from '../../components/ui/MetricExplanationModal';
 import { useProject } from '../../store/ProjectContext';
 import { calculateProjections } from '../../lib/projections';
 import { ProjectionTable } from './ProjectionTable';
 import { ProjectionCharts } from './ProjectionCharts';
 import { formatCurrency, formatPercent, formatNumber } from '../../lib/utils';
 import { LIMITS } from '../../lib/constants';
+import {
+  getDSCRAdvice,
+  getLTVAdvice,
+  getBreakEvenOccupancyAdvice,
+  getMetricExplanation,
+} from '../../lib/metricAdvice';
 
 export function ProjectionAnalysis() {
   const { getCurrentInputs } = useProject();
   const inputs = getCurrentInputs();
 
   const [numberOfYears, setNumberOfYears] = useState<number>(LIMITS.DEFAULT_PROJECTION_YEARS);
+  const [openModal, setOpenModal] = useState<'dscr' | 'ltv' | 'breakeven' | null>(null);
 
   // Calculer les projections
   const projection = useMemo(() => {
@@ -247,14 +256,25 @@ export function ProjectionAnalysis() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm text-gray-600 mb-1">DSCR minimum</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm text-gray-600">DSCR minimum</label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setOpenModal('dscr')}
+                  className="h-6 px-2 text-xs"
+                  title="Voir les détails et conseils"
+                >
+                  ⓘ Détails
+                </Button>
+              </div>
               <div className="flex items-center gap-2">
                 <div
                   className={`text-2xl font-bold ${
                     projection.minDSCR >= 1.25 ? 'text-green-700' : 'text-red-700'
                   }`}
                 >
-                  {formatNumber(projection.minDSCR)}
+                  {formatNumber(projection.minDSCR, 2)}
                 </div>
                 {projection.minDSCR < 1.25 && (
                   <span className="text-lg" title="DSCR insuffisant pour financement bancaire standard">
@@ -265,16 +285,21 @@ export function ProjectionAnalysis() {
               <div className="text-xs text-gray-600 mt-1">
                 Seuil bancaire : ≥ 1.25
               </div>
-              {projection.minDSCR < 1.25 && (
-                <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-800">
-                  <strong>Risque :</strong> Un DSCR &lt; 1.25 indique une marge de sécurité insuffisante. 
-                  Les banques peuvent refuser le financement ou exiger une mise de fonds plus élevée.
-                </div>
-              )}
             </div>
 
             <div>
-              <label className="block text-sm text-gray-600 mb-1">LTV maximum</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm text-gray-600">LTV maximum</label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setOpenModal('ltv')}
+                  className="h-6 px-2 text-xs"
+                  title="Voir les détails et conseils"
+                >
+                  ⓘ Détails
+                </Button>
+              </div>
               <div className="flex items-center gap-2">
                 <div
                   className={`text-2xl font-bold ${
@@ -292,16 +317,21 @@ export function ProjectionAnalysis() {
               <div className="text-xs text-gray-600 mt-1">
                 Seuil optimal : ≤ 75%
               </div>
-              {projection.maxLTV > 75 && (
-                <div className={`mt-2 p-2 rounded text-xs ${projection.maxLTV > 85 ? 'bg-red-50 border border-red-200 text-red-800' : 'bg-orange-50 border border-orange-200 text-orange-800'}`}>
-                  <strong>{projection.maxLTV > 85 ? 'Risque élevé :' : 'Attention :'}</strong> LTV élevé = faible équité. 
-                  {projection.maxLTV > 85 ? ' Risque de ne pas pouvoir refinancer.' : ' Considérez augmenter la mise de fonds.'}
-                </div>
-              )}
             </div>
 
             <div>
-              <label className="block text-sm text-gray-600 mb-1">Occupation break-even</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm text-gray-600">Occupation break-even</label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setOpenModal('breakeven')}
+                  className="h-6 px-2 text-xs"
+                  title="Voir les détails et conseils"
+                >
+                  ⓘ Détails
+                </Button>
+              </div>
               <div className="flex items-center gap-2">
                 <div className={`text-2xl font-bold ${
                   (projection.breakEvenOccupancy || 0) <= 50 ? 'text-green-700' : 
@@ -405,6 +435,31 @@ export function ProjectionAnalysis() {
           <ProjectionTable projection={projection} />
         </TabsContent>
       </Tabs>
+
+      {/* Modals d'explication */}
+      <MetricExplanationModal
+        isOpen={openModal === 'dscr'}
+        onClose={() => setOpenModal(null)}
+        title="DSCR - Debt Service Coverage Ratio"
+        explanation={getMetricExplanation('dscr')}
+        advice={getDSCRAdvice(projection.minDSCR, inputs, projection)}
+      />
+
+      <MetricExplanationModal
+        isOpen={openModal === 'ltv'}
+        onClose={() => setOpenModal(null)}
+        title="LTV - Loan-to-Value"
+        explanation={getMetricExplanation('ltv')}
+        advice={getLTVAdvice(projection.maxLTV, inputs)}
+      />
+
+      <MetricExplanationModal
+        isOpen={openModal === 'breakeven'}
+        onClose={() => setOpenModal(null)}
+        title="Occupation Break-Even"
+        explanation={getMetricExplanation('breakeven')}
+        advice={getBreakEvenOccupancyAdvice(projection.breakEvenOccupancy || 0, inputs)}
+      />
     </div>
   );
 }
