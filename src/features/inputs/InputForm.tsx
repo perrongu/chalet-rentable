@@ -534,7 +534,7 @@ export function InputForm() {
                     className="h-6 px-2 text-xs"
                     aria-label="Voir les détails sur l'évaluation municipale"
                   >
-                    🔍 Détails
+                    <span className="emoji-icon-sm">ⓘ</span>Détails
                   </Button>
                 </div>
                 <input
@@ -821,7 +821,7 @@ export function InputForm() {
               <div className="flex justify-between items-center">
                 <CardTitle>Évaluation municipale</CardTitle>
                 <Button variant="ghost" size="sm" onClick={() => setShowMunicipalAssessmentInfo(false)}>
-                  ✕
+                  ×
                 </Button>
               </div>
             </CardHeader>

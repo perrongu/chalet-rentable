@@ -8,12 +8,19 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('fr-CA', {
+  const formatted = new Intl.NumberFormat('fr-CA', {
     style: 'currency',
     currency: 'CAD',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(value);
+  // Remplacer l'espace normal par un espace insécable
+  return formatted.replace(' $', '\u00A0$');
+}
+
+export function formatCurrencySigned(value: number): string {
+  const formatted = formatCurrency(Math.abs(value));
+  return value < 0 ? `(${formatted})` : formatted;
 }
 
 export function formatPercent(value: number, decimals: number = 2): string {

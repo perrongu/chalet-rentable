@@ -69,7 +69,7 @@ function MetricCard({ title, value, color = 'sky', icon, onInspect }: MetricCard
               className="h-7 px-2 text-xs"
               aria-label={`Voir les détails de ${title}`}
             >
-              🔍 Détails
+              <span className="emoji-icon-sm">ⓘ</span>Détails
             </Button>
           )}
         </div>
@@ -236,17 +236,17 @@ export function KPIDashboard({ kpis, onInspect }: KPIDashboardProps) {
         <Card className="border border-slate-200">
           <CardContent className="pt-6">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="table-standard">
                 <thead>
-                  <tr className="border-b-2 border-slate-200">
-                    <th className="text-left py-2 px-3 font-semibold text-slate-700">Composante</th>
-                    <th className="text-right py-2 px-3 font-semibold text-slate-700">Montant</th>
-                    <th className="text-right py-2 px-3 font-semibold text-slate-700">ROI</th>
+                  <tr>
+                    <th className="text-left">Composante</th>
+                    <th className="text-right">Montant</th>
+                    <th className="text-right">ROI</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
-                    <td className="py-3 px-3">
+                  <tr>
+                    <td>
                       <button
                         onClick={() => onInspect?.('annualCashflow')}
                         className="text-left text-slate-700 hover:text-slate-900 hover:underline focus:outline-none focus:underline"
@@ -254,11 +254,11 @@ export function KPIDashboard({ kpis, onInspect }: KPIDashboardProps) {
                         Cashflow
                       </button>
                     </td>
-                    <td className="text-right py-3 px-3 font-medium text-slate-900">{formatCurrency(kpis.annualCashflow)}</td>
-                    <td className="text-right py-3 px-3 font-medium text-slate-900">{formatPercent(kpis.cashflowROI)}</td>
+                    <td className="text-right">{formatCurrency(kpis.annualCashflow)}</td>
+                    <td className="text-right">{formatPercent(kpis.cashflowROI)}</td>
                   </tr>
-                  <tr className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
-                    <td className="py-3 px-3">
+                  <tr>
+                    <td>
                       <button
                         onClick={() => onInspect?.('principalPaidFirstYear')}
                         className="text-left text-slate-700 hover:text-slate-900 hover:underline focus:outline-none focus:underline"
@@ -266,11 +266,11 @@ export function KPIDashboard({ kpis, onInspect }: KPIDashboardProps) {
                         Capitalisation
                       </button>
                     </td>
-                    <td className="text-right py-3 px-3 font-medium text-slate-900">{formatCurrency(kpis.principalPaidFirstYear)}</td>
-                    <td className="text-right py-3 px-3 font-medium text-slate-900">{formatPercent(kpis.capitalizationROI)}</td>
+                    <td className="text-right">{formatCurrency(kpis.principalPaidFirstYear)}</td>
+                    <td className="text-right">{formatPercent(kpis.capitalizationROI)}</td>
                   </tr>
-                  <tr className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
-                    <td className="py-3 px-3">
+                  <tr>
+                    <td>
                       <button
                         onClick={() => onInspect?.('propertyAppreciation')}
                         className="text-left text-slate-700 hover:text-slate-900 hover:underline focus:outline-none focus:underline"
@@ -278,11 +278,11 @@ export function KPIDashboard({ kpis, onInspect }: KPIDashboardProps) {
                         Plus-value
                       </button>
                     </td>
-                    <td className="text-right py-3 px-3 font-medium text-slate-900">{formatCurrency(kpis.propertyAppreciation)}</td>
-                    <td className="text-right py-3 px-3 font-medium text-slate-900">{formatPercent(kpis.appreciationROI)}</td>
+                    <td className="text-right">{formatCurrency(kpis.propertyAppreciation)}</td>
+                    <td className="text-right">{formatPercent(kpis.appreciationROI)}</td>
                   </tr>
-                  <tr className="bg-emerald-50 border-t-2 border-slate-200">
-                    <td className="py-3 px-3 font-bold">
+                  <tr className="bg-emerald-50">
+                    <td className="font-bold border-t-2 border-slate-200">
                       <button
                         onClick={() => onInspect?.('totalAnnualProfit')}
                         className="text-left text-slate-800 hover:text-slate-900 hover:underline focus:outline-none focus:underline font-bold"
@@ -290,10 +290,10 @@ export function KPIDashboard({ kpis, onInspect }: KPIDashboardProps) {
                         Total
                       </button>
                     </td>
-                    <td className="text-right py-3 px-3 font-bold text-slate-900">
+                    <td className="text-right font-bold border-t-2 border-slate-200">
                       {formatCurrency(kpis.totalAnnualProfit)}
                     </td>
-                    <td className="text-right py-3 px-3 font-bold text-slate-900">{formatPercent(kpis.totalROI)}</td>
+                    <td className="text-right font-bold border-t-2 border-slate-200">{formatPercent(kpis.totalROI)}</td>
                   </tr>
                 </tbody>
               </table>

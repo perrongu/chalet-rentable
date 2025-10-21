@@ -61,11 +61,11 @@ export function TornadoChart({ results, objective }: TornadoChartProps) {
     <div className="space-y-6">
       <h3 className="text-lg font-semibold text-slate-800">Analyse de sensibilité - Plages de valeurs</h3>
       
-      <div className="bg-sky-50 border border-sky-200 rounded-xl p-4">
-        <p className="text-sm text-sky-900">
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+        <p className="text-sm text-slate-700">
           <span className="font-medium">Valeur de base (référence) :</span> {formatValue(results.baseValue)}
         </p>
-        <p className="text-xs text-sky-700 mt-1">
+        <p className="text-xs text-slate-600 mt-1">
           Le graphique montre l'étendue des valeurs possibles de l'objectif pour chaque paramètre.
           La ligne verticale noire indique la valeur actuelle (référence).
         </p>

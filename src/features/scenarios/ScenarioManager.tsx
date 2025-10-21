@@ -265,40 +265,40 @@ export function ScenarioManager() {
           <CardContent>
             {/* Tableau de comparaison */}
             <div className="overflow-x-auto mb-6">
-              <table className="w-full text-sm border border-slate-200 rounded-xl overflow-hidden">
-                <thead>
-                  <tr className="border-b-2 border-slate-200 bg-slate-50">
-                    <th className="text-left py-3 px-4 font-semibold text-slate-700">Métrique</th>
+              <table className="table-standard border border-slate-200 rounded-xl overflow-hidden">
+                <thead className="bg-slate-50">
+                  <tr>
+                    <th className="text-left">Métrique</th>
                     {project.scenarios.map((s) => (
-                      <th key={s.id} className="text-right py-3 px-4 font-semibold text-slate-700">
+                      <th key={s.id} className="text-right">
                         {s.name}
                       </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody className="bg-white">
-                  <tr className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
-                    <td className="py-3 px-4 text-slate-700">Revenus annuels bruts</td>
+                  <tr>
+                    <td>Revenus annuels bruts</td>
                     {comparisonData.map((d, i) => (
-                      <td key={i} className="text-right py-3 px-4 font-medium text-slate-900">
+                      <td key={i} className="text-right">
                         {formatCurrency(d.revenus)}
                       </td>
                     ))}
                   </tr>
-                  <tr className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
-                    <td className="py-3 px-4 text-slate-700">Dépenses totales</td>
+                  <tr>
+                    <td>Dépenses totales</td>
                     {comparisonData.map((d, i) => (
-                      <td key={i} className="text-right py-3 px-4 font-medium text-slate-900">
+                      <td key={i} className="text-right">
                         {formatCurrency(d.dépenses)}
                       </td>
                     ))}
                   </tr>
-                  <tr className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
-                    <td className="py-3 px-4 text-slate-700">Cashflow annuel</td>
+                  <tr>
+                    <td>Cashflow annuel</td>
                     {comparisonData.map((d, i) => (
                       <td
                         key={i}
-                        className={`text-right py-3 px-4 font-medium ${
+                        className={`text-right ${
                           d.cashflow >= 0 ? 'text-emerald-600' : 'text-red-500'
                         }`}
                       >
@@ -306,18 +306,18 @@ export function ScenarioManager() {
                       </td>
                     ))}
                   </tr>
-                  <tr className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
-                    <td className="py-3 px-4 text-slate-700">Cash-on-Cash</td>
+                  <tr>
+                    <td>Cash-on-Cash</td>
                     {comparisonData.map((d, i) => (
-                      <td key={i} className="text-right py-3 px-4 font-medium text-slate-900">
+                      <td key={i} className="text-right">
                         {formatPercent(d.coc)}
                       </td>
                     ))}
                   </tr>
-                  <tr className="hover:bg-slate-50/50 transition-colors">
-                    <td className="py-3 px-4 text-slate-700">Cap Rate</td>
+                  <tr>
+                    <td>Cap Rate</td>
                     {comparisonData.map((d, i) => (
-                      <td key={i} className="text-right py-3 px-4 font-medium text-slate-900">
+                      <td key={i} className="text-right">
                         {formatPercent(d.capRate)}
                       </td>
                     ))}

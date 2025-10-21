@@ -55,7 +55,7 @@ export function MetricExplanationModal({
             <CardTitle className="text-xl">{title}</CardTitle>
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-slate-600 text-2xl leading-none transition-colors"
+              className="text-2xl text-slate-400 hover:text-slate-600 transition-colors leading-none"
               aria-label="Fermer"
             >
               ×

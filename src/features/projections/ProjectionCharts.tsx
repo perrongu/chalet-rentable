@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import type { ProjectionResult } from '../../types';
 import { formatCurrency } from '../../lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
+import { cn } from '../../lib/utils';
 import { CHART_COLORS, CHART_COLORS_WITH_OPACITY } from '../../lib/colors';
 import {
   BarChart,
@@ -67,34 +68,31 @@ export function ProjectionCharts({ projection }: ProjectionChartsProps) {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>
-              {viewMode === 'annual' 
-                ? 'Décomposition du profit annuel ($) : cashflow, capitalisation et plus-value par année'
-                : 'Évolution cumulée du profit ($) : cashflow, capitalisation et plus-value par année'
-              }
-            </CardTitle>
-            <div className="flex gap-2" role="group" aria-label="Mode d'affichage du graphique">
+            <CardTitle>Décomposition du profit ($)</CardTitle>
+            <div className="inline-flex h-10 items-center justify-center rounded-xl bg-slate-100 p-1.5 gap-1.5">
               <button
                 onClick={() => setViewMode('annual')}
-                aria-pressed={viewMode === 'annual'}
-                aria-label="Afficher les valeurs annuelles"
-                className="px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200"
-                style={{
-                  backgroundColor: viewMode === 'annual' ? CHART_COLORS.info : '#f1f5f9',
-                  color: viewMode === 'annual' ? 'white' : '#475569',
-                }}
+                className={cn(
+                  'inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 py-2',
+                  'text-sm font-medium transition-all duration-200',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400',
+                  viewMode === 'annual'
+                    ? 'bg-white text-slate-900 shadow-subtle'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                )}
               >
                 Annuel
               </button>
               <button
                 onClick={() => setViewMode('cumulative')}
-                aria-pressed={viewMode === 'cumulative'}
-                aria-label="Afficher les valeurs cumulatives"
-                className="px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200"
-                style={{
-                  backgroundColor: viewMode === 'cumulative' ? CHART_COLORS.info : '#f1f5f9',
-                  color: viewMode === 'cumulative' ? 'white' : '#475569',
-                }}
+                className={cn(
+                  'inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 py-2',
+                  'text-sm font-medium transition-all duration-200',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400',
+                  viewMode === 'cumulative'
+                    ? 'bg-white text-slate-900 shadow-subtle'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                )}
               >
                 Cumulatif
               </button>
@@ -179,7 +177,7 @@ export function ProjectionCharts({ projection }: ProjectionChartsProps) {
       {/* Graphique 2: Équité et valeur */}
       <Card>
         <CardHeader>
-          <CardTitle>Évolution de la valeur, du solde hypothécaire et de l'équité ($) par année</CardTitle>
+          <CardTitle>Évolution de l'équité et de la valeur ($)</CardTitle>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={400}>

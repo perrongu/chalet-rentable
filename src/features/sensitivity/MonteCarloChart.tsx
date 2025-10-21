@@ -73,7 +73,7 @@ export function MonteCarloChart({ results, objective }: MonteCarloChartProps) {
       {/* Statistiques clés */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div 
-          className="border rounded-lg p-4"
+          className="border rounded-xl p-4"
           style={{ 
             backgroundColor: hexToRgba(CHART_COLORS.info, 0.1),
             borderColor: hexToRgba(CHART_COLORS.info, 0.25)
@@ -88,7 +88,13 @@ export function MonteCarloChart({ results, objective }: MonteCarloChartProps) {
           </div>
         </div>
         
-        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+        <div 
+          className="border rounded-xl p-4"
+          style={{ 
+            backgroundColor: hexToRgba(CHART_COLORS.info, 0.1),
+            borderColor: hexToRgba(CHART_COLORS.info, 0.25)
+          }}
+        >
           <div className="text-sm text-slate-600 mb-1">Moyenne</div>
           <div className="text-xl font-bold text-slate-700">
             {formatValue(results.statistics.mean)}
@@ -130,17 +136,17 @@ export function MonteCarloChart({ results, objective }: MonteCarloChartProps) {
       
       {/* Statistiques additionnelles */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-        <div className="flex justify-between">
+        <div className="flex justify-between items-center">
           <span className="text-slate-600">Écart-type:</span>
-          <span className="font-medium">{formatValue(results.statistics.stdDev)}</span>
+          <span className="font-medium ml-2">{formatValue(results.statistics.stdDev)}</span>
         </div>
-        <div className="flex justify-between">
+        <div className="flex justify-between items-center">
           <span className="text-slate-600">Minimum:</span>
-          <span className="font-medium">{formatValue(results.statistics.min)}</span>
+          <span className="font-medium ml-2">{formatValue(results.statistics.min)}</span>
         </div>
-        <div className="flex justify-between">
+        <div className="flex justify-between items-center">
           <span className="text-slate-600">Maximum:</span>
-          <span className="font-medium">{formatValue(results.statistics.max)}</span>
+          <span className="font-medium ml-2">{formatValue(results.statistics.max)}</span>
         </div>
       </div>
       
@@ -185,7 +191,7 @@ export function MonteCarloChart({ results, objective }: MonteCarloChartProps) {
                       className="h-full transition-all"
                       style={{ 
                         width: `${heightPercent}%`,
-                        backgroundColor: isMedianBin ? CHART_COLORS.info : `${CHART_COLORS.info}60`
+                        backgroundColor: isMedianBin ? '#7dd3fc' : '#7dd3fc90'
                       }}
                       aria-label={`${bin.count} échantillons entre ${formatValue(bin.min)} et ${formatValue(bin.max)}`}
                     />
@@ -209,19 +215,12 @@ export function MonteCarloChart({ results, objective }: MonteCarloChartProps) {
       
       {/* Interprétation */}
       <div 
-        className="border rounded-xl p-4"
-        style={{
-          backgroundColor: hexToRgba(CHART_COLORS.info, 0.1),
-          borderColor: hexToRgba(CHART_COLORS.info, 0.25)
-        }}
+        className="bg-blue-50 border border-blue-200 rounded-xl p-4"
       >
-        <h4 
-          className="text-sm font-medium mb-2"
-          style={{ color: CHART_COLORS.info }}
-        >
+        <h4 className="text-sm font-medium text-slate-800 mb-2">
           Interprétation
         </h4>
-        <ul className="text-sm space-y-1" style={{ color: CHART_COLORS.info }}>
+        <ul className="text-sm text-slate-700 space-y-1">
           <li>
             <strong>P10:</strong> Il y a 10% de chances que le résultat soit inférieur à {formatValue(results.statistics.p10)}
           </li>

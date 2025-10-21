@@ -312,8 +312,8 @@ export function SensitivityAnalysis() {
             </TabsList>
 
             {/* Analyse 1D */}
-            <TabsContent value="1d">
-              <div className="space-y-4">
+            <TabsContent value="1d" className="bg-slate-50">
+              <div className="space-y-6">
                 <Select
                   label="Objectif à analyser"
                   value={objective1D}
@@ -322,7 +322,7 @@ export function SensitivityAnalysis() {
                 />
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-base font-medium text-slate-700 mb-2">
                     Sélectionner les paramètres
                   </label>
                   <div className="space-y-2">
@@ -386,11 +386,11 @@ export function SensitivityAnalysis() {
                   
                   {results1D && (
                     <Button 
+                      variant="outline"
                       onClick={() => setResults1D(null)} 
                       disabled={isRunning1D}
-                      className="flex items-center justify-center space-x-2 bg-gray-500 hover:bg-gray-600"
                     >
-                      <span>Effacer les résultats</span>
+                      Effacer les résultats
                     </Button>
                   )}
                 </div>
@@ -404,8 +404,8 @@ export function SensitivityAnalysis() {
             </TabsContent>
 
             {/* Analyse 2D */}
-            <TabsContent value="2d">
-              <div className="space-y-4">
+            <TabsContent value="2d" className="bg-slate-50">
+              <div className="space-y-6">
                 <Select
                   label="Objectif à analyser"
                   value={objective2D}
@@ -487,11 +487,11 @@ export function SensitivityAnalysis() {
                   
                   {results2D && (
                     <Button 
+                      variant="outline"
                       onClick={() => setResults2D(null)} 
                       disabled={isRunning2D}
-                      className="flex items-center justify-center space-x-2 bg-gray-500 hover:bg-gray-600"
                     >
-                      <span>Effacer les résultats</span>
+                      Effacer les résultats
                     </Button>
                   )}
                 </div>
@@ -512,8 +512,8 @@ export function SensitivityAnalysis() {
             </TabsContent>
 
             {/* Analyse Monte Carlo */}
-            <TabsContent value="montecarlo">
-              <div className="space-y-4">
+            <TabsContent value="montecarlo" className="bg-slate-50">
+              <div className="space-y-6">
                 {availableParameters.length === 0 ? (
                   <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm text-yellow-800">
                     Aucun paramètre avec plage définie (useRange=true). Pour utiliser la simulation Monte Carlo, 
@@ -521,10 +521,13 @@ export function SensitivityAnalysis() {
                   </div>
                 ) : (
                   <>
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
-                      <strong>Simulation Monte Carlo:</strong> Analyse stochastique qui échantillonne aléatoirement 
-                      tous les paramètres avec plages selon une distribution normale, puis calcule des milliers 
-                      de scénarios possibles pour estimer la distribution probabiliste du résultat.
+                    <div>
+                      <h3 className="text-lg font-semibold text-slate-800 mb-3">Simulation Monte Carlo</h3>
+                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-slate-700">
+                        <strong>Description:</strong> Analyse stochastique qui échantillonne aléatoirement 
+                        tous les paramètres avec plages selon une distribution normale, puis calcule des milliers 
+                        de scénarios possibles pour estimer la distribution probabiliste du résultat.
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -557,11 +560,11 @@ export function SensitivityAnalysis() {
                       
                       {resultsMC && (
                         <Button 
+                          variant="outline"
                           onClick={() => setResultsMC(null)} 
                           disabled={isRunningMC}
-                          className="flex items-center justify-center space-x-2 bg-gray-500 hover:bg-gray-600"
                         >
-                          <span>Effacer les résultats</span>
+                          Effacer les résultats
                         </Button>
                       )}
                     </div>

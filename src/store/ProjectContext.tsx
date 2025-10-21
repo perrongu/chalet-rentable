@@ -210,14 +210,6 @@ function loadProjectFromStorage(): Project {
       
       const project = validationResult.success ? validationResult.data : parsed;
       
-      // Logging du versioning
-      console.log(`[Migration] Chargement projet version: ${project.version || 'legacy'}`);
-      const needsMigration = !project.version || project.version !== '1.0.0';
-      
-      if (needsMigration) {
-        console.log('[Migration] Migration des données nécessaire');
-      }
-      
       // Migration des données
       if (project.baseInputs) {
         // Migrer les revenus
@@ -227,33 +219,17 @@ function loadProjectFromStorage(): Project {
           
           project.baseInputs.revenue.averageDailyRate = migrateInputWithSource(oldAdr);
           project.baseInputs.revenue.occupancyRate = migrateInputWithSource(oldOcc);
-          
-          if (typeof oldAdr === 'number' || typeof oldOcc === 'number') {
-            console.log('[Migration] Revenus migrés vers InputWithSource');
-          }
         }
         
         // Migrer les dépenses
         if (project.baseInputs.expenses) {
-          let expensesMigrated = 0;
           project.baseInputs.expenses = project.baseInputs.expenses.map((expense: any) => {
-            const hadOldCategory = expense.category && !Object.values(ExpenseCategory).includes(expense.category);
-            const hadOldAmount = typeof expense.amount === 'number';
-            
-            if (hadOldCategory || hadOldAmount) {
-              expensesMigrated++;
-            }
-            
             return {
               ...expense,
               amount: migrateInputWithSource(expense.amount),
               category: migrateExpenseCategory(expense.category),
             };
           });
-          
-          if (expensesMigrated > 0) {
-            console.log(`[Migration] ${expensesMigrated} dépenses migrées`);
-          }
         }
         
         // Migrer le financement
@@ -321,10 +297,8 @@ function loadProjectFromStorage(): Project {
       // Assurer que la version est à jour
       if (!project.version) {
         project.version = '1.0.0';
-        console.log('[Migration] Version définie à 1.0.0');
       }
       
-      console.log('[Migration] Projet chargé avec succès');
       return project;
     }
   } catch (error) {
@@ -333,7 +307,6 @@ function loadProjectFromStorage(): Project {
       console.error('[Migration] JSON invalide - reset nécessaire');
     }
   }
-  console.log('[Migration] Création d\'un nouveau projet par défaut');
   return createDefaultProject();
 }
 

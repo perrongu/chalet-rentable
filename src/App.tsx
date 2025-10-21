@@ -32,7 +32,7 @@ function InspectionModal({
           <div className="flex justify-between items-center">
             <CardTitle>Inspection: {metric}</CardTitle>
             <Button variant="ghost" size="sm" onClick={onClose}>
-              ✕
+              ×
             </Button>
           </div>
         </CardHeader>
@@ -289,16 +289,16 @@ function AppContent() {
             <nav aria-label="Actions principales">
               <div className="flex space-x-2">
                 <Button variant="outline" onClick={handleNewProject} aria-label="Nouveau projet">
-                  ✨ Nouveau
+                  <span className="emoji-icon">✨</span>Nouveau
                 </Button>
                 <Button variant="outline" onClick={handleLoad} aria-label="Ouvrir un projet">
-                  📂 Ouvrir
+                  <span className="emoji-icon">📂</span>Ouvrir
                 </Button>
                 <Button variant="outline" onClick={handleSave} aria-label="Enregistrer le projet">
-                  💾 Enregistrer
+                  <span className="emoji-icon">💾</span>Enregistrer
                 </Button>
                 <Button variant="outline" onClick={handleExportPDF} aria-label="Exporter rapport PDF">
-                  📄 Rapport PDF
+                  <span className="emoji-icon">📄</span>Rapport PDF
                 </Button>
               </div>
             </nav>

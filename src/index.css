@@ -13,6 +13,22 @@
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Variables pour boutons */
+  --btn-height-sm: 32px;
+  --btn-height-md: 40px;
+  --btn-height-lg: 48px;
+
+  /* Variables pour espacements */
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+
+  /* Variables pour émojis */
+  --emoji-size-sm: 16px;
+  --emoji-size-md: 20px;
+  --emoji-size-lg: 24px;
 }
 
 * {
@@ -32,4 +48,95 @@ input,
 select,
 textarea {
   transition: all var(--transition-base);
+}
+
+/* ============================================================================
+   ÉMOJIS STANDARDISÉS
+   ============================================================================ */
+
+.emoji-icon {
+  display: inline-block;
+  font-size: var(--emoji-size-md);
+  line-height: 1;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+.emoji-icon-sm {
+  font-size: var(--emoji-size-sm);
+  margin-right: 6px;
+}
+
+.emoji-icon-md {
+  font-size: var(--emoji-size-md);
+  margin-right: 8px;
+}
+
+.emoji-icon-lg {
+  font-size: var(--emoji-size-lg);
+  margin-right: 10px;
+}
+
+/* ============================================================================
+   TABLEAUX STANDARDISÉS
+   ============================================================================ */
+
+.table-standard {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table-standard thead th {
+  padding: 12px 16px;
+  font-weight: 600;
+  font-size: 14px;
+  color: rgb(51, 65, 85); /* text-slate-700 */
+  text-align: left;
+  border-bottom: 2px solid rgb(226, 232, 240); /* border-slate-200 */
+}
+
+.table-standard thead th.text-right {
+  text-align: right;
+}
+
+.table-standard tbody td {
+  padding: 12px 16px;
+  font-size: 14px;
+  color: rgb(15, 23, 42); /* text-slate-900 */
+  border-bottom: 1px solid rgb(241, 245, 249); /* border-slate-100 */
+}
+
+.table-standard tbody td.text-right {
+  text-align: right;
+  font-weight: 500;
+}
+
+.table-standard tbody tr {
+  transition: background-color var(--transition-fast);
+}
+
+.table-standard tbody tr:hover {
+  background-color: rgb(248, 250, 252); /* bg-slate-50 */
+}
+
+/* ============================================================================
+   PALETTE DE COULEURS - GUIDE D'UTILISATION
+   ============================================================================ */
+
+/* 
+  Revenus / Positif : sky (bleu) - rgb(56, 189, 248)
+  Dépenses / Neutre : orange - rgb(251, 146, 60) ou slate - rgb(148, 163, 184)
+  Négatif / Alerte : red - rgb(239, 68, 68)
+  Succès : emerald (vert) - rgb(52, 211, 153)
+  Info : violet - rgb(167, 139, 250)
+*/
+
+/* ============================================================================
+   VALEURS MONÉTAIRES
+   ============================================================================ */
+
+.monetary-value {
+  white-space: nowrap;
+  vertical-align: middle;
+  font-variant-numeric: tabular-nums;
 }

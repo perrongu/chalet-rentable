@@ -8,7 +8,7 @@ import { useProject } from '../../store/ProjectContext';
 import { calculateProjections } from '../../lib/projections';
 import { ProjectionTable } from './ProjectionTable';
 import { ProjectionCharts } from './ProjectionCharts';
-import { formatCurrency, formatPercent, formatNumber } from '../../lib/utils';
+import { formatCurrency, formatCurrencySigned, formatPercent, formatNumber } from '../../lib/utils';
 import { LIMITS, ADVICE_THRESHOLDS } from '../../lib/constants';
 import {
   getDSCRAdvice,
@@ -70,7 +70,7 @@ export function ProjectionAnalysis() {
             <CardTitle>Résumé exécutif - Projection {numberOfYears} ans</CardTitle>
             <div className={`flex items-center gap-2 px-3 py-1 bg-${investmentQuality.color}-100 rounded-full`}>
               <span className="text-lg">{investmentQuality.icon}</span>
-              <span className={`font-bold text-${investmentQuality.color}-800`}>
+              <span className={`font-bold text-${investmentQuality.color}-900`}>
                 {investmentQuality.label}
               </span>
             </div>
@@ -79,25 +79,25 @@ export function ProjectionAnalysis() {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
             <div>
-              <div className="text-gray-600">TRI global</div>
+              <div className="text-slate-600" title="Taux de rendement interne">TRI</div>
               <div className={`text-xl font-bold ${projection.irr >= 10 ? 'text-green-700' : projection.irr >= 5 ? 'text-blue-700' : 'text-orange-600'}`}>
                 {formatPercent(projection.irr)}
               </div>
             </div>
             <div>
-              <div className="text-gray-600">Payback cashflow</div>
+              <div className="text-slate-600">Délai de récupération</div>
               <div className={`text-xl font-bold ${!projection.paybackPeriodCashflow ? 'text-red-700' : projection.paybackPeriodCashflow <= 5 ? 'text-green-700' : 'text-blue-700'}`}>
                 {projection.paybackPeriodCashflow ? `${projection.paybackPeriodCashflow} ans` : 'Jamais'}
               </div>
             </div>
             <div>
-              <div className="text-gray-600">Cashflow cumulé</div>
+              <div className="text-slate-600">Cashflow cumulé</div>
               <div className={`text-xl font-bold ${projection.years[projection.years.length - 1].cumulativeCashflow >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                {formatCurrency(projection.years[projection.years.length - 1].cumulativeCashflow)}
+                {formatCurrencySigned(projection.years[projection.years.length - 1].cumulativeCashflow)}
               </div>
             </div>
             <div>
-              <div className="text-gray-600">Équité finale</div>
+              <div className="text-slate-600">Équité finale</div>
               <div className="text-xl font-bold text-green-700">
                 {formatCurrency(projection.years[projection.years.length - 1].equity)}
               </div>
@@ -114,8 +114,8 @@ export function ProjectionAnalysis() {
         <CardContent>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nombre d'années à projeter
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Durée de projection (années)
               </label>
               <div className="flex items-center gap-4">
                 <input
@@ -124,7 +124,7 @@ export function ProjectionAnalysis() {
                   max={LIMITS.MAX_PROJECTION_YEARS}
                   value={numberOfYears}
                   onChange={(e) => handleYearsChange(Number(e.target.value))}
-                  className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                  className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
                 />
                 <Input
                   type="number"
@@ -132,41 +132,41 @@ export function ProjectionAnalysis() {
                   max={LIMITS.MAX_PROJECTION_YEARS}
                   value={numberOfYears}
                   onChange={(e) => handleYearsChange(Number(e.target.value))}
-                  className="w-20"
+                  className="w-24 flex-shrink-0"
                 />
-                <span className="text-sm text-gray-600">ans</span>
+                <span className="text-sm text-slate-600 flex-shrink-0">ans</span>
               </div>
             </div>
 
             {inputs.projectionSettings && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t border-slate-200">
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">Escalade revenus</label>
-                  <div className="text-lg font-semibold">
+                  <label className="block text-sm text-slate-600 mb-1">Escalade revenus</label>
+                  <div className="text-lg font-semibold text-slate-900">
                     {formatPercent(inputs.projectionSettings.revenueEscalationRate.value)}
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">Escalade dépenses</label>
-                  <div className="text-lg font-semibold">
+                  <label className="block text-sm text-slate-600 mb-1">Escalade dépenses</label>
+                  <div className="text-lg font-semibold text-slate-900">
                     {formatPercent(inputs.projectionSettings.expenseEscalationRate.value)}
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">CAPEX annuel</label>
-                  <div className="text-lg font-semibold">
+                  <label className="block text-sm text-slate-600 mb-1">CAPEX annuel</label>
+                  <div className="text-lg font-semibold text-slate-900">
                     {formatPercent(inputs.projectionSettings.capexRate.value)}
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">Taux actualisation</label>
-                  <div className="text-lg font-semibold">
+                  <label className="block text-sm text-slate-600 mb-1">Taux actualisation</label>
+                  <div className="text-lg font-semibold text-slate-900">
                     {formatPercent(inputs.projectionSettings.discountRate.value)}
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">Frais de vente</label>
-                  <div className="text-lg font-semibold">
+                  <label className="block text-sm text-slate-600 mb-1">Frais de vente</label>
+                  <div className="text-lg font-semibold text-slate-900">
                     {formatPercent(inputs.projectionSettings.saleCostsRate.value)}
                   </div>
                 </div>
@@ -181,8 +181,8 @@ export function ProjectionAnalysis() {
         {/* Temps de retour cashflow */}
         <Card className="border-2 border-blue-200 bg-blue-50">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Temps retour cashflow
+            <CardTitle className="text-sm font-medium text-slate-600">
+              Délai de récupération (cashflow)
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -191,7 +191,7 @@ export function ProjectionAnalysis() {
                 ? `${projection.paybackPeriodCashflow} ans`
                 : 'Jamais'}
             </div>
-            <div className="text-xs text-gray-600 mt-1">
+            <div className="text-xs text-slate-600 mt-1">
               Quand cashflow cumulé &gt; 0
             </div>
           </CardContent>
@@ -200,8 +200,8 @@ export function ProjectionAnalysis() {
         {/* Temps de retour profit total */}
         <Card className="border-2 border-green-200 bg-green-50">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Temps retour investissement
+            <CardTitle className="text-sm font-medium text-slate-600">
+              Délai de récupération (total)
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -210,7 +210,7 @@ export function ProjectionAnalysis() {
                 ? `${projection.paybackPeriodTotal} ans`
                 : 'Jamais'}
             </div>
-            <div className="text-xs text-gray-600 mt-1">
+            <div className="text-xs text-slate-600 mt-1">
               Quand profit total &gt; investissement
             </div>
           </CardContent>
@@ -219,15 +219,15 @@ export function ProjectionAnalysis() {
         {/* TRI (IRR) */}
         <Card className="border-2 border-purple-200 bg-purple-50">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              TRI (IRR)
+            <CardTitle className="text-sm font-medium text-slate-600" title="Taux de rendement interne">
+              TRI
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-900">
               {formatPercent(projection.irr)}
             </div>
-            <div className="text-xs text-gray-600 mt-1">
+            <div className="text-xs text-slate-600 mt-1">
               Taux de rendement interne
             </div>
           </CardContent>
@@ -236,7 +236,7 @@ export function ProjectionAnalysis() {
         {/* ROE moyen */}
         <Card className="border-2 border-orange-200 bg-orange-50">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
+            <CardTitle className="text-sm font-medium text-slate-600" title="Return on Equity moyen">
               ROE moyen
             </CardTitle>
           </CardHeader>
@@ -244,8 +244,8 @@ export function ProjectionAnalysis() {
             <div className="text-2xl font-bold text-orange-900">
               {formatPercent(projection.averageROE)}
             </div>
-            <div className="text-xs text-gray-600 mt-1">
-              Return on Equity moyen
+            <div className="text-xs text-slate-600 mt-1">
+              Rendement sur l'équité
             </div>
           </CardContent>
         </Card>
@@ -260,7 +260,7 @@ export function ProjectionAnalysis() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-sm text-gray-600">DSCR minimum</label>
+                <label className="block text-sm text-slate-600">DSCR minimum</label>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -268,7 +268,7 @@ export function ProjectionAnalysis() {
                   className="h-6 px-2 text-xs"
                   title="Voir les détails et conseils"
                 >
-                  ⓘ Détails
+                  <span className="emoji-icon-sm">ⓘ</span>Détails
                 </Button>
               </div>
               <div className="flex items-center gap-2">
@@ -285,14 +285,14 @@ export function ProjectionAnalysis() {
                   </span>
                 )}
               </div>
-              <div className="text-xs text-gray-600 mt-1">
+              <div className="text-xs text-slate-600 mt-1">
                 Seuil bancaire : ≥ 1.25
               </div>
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-sm text-gray-600">LTV maximum</label>
+                <label className="block text-sm text-slate-600">LTV maximum</label>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -300,7 +300,7 @@ export function ProjectionAnalysis() {
                   className="h-6 px-2 text-xs"
                   title="Voir les détails et conseils"
                 >
-                  ⓘ Détails
+                  <span className="emoji-icon-sm">ⓘ</span>Détails
                 </Button>
               </div>
               <div className="flex items-center gap-2">
@@ -317,14 +317,14 @@ export function ProjectionAnalysis() {
                   </span>
                 )}
               </div>
-              <div className="text-xs text-gray-600 mt-1">
+              <div className="text-xs text-slate-600 mt-1">
                 Seuil optimal : ≤ 75%
               </div>
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-sm text-gray-600">Occupation break-even</label>
+                <label className="block text-sm text-slate-600">Occupation seuil de rentabilité</label>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -332,7 +332,7 @@ export function ProjectionAnalysis() {
                   className="h-6 px-2 text-xs"
                   title="Voir les détails et conseils"
                 >
-                  ⓘ Détails
+                  <span className="emoji-icon-sm">ⓘ</span>Détails
                 </Button>
               </div>
               <div className="flex items-center gap-2">
@@ -343,7 +343,7 @@ export function ProjectionAnalysis() {
                   {formatPercent(projection.breakEvenOccupancy || 0)}
                 </div>
               </div>
-              <div className="text-xs text-gray-600 mt-1">
+              <div className="text-xs text-slate-600 mt-1">
                 Occupation min pour cashflow = 0
               </div>
               <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
@@ -362,17 +362,17 @@ export function ProjectionAnalysis() {
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
-            <table className="w-full text-sm">
+            <table className="table-standard">
               <thead className="sticky top-0 bg-white z-10 shadow-sm">
-                <tr className="border-b-2 border-gray-300">
-                  <th className="text-left py-2 px-3">Année</th>
-                  <th className="text-right py-2 px-3">Valeur propriété</th>
-                  <th className="text-right py-2 px-3">Prix vente net</th>
-                  <th className="text-right py-2 px-3">Solde prêt</th>
-                  <th className="text-right py-2 px-3">Produit net</th>
-                  <th className="text-right py-2 px-3">Profit net</th>
-                  <th className="text-right py-2 px-3">MOIC</th>
-                  <th className="text-right py-2 px-3">TRI</th>
+                <tr>
+                  <th className="text-left">Année</th>
+                  <th className="text-right">Valeur propriété</th>
+                  <th className="text-right">Prix vente net</th>
+                  <th className="text-right">Solde prêt</th>
+                  <th className="text-right">Produit net</th>
+                  <th className="text-right">Profit net</th>
+                  <th className="text-right" title="Multiple du capital investi">MOIC</th>
+                  <th className="text-right" title="Taux de rendement interne">TRI</th>
                 </tr>
               </thead>
               <tbody>
@@ -381,22 +381,22 @@ export function ProjectionAnalysis() {
                   const needsTRIAdvice = exit.irr < ADVICE_THRESHOLDS.TRI.GOOD;
                   
                   return (
-                    <tr key={exit.year} className="border-b border-gray-200 hover:bg-gray-50">
-                      <td className="py-3 px-3 font-medium">Année {exit.year}</td>
-                      <td className="text-right py-3 px-3">{formatCurrency(exit.propertyValue)}</td>
-                      <td className="text-right py-3 px-3">{formatCurrency(exit.salePrice)}</td>
-                      <td className="text-right py-3 px-3">{formatCurrency(exit.mortgageBalance)}</td>
-                      <td className="text-right py-3 px-3 font-medium text-blue-700">
+                    <tr key={exit.year}>
+                      <td className="font-medium">Année {exit.year}</td>
+                      <td className="text-right">{formatCurrency(exit.propertyValue)}</td>
+                      <td className="text-right">{formatCurrency(exit.salePrice)}</td>
+                      <td className="text-right">{formatCurrency(exit.mortgageBalance)}</td>
+                      <td className="text-right font-medium text-blue-700">
                         {formatCurrency(exit.netProceeds)}
                       </td>
                       <td
-                        className={`text-right py-3 px-3 font-medium ${
+                        className={`text-right font-medium ${
                           exit.netProfit >= 0 ? 'text-green-700' : 'text-red-700'
                         }`}
                       >
-                        {exit.netProfit >= 0 ? formatCurrency(exit.netProfit) : `(${formatCurrency(Math.abs(exit.netProfit))})`}
+                        {formatCurrencySigned(exit.netProfit)}
                       </td>
-                      <td className={`text-right py-3 px-3 ${exit.moic >= ADVICE_THRESHOLDS.MOIC.GOOD ? 'text-green-700' : exit.moic >= ADVICE_THRESHOLDS.MOIC.ACCEPTABLE ? 'text-orange-600' : 'text-red-700'}`}>
+                      <td className={`text-right ${exit.moic >= ADVICE_THRESHOLDS.MOIC.GOOD ? 'text-green-700' : exit.moic >= ADVICE_THRESHOLDS.MOIC.ACCEPTABLE ? 'text-orange-600' : 'text-red-700'}`}>
                         <div className="flex items-center justify-end gap-2">
                           <span className="font-medium">{exit.moic.toFixed(2)}x</span>
                           {needsMOICAdvice && (
@@ -408,12 +408,12 @@ export function ProjectionAnalysis() {
                               aria-label={`Voir les conseils pour améliorer le MOIC de l'année ${exit.year}`}
                               title="Voir comment améliorer ce MOIC"
                             >
-                              ⓘ
+                              <span className="emoji-icon-sm">ⓘ</span>
                             </Button>
                           )}
                         </div>
                       </td>
-                      <td className={`text-right py-3 px-3 ${exit.irr >= ADVICE_THRESHOLDS.TRI.GOOD ? 'text-green-700' : exit.irr >= ADVICE_THRESHOLDS.TRI.ACCEPTABLE ? 'text-orange-600' : exit.irr >= 0 ? 'text-blue-700' : 'text-red-700'}`}>
+                      <td className={`text-right ${exit.irr >= ADVICE_THRESHOLDS.TRI.GOOD ? 'text-green-700' : exit.irr >= ADVICE_THRESHOLDS.TRI.ACCEPTABLE ? 'text-orange-600' : exit.irr >= 0 ? 'text-blue-700' : 'text-red-700'}`}>
                         <div className="flex items-center justify-end gap-2">
                           <span className="font-medium">{formatPercent(exit.irr)}</span>
                           {needsTRIAdvice && (
@@ -425,7 +425,7 @@ export function ProjectionAnalysis() {
                               aria-label={`Voir les conseils pour améliorer le TRI de l'année ${exit.year}`}
                               title="Voir comment améliorer ce TRI"
                             >
-                              ⓘ
+                              <span className="emoji-icon-sm">ⓘ</span>
                             </Button>
                           )}
                         </div>
@@ -436,23 +436,23 @@ export function ProjectionAnalysis() {
               </tbody>
             </table>
           </div>
-          <div className="mt-4 p-3 bg-gray-50 rounded text-xs space-y-1">
+          <div className="mt-4 p-3 bg-slate-50 rounded-xl text-xs space-y-1 border border-slate-200">
             <p>
               <strong>Prix vente net</strong> : Après frais de vente (courtage, notaire)
             </p>
             <p>
-              <strong>Produit net</strong> : Ce que vous récupérez (Prix vente - Solde prêt)
+              <strong>Produit net</strong> : Ce que vous récupérez (Prix vente − Solde prêt)
             </p>
             <p>
-              <strong>Profit net</strong> : Produit net + Cashflows cumulés - Investissement total
+              <strong>Profit net</strong> : Produit net + Cashflows cumulés − Investissement total
             </p>
             <p>
-              <strong>MOIC</strong> : Multiple on Invested Capital (Profit net / Investissement). 
+              <strong>MOIC</strong> : Multiple du capital investi (Profit net ÷ Investissement). 
               Seuil optimal : <span className="text-green-700 font-medium">≥ {ADVICE_THRESHOLDS.MOIC.GOOD}x</span>
             </p>
             <p>
               <strong>TRI</strong> : Taux de rendement interne jusqu'à cette année. 
-              Seuil optimal : <span className="text-green-700 font-medium">≥ {ADVICE_THRESHOLDS.TRI.GOOD}%</span>
+              Seuil optimal : <span className="text-green-700 font-medium">≥ {ADVICE_THRESHOLDS.TRI.GOOD} %</span>
             </p>
           </div>
         </CardContent>

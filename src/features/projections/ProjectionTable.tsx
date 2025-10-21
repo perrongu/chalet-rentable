@@ -1,5 +1,5 @@
 import type { ProjectionResult } from '../../types';
-import { formatCurrency, formatPercent, formatNumber } from '../../lib/utils';
+import { formatCurrency, formatCurrencySigned, formatPercent, formatNumber } from '../../lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 
 interface ProjectionTableProps {
@@ -79,7 +79,7 @@ export function ProjectionTable({ projection }: ProjectionTableProps) {
             onClick={handleExportCSV}
             className="px-4 py-2 text-sm bg-sky-400 text-white rounded-xl hover:bg-sky-500 hover:shadow-soft transition-all duration-200 font-medium"
           >
-            📥 Exporter CSV
+            <span className="emoji-icon">📥</span>Exporter CSV
           </button>
         </div>
       </CardHeader>
@@ -129,10 +129,10 @@ export function ProjectionTable({ projection }: ProjectionTableProps) {
                     <td className="text-right py-3 px-4 font-medium text-slate-900">{formatCurrency(year.noi)}</td>
                     <td className="text-right py-3 px-4 text-slate-700">{formatCurrency(year.debtService)}</td>
                     <td className={`text-right py-3 px-4 font-medium ${isPositiveCashflow ? 'text-emerald-600' : 'text-red-500'}`}>
-                      {isPositiveCashflow ? formatCurrency(year.cashflow) : `(${formatCurrency(Math.abs(year.cashflow))})`}
+                      {formatCurrencySigned(year.cashflow)}
                     </td>
                     <td className={`text-right py-3 px-4 font-medium ${year.cumulativeCashflow >= 0 ? 'text-sky-600' : 'text-red-500'}`}>
-                      {year.cumulativeCashflow >= 0 ? formatCurrency(year.cumulativeCashflow) : `(${formatCurrency(Math.abs(year.cumulativeCashflow))})`}
+                      {formatCurrencySigned(year.cumulativeCashflow)}
                     </td>
                     <td className="text-right py-3 px-4 text-slate-700">{formatCurrency(year.principalPaid)}</td>
                     <td className="text-right py-3 px-4 text-slate-700">{formatCurrency(year.mortgageBalance)}</td>

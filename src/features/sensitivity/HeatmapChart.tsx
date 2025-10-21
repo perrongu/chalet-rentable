@@ -80,14 +80,14 @@ export function HeatmapChart({ results, objective, labelX, labelY, paramPathX, p
       const r = COLOR_RED_DARK.r;
       const g = Math.floor(COLOR_RED_LIGHT.g - intensity * (COLOR_RED_LIGHT.g - COLOR_RED_DARK.g));
       const b = Math.floor(COLOR_RED_LIGHT.b - intensity * (COLOR_RED_LIGHT.b - COLOR_RED_DARK.b));
-      return `rgb(${r}, ${g}, ${b})`;
+      return `rgba(${r}, ${g}, ${b}, 0.9)`;
     } else {
       // Valeurs positives : gradient de vert pâle (proche de 0) à vert foncé (loin de 0)
       const intensity = value / maxAbsValue;
       const r = Math.floor(COLOR_GREEN_LIGHT.r - intensity * (COLOR_GREEN_LIGHT.r - COLOR_GREEN_DARK.r));
       const g = Math.floor(COLOR_GREEN_LIGHT.g - intensity * (COLOR_GREEN_LIGHT.g - COLOR_GREEN_DARK.g));
       const b = Math.floor(COLOR_GREEN_LIGHT.b - intensity * (COLOR_GREEN_LIGHT.b - COLOR_GREEN_DARK.b));
-      return `rgb(${r}, ${g}, ${b})`;
+      return `rgba(${r}, ${g}, ${b}, 0.9)`;
     }
   };
   
@@ -347,12 +347,14 @@ export function HeatmapChart({ results, objective, labelX, labelY, paramPathX, p
                     return (
                       <td
                         key={i}
-                        className={`border px-1 py-0.5 text-[10px] text-center font-medium ${textColor} ${
+                        className={`border px-1 py-0.5 text-center font-medium ${textColor} ${
                           onBoundary ? 'border-2' : ''
                         }`}
                         style={{ 
                           backgroundColor: cellColor,
-                          borderColor: onBoundary ? CHART_COLORS.warning : undefined
+                          borderColor: onBoundary ? CHART_COLORS.warning : undefined,
+                          fontSize: '0.875rem',
+                          lineHeight: '1.4'
                         }}
                         title={`${symbol} ${formatValue(value)}`}
                       >
@@ -368,35 +370,35 @@ export function HeatmapChart({ results, objective, labelX, labelY, paramPathX, p
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-4 text-xs bg-slate-50 p-3 rounded-xl border border-slate-200">
-        <span className="font-semibold">Légende:</span>
+      <div className="flex flex-wrap items-center gap-4 text-sm bg-slate-50 p-3 rounded-xl border border-slate-200">
+        <span className="font-medium">Légende:</span>
         <div className="flex items-center gap-2">
           <div 
             className="w-5 h-4 rounded border border-slate-300"
             style={{ backgroundColor: CHART_COLORS.negative }}
           ></div>
-          <span>Négatif: {formatValue(minValue)}</span>
+          <span className="font-medium capitalize">Négatif: {formatValue(minValue)}</span>
         </div>
         <div className="flex items-center gap-2">
           <div 
             className="w-5 h-4 rounded border border-slate-300" 
             style={{ backgroundColor: CHART_COLORS.nearZero }}
           ></div>
-          <span>Proche de 0</span>
+          <span className="font-medium capitalize">Proche de 0</span>
         </div>
         <div className="flex items-center gap-2">
           <div 
             className="w-5 h-4 rounded border border-slate-300"
             style={{ backgroundColor: CHART_COLORS.positive }}
           ></div>
-          <span>Positif: {formatValue(maxValue)}</span>
+          <span className="font-medium capitalize">Positif: {formatValue(maxValue)}</span>
         </div>
         <div className="flex items-center gap-2">
           <div 
             className="w-5 h-4 border-2 bg-white rounded"
             style={{ borderColor: CHART_COLORS.warning }}
           ></div>
-          <span>Frontière (transition pos/nég)</span>
+          <span className="font-medium capitalize">Frontière (transition pos/nég)</span>
         </div>
       </div>
     </>
