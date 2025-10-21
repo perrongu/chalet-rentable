@@ -84,10 +84,10 @@ export function ProjectionTable({ projection }: ProjectionTableProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto border border-slate-200 rounded-xl">
+        <div className="overflow-x-auto border border-slate-300 rounded-xl">
           <table className="w-full text-sm border-collapse">
             <thead>
-              <tr className="border-b-2 border-slate-200 bg-slate-50">
+              <tr className="border-b-2 border-slate-300 bg-slate-50">
                 <th className="sticky left-0 z-10 bg-slate-50 text-left py-3 px-4 font-semibold text-slate-700">Année</th>
                 <th className="text-right py-3 px-4 font-semibold text-slate-700">Revenus</th>
                 <th className="text-right py-3 px-4 font-semibold text-slate-700">Dépenses</th>
@@ -116,8 +116,8 @@ export function ProjectionTable({ projection }: ProjectionTableProps) {
                 return (
                   <tr
                     key={year.year}
-                    className={`border-b border-slate-100 hover:bg-slate-50/50 transition-colors ${
-                      idx % 5 === 4 ? 'border-b-2 border-slate-200' : ''
+                    className={`border-b border-slate-200 hover:bg-slate-50/50 transition-colors ${
+                      idx % 5 === 4 ? 'border-b-2 border-slate-300' : ''
                     }`}
                   >
                     <td className="sticky left-0 z-10 bg-white hover:bg-slate-50/50 py-3 px-4 font-medium text-slate-900">
@@ -161,7 +161,7 @@ export function ProjectionTable({ projection }: ProjectionTableProps) {
         </div>
 
         {/* Légende */}
-        <div className="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1 text-slate-700">
+        <div className="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-300 text-xs space-y-1 text-slate-700">
           <p><strong>CAPEX</strong> : Dépenses en capital (rénovations majeures)</p>
           <p><strong>NOI</strong> : Net Operating Income (Revenus - Dépenses opérationnelles)</p>
           <p><strong>DSCR</strong> : Debt Service Coverage Ratio (NOI / Service dette) - Seuil bancaire : ≥ 1.25</p>

@@ -22,7 +22,7 @@ export function Button({
         {
           'bg-sky-400 text-white hover:bg-sky-500 hover:shadow-soft focus-visible:ring-sky-400':
             variant === 'default',
-          'border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 focus-visible:ring-slate-300':
+          'border border-slate-300 bg-white hover:bg-slate-50 hover:border-slate-400 focus-visible:ring-slate-300':
             variant === 'outline',
           'hover:bg-slate-50 focus-visible:ring-slate-300': variant === 'ghost',
           'bg-red-400 text-white hover:bg-red-500 hover:shadow-soft focus-visible:ring-red-400':

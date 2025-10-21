@@ -39,7 +39,7 @@ function InspectionModal({
         <CardContent className="space-y-4">
           <div>
             <h4 className="font-medium mb-2 text-slate-700">Formule</h4>
-            <pre className="bg-slate-50 p-3 rounded-xl text-sm whitespace-pre-wrap border border-slate-100">
+            <pre className="bg-slate-50 p-3 rounded-xl text-sm whitespace-pre-wrap border border-slate-300">
               {trace.formula}
             </pre>
           </div>
@@ -243,7 +243,7 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-40 shadow-subtle" role="banner">
+      <header className="bg-white/80 backdrop-blur-md border-b border-slate-300 sticky top-0 z-40 shadow-soft" role="banner">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <div>

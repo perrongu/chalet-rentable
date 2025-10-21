@@ -359,7 +359,7 @@ export function InputForm() {
               />
             </div>
           </div>
-          <div className="text-sm text-slate-600 pt-1 border-t border-slate-100">
+          <div className="text-sm text-slate-600 pt-1 border-t border-slate-300">
             Revenu annuel estimé:{' '}
             <span className="font-semibold text-slate-900">
               {kpis.annualRevenue.toLocaleString('fr-CA', {
@@ -547,7 +547,7 @@ export function InputForm() {
                   min={0}
                   step={1000}
                   placeholder="Optionnel - prix d'achat par défaut"
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent transition-all duration-200"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent transition-all duration-200"
                 />
                 <p className="text-xs text-slate-500 mt-1.5">
                   Laisser vide pour utiliser le prix d'achat
@@ -769,7 +769,7 @@ export function InputForm() {
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 0,
                   })}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 text-slate-700 cursor-not-allowed"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl bg-slate-50 text-slate-700 cursor-not-allowed"
                   title="Valeur calculée automatiquement"
                 />
               </div>
@@ -847,7 +847,7 @@ export function InputForm() {
 
               <div>
                 <h4 className="font-medium mb-2 text-slate-800">Barème des droits de mutation (Québec)</h4>
-                <div className="bg-slate-50 p-3 rounded-xl text-sm space-y-1 border border-slate-100">
+                <div className="bg-slate-50 p-3 rounded-xl text-sm space-y-1 border border-slate-300">
                   <div>• 0,5% sur la tranche jusqu'à 52 800 $</div>
                   <div>• 1,0% sur la tranche de 52 800 $ à 264 000 $</div>
                   <div>• 1,5% sur la tranche au-delà de 264 000 $</div>

@@ -34,7 +34,7 @@ export function TabsList({ children, className }: TabsListProps) {
   return (
     <div
       className={cn(
-        'inline-flex h-10 items-center justify-center rounded-xl bg-slate-100 p-1.5 gap-1.5',
+        'inline-flex h-10 items-center justify-center rounded-xl bg-slate-200 p-1.5 gap-1.5 border border-slate-300',
         className
       )}
     >
@@ -64,8 +64,8 @@ export function TabsTrigger({ value, children, className }: TabsTriggerProps) {
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400',
         'disabled:pointer-events-none disabled:opacity-50',
         isActive
-          ? 'bg-white text-slate-900 shadow-subtle'
-          : 'text-slate-600 hover:text-slate-900 hover:bg-white/50',
+          ? 'bg-white text-slate-900 shadow-medium border-2 border-slate-300'
+          : 'text-slate-700 hover:text-slate-900 hover:bg-white/70 border border-transparent',
         className
       )}
       onClick={() => setActiveTab(value)}

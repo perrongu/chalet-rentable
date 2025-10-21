@@ -143,7 +143,7 @@ export function ScenarioManager() {
                 <div
                   key={scenario.id}
                   className={`border rounded-2xl p-4 transition-all ${
-                    isActive ? 'border-sky-400 bg-sky-50 shadow-soft' : 'border-slate-200 hover:border-slate-300'
+                    isActive ? 'border-sky-400 bg-sky-50 shadow-soft' : 'border-slate-300 hover:border-slate-400'
                   }`}
                 >
                   <div className="flex justify-between items-start">
@@ -265,7 +265,7 @@ export function ScenarioManager() {
           <CardContent>
             {/* Tableau de comparaison */}
             <div className="overflow-x-auto mb-6">
-              <table className="table-standard border border-slate-200 rounded-xl overflow-hidden">
+              <table className="table-standard border border-slate-300 rounded-xl overflow-hidden">
                 <thead className="bg-slate-50">
                   <tr>
                     <th className="text-left">Métrique</th>

@@ -24,7 +24,7 @@ function MetricCard({ title, value, color = 'sky', icon, onInspect }: MetricCard
     orange: 'border-orange-100 bg-orange-50/50',
     red: 'border-red-100 bg-red-50/50',
     violet: 'border-violet-100 bg-violet-50/50',
-    slate: 'border-slate-100 bg-slate-50/50',
+    slate: 'border-slate-300 bg-slate-50/50',
   };
 
   const textColorClasses = {
@@ -138,7 +138,7 @@ export function KPIDashboard({ kpis, onInspect }: KPIDashboardProps) {
       </div>
 
       {/* 3. ÉGALE : NOI */}
-      <div className="border-t-2 border-slate-200 pt-6">
+      <div className="border-t-2 border-slate-300 pt-6">
         <h3 className="text-lg font-semibold mb-4 text-slate-800">= NOI (Net Operating Income)</h3>
         <div className="grid grid-cols-1 gap-4">
           <MetricCard
@@ -180,7 +180,7 @@ export function KPIDashboard({ kpis, onInspect }: KPIDashboardProps) {
       </div>
 
       {/* 5. ÉGALE : CASHFLOW ANNUEL */}
-      <div className="border-t-2 border-slate-200 pt-6">
+      <div className="border-t-2 border-slate-300 pt-6">
         <h3 className="text-lg font-semibold mb-4 text-slate-800">= Cashflow annuel</h3>
         <div className="grid grid-cols-1 gap-4">
           <MetricCard
@@ -215,7 +215,7 @@ export function KPIDashboard({ kpis, onInspect }: KPIDashboardProps) {
       </div>
 
       {/* 7. ÉGALE : PROFIT TOTAL ANNUEL */}
-      <div className="border-t-2 border-slate-200 pt-6">
+      <div className="border-t-2 border-slate-300 pt-6">
         <h3 className="text-lg font-semibold mb-4 text-slate-800">= Profit total annuel</h3>
         <div className="grid grid-cols-1 gap-4">
           <MetricCard
@@ -229,11 +229,11 @@ export function KPIDashboard({ kpis, onInspect }: KPIDashboardProps) {
       </div>
 
       {/* 8. ANALYSE DE RENTABILITÉ */}
-      <div className="border-t-2 border-slate-200 pt-6">
+      <div className="border-t-2 border-slate-300 pt-6">
         <h3 className="text-lg font-semibold mb-4 text-slate-800">Analyse de rentabilité</h3>
         
         {/* Tableau ROI simplifié */}
-        <Card className="border border-slate-200">
+        <Card className="border-2 border-slate-300">
           <CardContent className="pt-6">
             <div className="overflow-x-auto">
               <table className="table-standard">
@@ -282,7 +282,7 @@ export function KPIDashboard({ kpis, onInspect }: KPIDashboardProps) {
                     <td className="text-right">{formatPercent(kpis.appreciationROI)}</td>
                   </tr>
                   <tr className="bg-emerald-50">
-                    <td className="font-bold border-t-2 border-slate-200">
+                    <td className="font-bold border-t-2 border-slate-300">
                       <button
                         onClick={() => onInspect?.('totalAnnualProfit')}
                         className="text-left text-slate-800 hover:text-slate-900 hover:underline focus:outline-none focus:underline font-bold"
@@ -290,10 +290,10 @@ export function KPIDashboard({ kpis, onInspect }: KPIDashboardProps) {
                         Total
                       </button>
                     </td>
-                    <td className="text-right font-bold border-t-2 border-slate-200">
+                    <td className="text-right font-bold border-t-2 border-slate-300">
                       {formatCurrency(kpis.totalAnnualProfit)}
                     </td>
-                    <td className="text-right font-bold border-t-2 border-slate-200">{formatPercent(kpis.totalROI)}</td>
+                    <td className="text-right font-bold border-t-2 border-slate-300">{formatPercent(kpis.totalROI)}</td>
                   </tr>
                 </tbody>
               </table>
@@ -319,7 +319,7 @@ export function KPIDashboard({ kpis, onInspect }: KPIDashboardProps) {
       </div>
 
       {/* 9. INVESTISSEMENT REQUIS */}
-      <div className="border-t-2 border-slate-200 pt-6">
+      <div className="border-t-2 border-slate-300 pt-6">
         <h3 className="text-lg font-semibold mb-4 text-slate-800">Investissement requis</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <MetricCard

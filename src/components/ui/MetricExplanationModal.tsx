@@ -64,7 +64,7 @@ export function MetricExplanationModal({
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Explication */}
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+          <div className="p-4 bg-slate-50 rounded-xl border border-slate-300">
             <p className="text-sm text-slate-700 leading-relaxed">{explanation}</p>
           </div>
 

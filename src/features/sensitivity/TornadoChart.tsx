@@ -73,9 +73,9 @@ export function TornadoChart({ results, objective }: TornadoChartProps) {
 
       {/* Tableau détaillé */}
       <div className="overflow-x-auto">
-        <table className="w-full text-sm border border-slate-200 rounded-xl overflow-hidden">
+        <table className="w-full text-sm border border-slate-300 rounded-xl overflow-hidden">
           <thead>
-            <tr className="bg-slate-100 border-b-2 border-slate-200">
+            <tr className="bg-slate-100 border-b-2 border-slate-300">
               <th className="text-left py-3 px-4 font-semibold text-slate-700">Paramètre</th>
               <th className="text-right py-3 px-4 font-semibold text-slate-700">Valeur au Min</th>
               <th className="text-right py-3 px-4 font-semibold text-slate-700">Valeur au Max</th>
@@ -85,7 +85,7 @@ export function TornadoChart({ results, objective }: TornadoChartProps) {
           </thead>
           <tbody className="bg-white">
             {results.impacts.map((impact, i) => (
-              <tr key={i} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
+              <tr key={i} className="border-b border-slate-200 hover:bg-slate-50/50 transition-colors">
                 <td className="py-3 px-4 font-medium text-slate-800">{impact.label}</td>
                 <td className={`text-right py-3 px-4 font-medium ${impact.valueLow < 0 ? 'text-red-500' : 'text-emerald-600'}`}>
                   {formatValue(impact.valueLow)}
@@ -142,7 +142,7 @@ export function TornadoChart({ results, objective }: TornadoChartProps) {
             }
             
             return (
-              <div key={idx} className="relative border-b border-slate-100 pb-4 last:border-b-0">
+              <div key={idx} className="relative border-b border-slate-200 pb-4 last:border-b-0">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
                   {/* Label */}
                   <div className="w-full sm:w-44 text-sm font-medium text-slate-700" title={data.label}>
@@ -150,7 +150,7 @@ export function TornadoChart({ results, objective }: TornadoChartProps) {
                   </div>
                   
                   {/* Barre de visualisation */}
-                  <div className="flex-1 w-full relative h-12 bg-slate-50 rounded-xl border border-slate-200">
+                  <div className="flex-1 w-full relative h-12 bg-slate-50 rounded-xl border border-slate-300">
                     {/* Ligne de référence (valeur de base) */}
                     <div 
                       className="absolute top-0 bottom-0 w-0.5 bg-black z-20"
@@ -271,7 +271,7 @@ export function TornadoChart({ results, objective }: TornadoChartProps) {
       </div>
       
       {/* Légende */}
-      <div className="flex flex-wrap items-center gap-6 text-xs text-slate-600 p-4 bg-slate-50 rounded-xl border border-slate-200">
+      <div className="flex flex-wrap items-center gap-6 text-xs text-slate-600 p-4 bg-slate-50 rounded-xl border border-slate-300">
         <div className="flex items-center gap-2">
           <div 
             className="w-6 h-4 rounded shadow-sm border-2 border-dashed"

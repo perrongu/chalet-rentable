@@ -92,7 +92,7 @@ textarea {
   font-size: 14px;
   color: rgb(51, 65, 85); /* text-slate-700 */
   text-align: left;
-  border-bottom: 2px solid rgb(226, 232, 240); /* border-slate-200 */
+  border-bottom: 2px solid rgb(203, 213, 225); /* border-slate-300 */
 }
 
 .table-standard thead th.text-right {
@@ -103,7 +103,7 @@ textarea {
   padding: 12px 16px;
   font-size: 14px;
   color: rgb(15, 23, 42); /* text-slate-900 */
-  border-bottom: 1px solid rgb(241, 245, 249); /* border-slate-100 */
+  border-bottom: 1px solid rgb(203, 213, 225); /* border-slate-300 */
 }
 
 .table-standard tbody td.text-right {

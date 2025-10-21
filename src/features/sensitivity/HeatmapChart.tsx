@@ -370,7 +370,7 @@ export function HeatmapChart({ results, objective, labelX, labelY, paramPathX, p
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-4 text-sm bg-slate-50 p-3 rounded-xl border border-slate-200">
+      <div className="flex flex-wrap items-center gap-4 text-sm bg-slate-50 p-3 rounded-xl border border-slate-300">
         <span className="font-medium">Légende:</span>
         <div className="flex items-center gap-2">
           <div 

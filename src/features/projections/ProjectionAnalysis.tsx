@@ -139,7 +139,7 @@ export function ProjectionAnalysis() {
             </div>
 
             {inputs.projectionSettings && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t border-slate-200">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t border-slate-300">
                 <div>
                   <label className="block text-sm text-slate-600 mb-1">Escalade revenus</label>
                   <div className="text-lg font-semibold text-slate-900">
@@ -436,7 +436,7 @@ export function ProjectionAnalysis() {
               </tbody>
             </table>
           </div>
-          <div className="mt-4 p-3 bg-slate-50 rounded-xl text-xs space-y-1 border border-slate-200">
+          <div className="mt-4 p-3 bg-slate-50 rounded-xl text-xs space-y-1 border border-slate-300">
             <p>
               <strong>Prix vente net</strong> : Après frais de vente (courtage, notaire)
             </p>

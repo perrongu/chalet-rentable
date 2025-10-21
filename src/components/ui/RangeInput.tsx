@@ -155,7 +155,7 @@ export function RangeInput({
                 min={globalMin}
                 max={globalMax}
                 step={step}
-                className="w-full px-2 py-1 text-sm border border-slate-200 rounded-xl hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent transition-all duration-200"
+                className="w-full px-2 py-1 text-sm border border-slate-300 rounded-xl hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent transition-all duration-200"
                 aria-label={`Valeur minimale pour ${labelText}`}
               />
             </div>
@@ -168,7 +168,7 @@ export function RangeInput({
                 min={value.range.min}
                 max={value.range.max}
                 step={step}
-                className="w-full px-2 py-1 text-sm border border-slate-200 rounded-xl hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent transition-all duration-200"
+                className="w-full px-2 py-1 text-sm border border-slate-300 rounded-xl hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent transition-all duration-200"
                 aria-label={`Valeur par défaut pour ${labelText}`}
               />
             </div>
@@ -181,7 +181,7 @@ export function RangeInput({
                 min={globalMin}
                 max={globalMax}
                 step={step}
-                className="w-full px-2 py-1 text-sm border border-slate-200 rounded-xl hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent transition-all duration-200"
+                className="w-full px-2 py-1 text-sm border border-slate-300 rounded-xl hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent transition-all duration-200"
                 aria-label={`Valeur maximale pour ${labelText}`}
               />
             </div>
@@ -196,7 +196,7 @@ export function RangeInput({
           min={globalMin}
           max={globalMax}
           step={step}
-          className="w-full px-3 py-2 border border-slate-200 rounded-xl hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent transition-all duration-200"
+          className="w-full px-3 py-2 border border-slate-300 rounded-xl hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent transition-all duration-200"
           aria-label={labelText}
         />
       )}

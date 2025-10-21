@@ -18,7 +18,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         )}
         <select
           className={cn(
-            'flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm transition-all duration-200',
+            'flex h-10 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm transition-all duration-200',
             'hover:border-slate-300',
             'focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent',
             'disabled:cursor-not-allowed disabled:opacity-50',
