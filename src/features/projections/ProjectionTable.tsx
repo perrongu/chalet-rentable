@@ -77,34 +77,34 @@ export function ProjectionTable({ projection }: ProjectionTableProps) {
           <CardTitle>Projection détaillée par année</CardTitle>
           <button
             onClick={handleExportCSV}
-            className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="px-4 py-2 text-sm bg-sky-400 text-white rounded-xl hover:bg-sky-500 hover:shadow-soft transition-all duration-200 font-medium"
           >
             📥 Exporter CSV
           </button>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto border border-slate-200 rounded-xl">
           <table className="w-full text-sm border-collapse">
             <thead>
-              <tr className="border-b-2 border-gray-300 bg-gray-50">
-                <th className="sticky left-0 z-10 bg-gray-50 text-left py-2 px-3 font-semibold">Année</th>
-                <th className="text-right py-2 px-3 font-semibold">Revenus</th>
-                <th className="text-right py-2 px-3 font-semibold">Dépenses</th>
-                <th className="text-right py-2 px-3 font-semibold">CAPEX</th>
-                <th className="text-right py-2 px-3 font-semibold">NOI</th>
-                <th className="text-right py-2 px-3 font-semibold">Service dette</th>
-                <th className="text-right py-2 px-3 font-semibold text-blue-700">Cashflow</th>
-                <th className="text-right py-2 px-3 font-semibold text-blue-700">CF cumulé</th>
-                <th className="text-right py-2 px-3 font-semibold">Capital payé</th>
-                <th className="text-right py-2 px-3 font-semibold">Solde prêt</th>
-                <th className="text-right py-2 px-3 font-semibold">Valeur</th>
-                <th className="text-right py-2 px-3 font-semibold text-green-700">Équité</th>
-                <th className="text-right py-2 px-3 font-semibold">DSCR</th>
-                <th className="text-right py-2 px-3 font-semibold">LTV</th>
-                <th className="text-right py-2 px-3 font-semibold text-purple-700">ROI</th>
-                <th className="text-right py-2 px-3 font-semibold">ROE</th>
-                <th className="text-right py-2 px-3 font-semibold">VAN</th>
+              <tr className="border-b-2 border-slate-200 bg-slate-50">
+                <th className="sticky left-0 z-10 bg-slate-50 text-left py-3 px-4 font-semibold text-slate-700">Année</th>
+                <th className="text-right py-3 px-4 font-semibold text-slate-700">Revenus</th>
+                <th className="text-right py-3 px-4 font-semibold text-slate-700">Dépenses</th>
+                <th className="text-right py-3 px-4 font-semibold text-slate-700">CAPEX</th>
+                <th className="text-right py-3 px-4 font-semibold text-slate-700">NOI</th>
+                <th className="text-right py-3 px-4 font-semibold text-slate-700">Service dette</th>
+                <th className="text-right py-3 px-4 font-semibold text-sky-700">Cashflow</th>
+                <th className="text-right py-3 px-4 font-semibold text-sky-700">CF cumulé</th>
+                <th className="text-right py-3 px-4 font-semibold text-slate-700">Capital payé</th>
+                <th className="text-right py-3 px-4 font-semibold text-slate-700">Solde prêt</th>
+                <th className="text-right py-3 px-4 font-semibold text-slate-700">Valeur</th>
+                <th className="text-right py-3 px-4 font-semibold text-emerald-700">Équité</th>
+                <th className="text-right py-3 px-4 font-semibold text-slate-700">DSCR</th>
+                <th className="text-right py-3 px-4 font-semibold text-slate-700">LTV</th>
+                <th className="text-right py-3 px-4 font-semibold text-violet-700">ROI</th>
+                <th className="text-right py-3 px-4 font-semibold text-slate-700">ROE</th>
+                <th className="text-right py-3 px-4 font-semibold text-slate-700">VAN</th>
               </tr>
             </thead>
             <tbody>
@@ -116,43 +116,43 @@ export function ProjectionTable({ projection }: ProjectionTableProps) {
                 return (
                   <tr
                     key={year.year}
-                    className={`border-b border-gray-200 hover:bg-gray-50 ${
-                      idx % 5 === 4 ? 'border-b-2 border-gray-300' : ''
+                    className={`border-b border-slate-100 hover:bg-slate-50/50 transition-colors ${
+                      idx % 5 === 4 ? 'border-b-2 border-slate-200' : ''
                     }`}
                   >
-                    <td className="sticky left-0 z-10 bg-white hover:bg-gray-50 py-2 px-3 font-medium">
+                    <td className="sticky left-0 z-10 bg-white hover:bg-slate-50/50 py-3 px-4 font-medium text-slate-900">
                       {year.year}
                     </td>
-                    <td className="text-right py-2 px-3">{formatCurrency(year.revenue)}</td>
-                    <td className="text-right py-2 px-3">{formatCurrency(year.expenses)}</td>
-                    <td className="text-right py-2 px-3 text-orange-600">{formatCurrency(year.capex)}</td>
-                    <td className="text-right py-2 px-3 font-medium">{formatCurrency(year.noi)}</td>
-                    <td className="text-right py-2 px-3">{formatCurrency(year.debtService)}</td>
-                    <td className={`text-right py-2 px-3 font-medium ${isPositiveCashflow ? 'text-green-700' : 'text-red-700'}`}>
+                    <td className="text-right py-3 px-4 text-slate-700">{formatCurrency(year.revenue)}</td>
+                    <td className="text-right py-3 px-4 text-slate-700">{formatCurrency(year.expenses)}</td>
+                    <td className="text-right py-3 px-4 text-orange-500">{formatCurrency(year.capex)}</td>
+                    <td className="text-right py-3 px-4 font-medium text-slate-900">{formatCurrency(year.noi)}</td>
+                    <td className="text-right py-3 px-4 text-slate-700">{formatCurrency(year.debtService)}</td>
+                    <td className={`text-right py-3 px-4 font-medium ${isPositiveCashflow ? 'text-emerald-600' : 'text-red-500'}`}>
                       {isPositiveCashflow ? formatCurrency(year.cashflow) : `(${formatCurrency(Math.abs(year.cashflow))})`}
                     </td>
-                    <td className={`text-right py-2 px-3 font-medium ${year.cumulativeCashflow >= 0 ? 'text-blue-700' : 'text-red-700'}`}>
+                    <td className={`text-right py-3 px-4 font-medium ${year.cumulativeCashflow >= 0 ? 'text-sky-600' : 'text-red-500'}`}>
                       {year.cumulativeCashflow >= 0 ? formatCurrency(year.cumulativeCashflow) : `(${formatCurrency(Math.abs(year.cumulativeCashflow))})`}
                     </td>
-                    <td className="text-right py-2 px-3">{formatCurrency(year.principalPaid)}</td>
-                    <td className="text-right py-2 px-3">{formatCurrency(year.mortgageBalance)}</td>
-                    <td className="text-right py-2 px-3">{formatCurrency(year.propertyValue)}</td>
-                    <td className="text-right py-2 px-3 font-medium text-green-700">
+                    <td className="text-right py-3 px-4 text-slate-700">{formatCurrency(year.principalPaid)}</td>
+                    <td className="text-right py-3 px-4 text-slate-700">{formatCurrency(year.mortgageBalance)}</td>
+                    <td className="text-right py-3 px-4 text-slate-700">{formatCurrency(year.propertyValue)}</td>
+                    <td className="text-right py-3 px-4 font-medium text-emerald-600">
                       {formatCurrency(year.equity)}
                     </td>
-                    <td className={`text-right py-2 px-3 ${isGoodDSCR ? 'text-green-700' : 'text-red-700'}`}>
+                    <td className={`text-right py-3 px-4 ${isGoodDSCR ? 'text-emerald-600' : 'text-red-500'}`}>
                       {formatNumber(year.dscr, 2)}
                     </td>
-                    <td className={`text-right py-2 px-3 ${isGoodLTV ? 'text-green-700' : 'text-orange-600'}`}>
+                    <td className={`text-right py-3 px-4 ${isGoodLTV ? 'text-emerald-600' : 'text-orange-500'}`}>
                       {formatPercent(year.ltv)}
                     </td>
-                    <td className="text-right py-2 px-3 font-medium text-purple-700">
+                    <td className="text-right py-3 px-4 font-medium text-violet-600">
                       {formatPercent(year.roiTotal)}
                     </td>
-                    <td className="text-right py-2 px-3">
+                    <td className="text-right py-3 px-4 text-slate-700">
                       {formatPercent(year.roe)}
                     </td>
-                    <td className="text-right py-2 px-3">{formatCurrency(year.npv)}</td>
+                    <td className="text-right py-3 px-4 text-slate-700">{formatCurrency(year.npv)}</td>
                   </tr>
                 );
               })}
@@ -161,7 +161,7 @@ export function ProjectionTable({ projection }: ProjectionTableProps) {
         </div>
 
         {/* Légende */}
-        <div className="mt-4 p-3 bg-gray-50 rounded text-xs space-y-1">
+        <div className="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1 text-slate-700">
           <p><strong>CAPEX</strong> : Dépenses en capital (rénovations majeures)</p>
           <p><strong>NOI</strong> : Net Operating Income (Revenus - Dépenses opérationnelles)</p>
           <p><strong>DSCR</strong> : Debt Service Coverage Ratio (NOI / Service dette) - Seuil bancaire : ≥ 1.25</p>

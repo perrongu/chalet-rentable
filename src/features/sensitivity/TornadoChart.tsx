@@ -59,13 +59,13 @@ export function TornadoChart({ results, objective }: TornadoChartProps) {
 
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold">Analyse de sensibilité - Plages de valeurs</h3>
+      <h3 className="text-lg font-semibold text-slate-800">Analyse de sensibilité - Plages de valeurs</h3>
       
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <p className="text-sm text-blue-900">
+      <div className="bg-sky-50 border border-sky-200 rounded-xl p-4">
+        <p className="text-sm text-sky-900">
           <span className="font-medium">Valeur de base (référence) :</span> {formatValue(results.baseValue)}
         </p>
-        <p className="text-xs text-blue-700 mt-1">
+        <p className="text-xs text-sky-700 mt-1">
           Le graphique montre l'étendue des valeurs possibles de l'objectif pour chaque paramètre.
           La ligne verticale noire indique la valeur actuelle (référence).
         </p>
@@ -73,24 +73,24 @@ export function TornadoChart({ results, objective }: TornadoChartProps) {
 
       {/* Tableau détaillé */}
       <div className="overflow-x-auto">
-        <table className="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+        <table className="w-full text-sm border border-slate-200 rounded-xl overflow-hidden">
           <thead>
-            <tr className="bg-gray-100 border-b-2 border-gray-300">
-              <th className="text-left py-3 px-4 font-semibold text-gray-700">Paramètre</th>
-              <th className="text-right py-3 px-4 font-semibold text-gray-700">Valeur au Min</th>
-              <th className="text-right py-3 px-4 font-semibold text-gray-700">Valeur au Max</th>
-              <th className="text-right py-3 px-4 font-semibold text-gray-700">Point critique</th>
-              <th className="text-right py-3 px-4 font-semibold text-gray-700">Amplitude</th>
+            <tr className="bg-slate-100 border-b-2 border-slate-200">
+              <th className="text-left py-3 px-4 font-semibold text-slate-700">Paramètre</th>
+              <th className="text-right py-3 px-4 font-semibold text-slate-700">Valeur au Min</th>
+              <th className="text-right py-3 px-4 font-semibold text-slate-700">Valeur au Max</th>
+              <th className="text-right py-3 px-4 font-semibold text-slate-700">Point critique</th>
+              <th className="text-right py-3 px-4 font-semibold text-slate-700">Amplitude</th>
             </tr>
           </thead>
           <tbody className="bg-white">
             {results.impacts.map((impact, i) => (
-              <tr key={i} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
-                <td className="py-3 px-4 font-medium text-gray-800">{impact.label}</td>
-                <td className={`text-right py-3 px-4 font-medium ${impact.valueLow < 0 ? 'text-red-600' : 'text-green-600'}`}>
+              <tr key={i} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
+                <td className="py-3 px-4 font-medium text-slate-800">{impact.label}</td>
+                <td className={`text-right py-3 px-4 font-medium ${impact.valueLow < 0 ? 'text-red-500' : 'text-emerald-600'}`}>
                   {formatValue(impact.valueLow)}
                 </td>
-                <td className={`text-right py-3 px-4 font-medium ${impact.valueHigh < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                <td className={`text-right py-3 px-4 font-medium ${impact.valueHigh < 0 ? 'text-red-500' : 'text-emerald-600'}`}>
                   {formatValue(impact.valueHigh)}
                 </td>
                 <td className="text-right py-3 px-4">
@@ -106,10 +106,10 @@ export function TornadoChart({ results, objective }: TornadoChartProps) {
                       {formatParamValue(impact.criticalPoint.paramValue, impact.parameter)}
                     </span>
                   ) : (
-                    <span className="text-gray-400 text-xs">Aucun</span>
+                    <span className="text-slate-400 text-xs">Aucun</span>
                   )}
                 </td>
-                <td className="text-right py-3 px-4 font-semibold text-gray-700">
+                <td className="text-right py-3 px-4 font-semibold text-slate-700">
                   {formatValue(Math.abs(impact.valueHigh - impact.valueLow))}
                 </td>
               </tr>
@@ -142,21 +142,21 @@ export function TornadoChart({ results, objective }: TornadoChartProps) {
             }
             
             return (
-              <div key={idx} className="relative border-b border-gray-200 pb-4 last:border-b-0">
+              <div key={idx} className="relative border-b border-slate-100 pb-4 last:border-b-0">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
                   {/* Label */}
-                  <div className="w-full sm:w-44 text-sm font-medium text-gray-700" title={data.label}>
+                  <div className="w-full sm:w-44 text-sm font-medium text-slate-700" title={data.label}>
                     {data.label}
                   </div>
                   
                   {/* Barre de visualisation */}
-                  <div className="flex-1 w-full relative h-12 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex-1 w-full relative h-12 bg-slate-50 rounded-xl border border-slate-200">
                     {/* Ligne de référence (valeur de base) */}
                     <div 
                       className="absolute top-0 bottom-0 w-0.5 bg-black z-20"
                       style={{ left: `${basePosition}%` }}
                     >
-                      <div className="absolute -top-7 left-1/2 -translate-x-1/2 text-xs font-medium text-gray-800 whitespace-nowrap bg-white px-1 rounded">
+                      <div className="absolute -top-7 left-1/2 -translate-x-1/2 text-xs font-medium text-slate-800 whitespace-nowrap bg-white px-1 rounded">
                         Base
                       </div>
                     </div>
@@ -228,22 +228,22 @@ export function TornadoChart({ results, objective }: TornadoChartProps) {
                     
                     {/* Marqueurs aux extrémités */}
                     <div 
-                      className="absolute top-1/2 -translate-y-1/2 w-1 h-9 bg-gray-800 rounded z-10"
+                      className="absolute top-1/2 -translate-y-1/2 w-1 h-9 bg-slate-800 rounded z-10"
                       style={{ left: `${lowPosition}%` }}
                     />
                     <div 
-                      className="absolute top-1/2 -translate-y-1/2 w-1 h-9 bg-gray-800 rounded z-10"
+                      className="absolute top-1/2 -translate-y-1/2 w-1 h-9 bg-slate-800 rounded z-10"
                       style={{ left: `${highPosition}%` }}
                     />
                   </div>
                   
                   {/* Valeurs */}
                   <div className="w-full sm:w-52 flex justify-between text-xs font-medium">
-                    <span className={`${data.valueLow < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    <span className={`${data.valueLow < 0 ? 'text-red-500' : 'text-emerald-600'}`}>
                       {formatValue(data.valueLow)}
                     </span>
-                    <span className="text-gray-400">→</span>
-                    <span className={`${data.valueHigh < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    <span className="text-slate-400">→</span>
+                    <span className={`${data.valueHigh < 0 ? 'text-red-500' : 'text-emerald-600'}`}>
                       {formatValue(data.valueHigh)}
                     </span>
                   </div>
@@ -271,7 +271,7 @@ export function TornadoChart({ results, objective }: TornadoChartProps) {
       </div>
       
       {/* Légende */}
-      <div className="flex flex-wrap items-center gap-6 text-xs text-gray-600 p-4 bg-gray-50 rounded-lg border border-gray-200">
+      <div className="flex flex-wrap items-center gap-6 text-xs text-slate-600 p-4 bg-slate-50 rounded-xl border border-slate-200">
         <div className="flex items-center gap-2">
           <div 
             className="w-6 h-4 rounded shadow-sm border-2 border-dashed"
@@ -304,7 +304,7 @@ export function TornadoChart({ results, objective }: TornadoChartProps) {
           <span className="font-medium">Point critique (objectif = 0)</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-1 h-4 bg-gray-800 rounded"></div>
+          <div className="w-1 h-4 bg-slate-800 rounded"></div>
           <span className="font-medium">Limites de la plage</span>
         </div>
       </div>

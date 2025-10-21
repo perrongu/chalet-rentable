@@ -79,7 +79,7 @@ export function MonteCarloChart({ results, objective }: MonteCarloChartProps) {
             borderColor: hexToRgba(CHART_COLORS.info, 0.25)
           }}
         >
-          <div className="text-sm text-gray-600 mb-1">Médiane (P50)</div>
+          <div className="text-sm text-slate-600 mb-1">Médiane (P50)</div>
           <div 
             className="text-xl font-bold"
             style={{ color: CHART_COLORS.info }}
@@ -88,21 +88,21 @@ export function MonteCarloChart({ results, objective }: MonteCarloChartProps) {
           </div>
         </div>
         
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-          <div className="text-sm text-gray-600 mb-1">Moyenne</div>
-          <div className="text-xl font-bold text-gray-700">
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+          <div className="text-sm text-slate-600 mb-1">Moyenne</div>
+          <div className="text-xl font-bold text-slate-700">
             {formatValue(results.statistics.mean)}
           </div>
         </div>
         
         <div 
-          className="border rounded-lg p-4"
+          className="border rounded-xl p-4"
           style={{ 
             backgroundColor: hexToRgba(CHART_COLORS.success, 0.1),
             borderColor: hexToRgba(CHART_COLORS.success, 0.25)
           }}
         >
-          <div className="text-sm text-gray-600 mb-1">P90 (optimiste)</div>
+          <div className="text-sm text-slate-600 mb-1">P90 (optimiste)</div>
           <div 
             className="text-xl font-bold"
             style={{ color: CHART_COLORS.success }}
@@ -112,13 +112,13 @@ export function MonteCarloChart({ results, objective }: MonteCarloChartProps) {
         </div>
         
         <div 
-          className="border rounded-lg p-4"
+          className="border rounded-xl p-4"
           style={{ 
             backgroundColor: hexToRgba(CHART_COLORS.warning, 0.1),
             borderColor: hexToRgba(CHART_COLORS.warning, 0.25)
           }}
         >
-          <div className="text-sm text-gray-600 mb-1">P10 (pessimiste)</div>
+          <div className="text-sm text-slate-600 mb-1">P10 (pessimiste)</div>
           <div 
             className="text-xl font-bold"
             style={{ color: CHART_COLORS.warning }}
@@ -131,29 +131,29 @@ export function MonteCarloChart({ results, objective }: MonteCarloChartProps) {
       {/* Statistiques additionnelles */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
         <div className="flex justify-between">
-          <span className="text-gray-600">Écart-type:</span>
+          <span className="text-slate-600">Écart-type:</span>
           <span className="font-medium">{formatValue(results.statistics.stdDev)}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-gray-600">Minimum:</span>
+          <span className="text-slate-600">Minimum:</span>
           <span className="font-medium">{formatValue(results.statistics.min)}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-gray-600">Maximum:</span>
+          <span className="text-slate-600">Maximum:</span>
           <span className="font-medium">{formatValue(results.statistics.max)}</span>
         </div>
       </div>
       
       {/* Histogramme */}
       <div>
-        <h4 className="text-sm font-medium text-gray-700 mb-3">
+        <h4 className="text-sm font-medium text-slate-700 mb-3">
           Distribution des résultats ({results.samples.length.toLocaleString('fr-CA')} simulations)
         </h4>
         
         {histogram.length === 1 ? (
           // Cas spécial: tous les échantillons identiques
           <div 
-            className="border rounded-lg p-4 text-sm"
+            className="border rounded-xl p-4 text-sm"
             style={{
               backgroundColor: hexToRgba(CHART_COLORS.info, 0.1),
               borderColor: hexToRgba(CHART_COLORS.info, 0.25),
@@ -175,12 +175,12 @@ export function MonteCarloChart({ results, objective }: MonteCarloChartProps) {
               return (
                 <div key={index} className="flex items-center gap-2">
                   {/* Label de la plage */}
-                  <div className="w-32 text-xs text-gray-600 text-right">
+                  <div className="w-32 text-xs text-slate-600 text-right">
                     {formatValue(bin.min)}
                   </div>
                   
                   {/* Barre */}
-                  <div className="flex-1 h-6 bg-gray-100 rounded relative overflow-hidden">
+                  <div className="flex-1 h-6 bg-slate-100 rounded-xl relative overflow-hidden">
                     <div
                       className="h-full transition-all"
                       style={{ 
@@ -197,7 +197,7 @@ export function MonteCarloChart({ results, objective }: MonteCarloChartProps) {
                   </div>
                   
                   {/* Compte */}
-                  <div className="w-16 text-xs text-gray-600">
+                  <div className="w-16 text-xs text-slate-600">
                     {bin.count} ({((bin.count / results.samples.length) * 100).toFixed(1)}%)
                   </div>
                 </div>
@@ -209,7 +209,7 @@ export function MonteCarloChart({ results, objective }: MonteCarloChartProps) {
       
       {/* Interprétation */}
       <div 
-        className="border rounded-lg p-4"
+        className="border rounded-xl p-4"
         style={{
           backgroundColor: hexToRgba(CHART_COLORS.info, 0.1),
           borderColor: hexToRgba(CHART_COLORS.info, 0.25)
@@ -239,10 +239,10 @@ export function MonteCarloChart({ results, objective }: MonteCarloChartProps) {
       
       {/* Paramètres analysés */}
       <div className="border-t pt-4">
-        <h4 className="text-sm font-medium text-gray-700 mb-2">
+        <h4 className="text-sm font-medium text-slate-700 mb-2">
           Paramètres inclus dans la simulation ({results.parameters.length})
         </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-gray-600">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-slate-600">
           {results.parameters.map((param, index) => (
             <div key={index} className="flex justify-between">
               <span>{param.label}:</span>
@@ -255,7 +255,7 @@ export function MonteCarloChart({ results, objective }: MonteCarloChartProps) {
       </div>
       
       {/* Durée d'exécution */}
-      <div className="text-xs text-gray-500 text-center">
+      <div className="text-xs text-slate-500 text-center">
         Simulation complétée en {results.duration}ms
       </div>
     </div>

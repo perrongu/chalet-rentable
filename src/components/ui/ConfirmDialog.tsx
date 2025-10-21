@@ -21,13 +21,13 @@ export function ConfirmDialog({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <Card className="max-w-md w-full">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+      <Card className="max-w-md w-full shadow-medium">
         <CardHeader>
-          <CardTitle>{title}</CardTitle>
+          <CardTitle className="text-xl">{title}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-gray-700">{message}</p>
+          <p className="text-slate-700">{message}</p>
           <div className="flex space-x-2 justify-end">
             <Button variant="outline" onClick={onCancel}>
               Annuler

@@ -19,7 +19,7 @@ function OverrideIndicator({ baseValue, tooltip }: { baseValue: any; tooltip?: s
 
   return (
     <span
-      className="inline-flex items-center ml-2 text-xs text-orange-600 font-medium"
+      className="inline-flex items-center ml-2 text-xs text-orange-500 font-medium"
       title={tooltip || `Valeur du scénario de base : ${formatValue(baseValue)}`}
     >
       🔄
@@ -359,9 +359,9 @@ export function InputForm() {
               />
             </div>
           </div>
-          <div className="text-sm text-gray-600 pt-1 border-t">
+          <div className="text-sm text-slate-600 pt-1 border-t border-slate-100">
             Revenu annuel estimé:{' '}
-            <span className="font-semibold text-gray-900">
+            <span className="font-semibold text-slate-900">
               {kpis.annualRevenue.toLocaleString('fr-CA', {
                 style: 'currency',
                 currency: 'CAD',
@@ -382,14 +382,14 @@ export function InputForm() {
         <CardContent className="space-y-4">
           {Object.entries(expensesByCategory).map(([category, expenses]) => (
             <div key={category} className="space-y-2">
-              <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+              <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
                 {category}
               </h3>
               <div className="space-y-1">
                 {expenses.map((line) => (
                   <div
                     key={line.id}
-                    className="py-2 px-2 hover:bg-gray-50 rounded group space-y-2"
+                    className="py-2 px-2 hover:bg-slate-50 rounded-xl group space-y-2 transition-colors"
                   >
                     <div className="grid grid-cols-12 gap-2 items-start">
                       <div className="col-span-4">
@@ -430,7 +430,7 @@ export function InputForm() {
                       <div className="col-span-2 flex items-center justify-center">
                         <button
                           onClick={() => deleteExpenseLine(line.id, line.name)}
-                          className="text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
                           title="Supprimer"
                           aria-label={`Supprimer ${line.name}`}
                         >
@@ -460,12 +460,12 @@ export function InputForm() {
                         className="text-sm"
                       />
                       {line.type === ExpenseType.PERCENTAGE_REVENUE && (
-                        <div className="text-xs text-gray-500 mt-1 ml-2">
+                        <div className="text-xs text-slate-500 mt-1 ml-2">
                           ≈ {formatCurrency((kpis.annualRevenue * (line.amount.value || 0)) / 100)}/an
                         </div>
                       )}
                       {line.type === ExpenseType.PERCENTAGE_PROPERTY_VALUE && (
-                        <div className="text-xs text-gray-500 mt-1 ml-2">
+                        <div className="text-xs text-slate-500 mt-1 ml-2">
                           ≈ {formatCurrency(((inputs.financing.purchasePrice.value || 0) * (line.amount.value || 0)) / 100)}/an
                         </div>
                       )}
@@ -475,7 +475,7 @@ export function InputForm() {
               </div>
               <button
                 onClick={() => addExpenseLine(category as ExpenseCategory)}
-                className="text-sm text-blue-600 hover:text-blue-700 pl-2 py-1"
+                className="text-sm text-sky-600 hover:text-sky-700 pl-2 py-1 transition-colors"
               >
                 + Ajouter une dépense
               </button>
@@ -483,10 +483,10 @@ export function InputForm() {
           ))}
           {inputs.expenses.length === 0 && (
             <div className="text-center py-4">
-              <p className="text-gray-500 text-sm mb-2">Aucune dépense configurée</p>
+              <p className="text-slate-500 text-sm mb-2">Aucune dépense configurée</p>
               <button
                 onClick={() => addExpenseLine(ExpenseCategory.AUTRE)}
-                className="text-sm text-blue-600 hover:text-blue-700"
+                className="text-sm text-sky-600 hover:text-sky-700 transition-colors"
               >
                 + Ajouter une dépense
               </button>
@@ -520,8 +520,8 @@ export function InputForm() {
             </div>
             <div className="relative">
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-sm font-medium text-gray-700">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium text-slate-700">
                     Évaluation municipale ($)
                     {isFieldOverridden(['financing', 'municipalAssessment']) && (
                       <OverrideIndicator baseValue={getBaseValue(['financing', 'municipalAssessment'])} />
@@ -547,9 +547,9 @@ export function InputForm() {
                   min={0}
                   step={1000}
                   placeholder="Optionnel - prix d'achat par défaut"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent transition-all duration-200"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-slate-500 mt-1.5">
                   Laisser vide pour utiliser le prix d'achat
                 </p>
               </div>
@@ -655,7 +655,7 @@ export function InputForm() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle>Paramètres de projection multi-années</CardTitle>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-slate-600 mt-1">
             Utilisés dans l'onglet "Projections" pour modéliser l'évolution de l'investissement
           </p>
         </CardHeader>
@@ -758,7 +758,7 @@ export function InputForm() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-slate-700 mb-2">
                 Droits de mutation ($)
               </label>
               <div className="relative">
@@ -769,11 +769,11 @@ export function InputForm() {
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 0,
                   })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700 cursor-not-allowed"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 text-slate-700 cursor-not-allowed"
                   title="Valeur calculée automatiquement"
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-slate-500 mt-1.5">
                 Calculé selon le barème progressif QC
               </p>
             </div>
@@ -815,8 +815,8 @@ export function InputForm() {
 
       {/* Modal d'information sur l'évaluation municipale */}
       {showMunicipalAssessmentInfo && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <Card className="max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <Card className="max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-medium">
             <CardHeader>
               <div className="flex justify-between items-center">
                 <CardTitle>Évaluation municipale</CardTitle>
@@ -827,27 +827,27 @@ export function InputForm() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <h4 className="font-medium mb-2">À quoi sert l'évaluation municipale ?</h4>
-                <p className="text-sm text-gray-700">
+                <h4 className="font-medium mb-2 text-slate-800">À quoi sert l'évaluation municipale ?</h4>
+                <p className="text-sm text-slate-700">
                   L'évaluation municipale est utilisée pour calculer les <strong>droits de mutation</strong> (taxe de bienvenue) 
                   lors de l'achat d'une propriété au Québec.
                 </p>
               </div>
 
               <div>
-                <h4 className="font-medium mb-2">Comment est-elle utilisée ?</h4>
-                <p className="text-sm text-gray-700 mb-2">
+                <h4 className="font-medium mb-2 text-slate-800">Comment est-elle utilisée ?</h4>
+                <p className="text-sm text-slate-700 mb-2">
                   Les droits de mutation sont calculés sur la <strong>valeur la plus élevée</strong> entre :
                 </p>
-                <ul className="list-disc list-inside text-sm text-gray-700 space-y-1 ml-2">
+                <ul className="list-disc list-inside text-sm text-slate-700 space-y-1 ml-2">
                   <li>Le prix d'achat de la propriété</li>
                   <li>L'évaluation municipale</li>
                 </ul>
               </div>
 
               <div>
-                <h4 className="font-medium mb-2">Barème des droits de mutation (Québec)</h4>
-                <div className="bg-gray-100 p-3 rounded text-sm space-y-1">
+                <h4 className="font-medium mb-2 text-slate-800">Barème des droits de mutation (Québec)</h4>
+                <div className="bg-slate-50 p-3 rounded-xl text-sm space-y-1 border border-slate-100">
                   <div>• 0,5% sur la tranche jusqu'à 52 800 $</div>
                   <div>• 1,0% sur la tranche de 52 800 $ à 264 000 $</div>
                   <div>• 1,5% sur la tranche au-delà de 264 000 $</div>
@@ -855,28 +855,28 @@ export function InputForm() {
               </div>
 
               <div>
-                <h4 className="font-medium mb-2">Exemple de calcul</h4>
-                <div className="bg-blue-50 p-3 rounded text-sm space-y-2">
+                <h4 className="font-medium mb-2 text-slate-800">Exemple de calcul</h4>
+                <div className="bg-sky-50 p-3 rounded-xl text-sm space-y-2 border border-sky-100">
                   <div>
                     <strong>Prix d'achat :</strong> 340 000 $<br />
                     <strong>Évaluation municipale :</strong> 600 000 $
                   </div>
                   <div>
-                    <strong>Base de calcul :</strong> max(340 000 $, 600 000 $) = <span className="font-bold text-blue-700">600 000 $</span>
+                    <strong>Base de calcul :</strong> max(340 000 $, 600 000 $) = <span className="font-bold text-sky-700">600 000 $</span>
                   </div>
                   <div>
                     <strong>Droits de mutation :</strong><br />
                     52 800 $ × 0,5% = 264 $<br />
                     (264 000 $ - 52 800 $) × 1,0% = 2 112 $<br />
                     (600 000 $ - 264 000 $) × 1,5% = 5 040 $<br />
-                    <strong className="text-blue-700">Total : 7 416 $</strong>
+                    <strong className="text-sky-700">Total : 7 416 $</strong>
                   </div>
                 </div>
               </div>
 
               <div>
-                <h4 className="font-medium mb-2">Que faire si je ne connais pas l'évaluation municipale ?</h4>
-                <p className="text-sm text-gray-700">
+                <h4 className="font-medium mb-2 text-slate-800">Que faire si je ne connais pas l'évaluation municipale ?</h4>
+                <p className="text-sm text-slate-700">
                   Vous pouvez laisser ce champ vide. Dans ce cas, le calculateur utilisera automatiquement 
                   le <strong>prix d'achat</strong> comme base de calcul pour les droits de mutation.
                 </p>

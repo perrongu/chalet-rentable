@@ -59,7 +59,7 @@ export function ProjectionCharts({ projection }: ProjectionChartsProps) {
 
   // Configuration commune pour les deux graphiques
   const chartMargin = { top: 20, right: 30, left: 70, bottom: 30 };
-  const tooltipStyle = { backgroundColor: 'white', border: '1px solid #ccc', borderRadius: '4px', padding: '8px' };
+  const tooltipStyle = { backgroundColor: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '10px', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)' };
 
   return (
     <div className="space-y-6">
@@ -78,10 +78,10 @@ export function ProjectionCharts({ projection }: ProjectionChartsProps) {
                 onClick={() => setViewMode('annual')}
                 aria-pressed={viewMode === 'annual'}
                 aria-label="Afficher les valeurs annuelles"
-                className="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+                className="px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200"
                 style={{
-                  backgroundColor: viewMode === 'annual' ? CHART_COLORS.info : '#e5e7eb',
-                  color: viewMode === 'annual' ? 'white' : '#374151',
+                  backgroundColor: viewMode === 'annual' ? CHART_COLORS.info : '#f1f5f9',
+                  color: viewMode === 'annual' ? 'white' : '#475569',
                 }}
               >
                 Annuel
@@ -90,10 +90,10 @@ export function ProjectionCharts({ projection }: ProjectionChartsProps) {
                 onClick={() => setViewMode('cumulative')}
                 aria-pressed={viewMode === 'cumulative'}
                 aria-label="Afficher les valeurs cumulatives"
-                className="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+                className="px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200"
                 style={{
-                  backgroundColor: viewMode === 'cumulative' ? CHART_COLORS.info : '#e5e7eb',
-                  color: viewMode === 'cumulative' ? 'white' : '#374151',
+                  backgroundColor: viewMode === 'cumulative' ? CHART_COLORS.info : '#f1f5f9',
+                  color: viewMode === 'cumulative' ? 'white' : '#475569',
                 }}
               >
                 Cumulatif
@@ -104,7 +104,7 @@ export function ProjectionCharts({ projection }: ProjectionChartsProps) {
         <CardContent>
           <ResponsiveContainer width="100%" height={400}>
             <BarChart data={profitData} margin={chartMargin}>
-              <CartesianGrid strokeDasharray="3 3" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
               <XAxis dataKey="année" />
               <YAxis
                 tickFormatter={(value) => formatCurrency(value).replace(/\s/g, '')}
@@ -137,7 +137,7 @@ export function ProjectionCharts({ projection }: ProjectionChartsProps) {
                     stackId="profit"
                     fill={CHART_COLORS.plusValue}
                     name="Plus-value (appréciation)"
-                    radius={[4, 4, 0, 0]}
+                    radius={[8, 8, 0, 0]}
                   />
                 </>
               ) : (
@@ -161,13 +161,13 @@ export function ProjectionCharts({ projection }: ProjectionChartsProps) {
                     stackId="profit-cumul"
                     fill={CHART_COLORS.plusValue}
                     name="Plus-value cumulée"
-                    radius={[4, 4, 0, 0]}
+                    radius={[8, 8, 0, 0]}
                   />
                 </>
               )}
             </BarChart>
           </ResponsiveContainer>
-          <div className="mt-2 text-xs text-gray-600 text-center">
+          <div className="mt-2 text-xs text-slate-600 text-center">
             {viewMode === 'annual' 
               ? 'Le profit total combine : Cashflow (liquidités), Capitalisation (capital remboursé), Plus-value (appréciation)'
               : 'Accumulation du profit au fil des années : Cashflow, Capitalisation et Plus-value'
@@ -184,7 +184,7 @@ export function ProjectionCharts({ projection }: ProjectionChartsProps) {
         <CardContent>
           <ResponsiveContainer width="100%" height={400}>
             <AreaChart data={equityData} margin={chartMargin}>
-              <CartesianGrid strokeDasharray="3 3" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
               <XAxis dataKey="année" />
               <YAxis
                 tickFormatter={(value) => formatCurrency(value).replace(/\s/g, '')}
@@ -222,7 +222,7 @@ export function ProjectionCharts({ projection }: ProjectionChartsProps) {
               />
             </AreaChart>
           </ResponsiveContainer>
-          <div className="mt-2 text-xs text-gray-600 text-center">
+          <div className="mt-2 text-xs text-slate-600 text-center">
             L'équité représente la valeur nette : Valeur de la propriété moins le solde hypothécaire
           </div>
         </CardContent>

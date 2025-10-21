@@ -26,7 +26,7 @@ function InspectionModal({
   if (!trace) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <Card className="max-w-2xl w-full max-h-[80vh] overflow-y-auto">
         <CardHeader>
           <div className="flex justify-between items-center">
@@ -38,18 +38,18 @@ function InspectionModal({
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <h4 className="font-medium mb-2">Formule</h4>
-            <pre className="bg-gray-100 p-3 rounded text-sm whitespace-pre-wrap">
+            <h4 className="font-medium mb-2 text-slate-700">Formule</h4>
+            <pre className="bg-slate-50 p-3 rounded-xl text-sm whitespace-pre-wrap border border-slate-100">
               {trace.formula}
             </pre>
           </div>
 
           <div>
-            <h4 className="font-medium mb-2">Variables</h4>
+            <h4 className="font-medium mb-2 text-slate-700">Variables</h4>
             <div className="space-y-1">
               {Object.entries(trace.variables).map(([key, value]) => (
                 <div key={key} className="flex justify-between text-sm">
-                  <span className="text-gray-600">{key}:</span>
+                  <span className="text-slate-600">{key}:</span>
                   <span className="font-mono">{String(value)}</span>
                 </div>
               ))}
@@ -57,25 +57,25 @@ function InspectionModal({
           </div>
 
           <div>
-            <h4 className="font-medium mb-2">Résultat</h4>
-            <div className="text-2xl font-bold text-blue-600">{String(trace.result)}</div>
+            <h4 className="font-medium mb-2 text-slate-700">Résultat</h4>
+            <div className="text-2xl font-bold text-sky-600">{String(trace.result)}</div>
           </div>
 
           {trace.sources && trace.sources.length > 0 && (
             <div>
-              <h4 className="font-medium mb-2">Sources</h4>
+              <h4 className="font-medium mb-2 text-slate-700">Sources</h4>
               <div className="space-y-2">
                 {trace.sources.map((source: any, i: number) => (
                   <div key={i} className="text-sm">
                     {source.source && (
                       <div>
-                        <span className="text-gray-600">Source: </span>
+                        <span className="text-slate-600">Source: </span>
                         <span>{sanitizeForDisplay(source.source)}</span>
                       </div>
                     )}
                     {source.remarks && (
                       <div>
-                        <span className="text-gray-600">Remarques: </span>
+                        <span className="text-slate-600">Remarques: </span>
                         <span>{sanitizeForDisplay(source.remarks)}</span>
                       </div>
                     )}
@@ -241,13 +241,13 @@ function AppContent() {
   const activeScenario = project.scenarios.find(s => s.id === project.activeScenarioId);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-40" role="banner">
+      <header className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-40 shadow-subtle" role="banner">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-2xl font-bold text-slate-900">
                 Analyse de Rentabilité - Chalet Locatif
               </h1>
               <div className="flex items-center gap-3 mt-1">
@@ -258,13 +258,13 @@ function AppContent() {
                     onChange={(e) => setProjectNameInput(e.target.value)}
                     onBlur={handleProjectNameBlur}
                     onKeyDown={handleProjectNameKeyDown}
-                    className="text-sm text-gray-600 border border-blue-400 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="text-sm text-slate-600 border border-sky-400 rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-sky-400"
                     autoFocus
                     aria-label="Modifier le nom du projet"
                   />
                 ) : (
                   <p
-                    className="text-sm text-gray-600 cursor-pointer hover:text-gray-800 hover:underline"
+                    className="text-sm text-slate-600 cursor-pointer hover:text-slate-800 hover:underline"
                     onClick={handleProjectNameClick}
                     aria-label="Nom du projet (cliquer pour modifier)"
                     title="Cliquer pour modifier"
@@ -274,10 +274,10 @@ function AppContent() {
                 )}
                 {activeScenario && (
                   <span
-                    className={`text-xs px-2 py-1 rounded-full ${
+                    className={`text-xs px-3 py-1.5 rounded-full ${
                       activeScenario.isBase
-                        ? 'bg-gray-200 text-gray-700'
-                        : 'bg-blue-100 text-blue-700'
+                        ? 'bg-slate-100 text-slate-700'
+                        : 'bg-sky-100 text-sky-700'
                     }`}
                     aria-label="Scénario actif"
                   >

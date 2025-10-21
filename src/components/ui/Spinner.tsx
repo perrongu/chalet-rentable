@@ -12,7 +12,7 @@ export function Spinner({ size = 'md', className = '' }: SpinnerProps) {
 
   return (
     <div
-      className={`${sizeClasses[size]} border-blue-600 border-t-transparent rounded-full animate-spin ${className}`}
+      className={`${sizeClasses[size]} border-sky-400 border-t-transparent rounded-full animate-spin ${className}`}
       role="status"
       aria-label="Chargement en cours"
     >
@@ -27,10 +27,10 @@ interface LoadingOverlayProps {
 
 export function LoadingOverlay({ message = 'Chargement...' }: LoadingOverlayProps) {
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 flex flex-col items-center space-y-4">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-white rounded-2xl shadow-medium p-6 flex flex-col items-center space-y-4">
         <Spinner size="lg" />
-        <p className="text-gray-700 font-medium">{message}</p>
+        <p className="text-slate-700 font-medium">{message}</p>
       </div>
     </div>
   );

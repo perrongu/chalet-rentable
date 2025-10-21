@@ -1,133 +1,161 @@
-# Webapp - Analyse de Rentabilité Chalet Locatif
+# 🏔️ Analyse de Rentabilité - Chalet Locatif
 
-Application web moderne pour analyser la rentabilité d'un chalet locatif avec gestion de scénarios, analyses de sensibilité, optimisation et export complet.
+Application web pour analyser la rentabilité d'un chalet locatif avec scénarios multiples, analyses de sensibilité et optimisation.
 
-## Fonctionnalités
+## 🚀 Fonctionnalités
 
-### 📊 Analyse financière complète
-- Calcul automatique des KPIs : revenus, dépenses, cashflow, cash-on-cash, cap rate
-- Traçabilité complète des calculs avec formules et sources
-- Inspection détaillée de chaque métrique
+- **📊 Analyse financière** : KPIs en temps réel (cashflow, cash-on-cash, cap rate, NOI, ROI)
+- **🎯 Scénarios multiples** : Création, duplication et comparaison visuelle
+- **📈 Sensibilité** : Analyses 1D (Tornado), 2D (Heatmap) et Monte Carlo
+- **🔍 Optimisation** : Grid search avec contraintes pour trouver les meilleures combinaisons
+- **💾 Exports** : JSON (projets), Excel (tableaux), PDF (rapports), PNG (graphiques)
+- **💿 Autosave** : Sauvegarde automatique en localStorage
 
-### 🎯 Scénarios multiples
-- Création et duplication de scénarios
-- Système d'overrides intelligent (seules les différences vs base)
-- Comparaison visuelle avec tableaux et graphiques
+## 🛠️ Stack technique
 
-### 📈 Analyses de sensibilité
-- **Analyse 1D (Tornado)** : impact relatif de N paramètres sur un objectif
-- **Analyse 2D (Heatmap)** : carte de chaleur pour deux paramètres variables
-- Export des résultats et création de scénarios depuis les points d'intérêt
+React 18 · TypeScript · Vite · Tailwind CSS · Recharts
 
-### 🔍 Optimisation
-- **Mode automatique** : grid search avec contraintes
-- Variables configurables avec bornes min/max
-- Contraintes flexibles (cashflow ≥ 0, occupation ≤ max, etc.)
-- Top-K solutions triées par faisabilité et objectif
-
-### 💾 Sauvegarde et export
-- **Autosave local** : localStorage avec sauvegarde automatique
-- **Fichiers projets** : save/load complet en JSON
-- **Exports** : Excel (tableaux), PNG (graphiques), PDF (rapports)
-- File System Access API avec fallback
-
-### 📝 Sources et remarques
-- Chaque input peut avoir une source et des remarques
-- Traçabilité complète dans les exports
-- Liens vers sources dans l'inspection des KPIs
-
-## Stack technique
-
-- **React 18** + **TypeScript 5.5**
-- **Vite** (build ultra-rapide)
-- **Tailwind CSS** (styling)
-- **Recharts** (graphiques)
-- **xlsx** (export Excel)
-- **jsPDF + html2canvas** (export PDF/PNG)
-- **Zustand** (state management optionnel)
-
-## Installation
+## ⚡ Démarrage rapide
 
 ```bash
+# Installation
 npm install
-```
 
-## Développement
-
-```bash
+# Développement (http://localhost:5173)
 npm run dev
+
+# Build de production
+npm run build
+
+# Prévisualisation du build
+npm preview
 ```
 
-Ouvrir [http://localhost:5173](http://localhost:5173)
+## 📦 Déploiement
 
-## Build de production
+### Architecture
+
+Application **100% client-side** (SPA) sans backend :
+- Aucune base de données requise
+- Aucun serveur API nécessaire
+- Toutes les données stockées localement (localStorage)
+- Fichiers statiques uniquement (HTML, CSS, JS)
+
+### Option 1 : GitHub Pages (Gratuit, recommandé)
 
 ```bash
+# 1. Build de production
 npm run build
+
+# 2. Déployer sur GitHub Pages
+# Via GitHub Actions (recommandé) :
+# - Créer .github/workflows/deploy.yml
+# - Push sur main → déploiement automatique
+# - Accessible sur https://<username>.github.io/<repo-name>
+
+# Via terminal (manuel) :
+npm install -g gh-pages
+gh-pages -d dist
 ```
 
-Les fichiers de production seront dans `dist/`.
+**Configuration GitHub** :
+1. Settings → Pages → Source : `gh-pages` branch
+2. Custom domain (optionnel) : ajouter un fichier `CNAME` dans `public/`
 
-## Structure du projet
+### Option 2 : Netlify (Gratuit)
+
+```bash
+# Méthode 1 : Déploiement par glisser-déposer
+# 1. Aller sur https://app.netlify.com/drop
+# 2. Glisser le dossier dist/
+
+# Méthode 2 : CLI Netlify
+npm install -g netlify-cli
+netlify deploy --prod --dir=dist
+```
+
+**Configuration Netlify** :
+- Build command : `npm run build`
+- Publish directory : `dist`
+- Redirects : Créer `public/_redirects` avec `/* /index.html 200`
+
+### Option 3 : Vercel (Gratuit)
+
+```bash
+# CLI Vercel
+npm install -g vercel
+vercel --prod
+```
+
+**Configuration Vercel** :
+- Framework Preset : Vite
+- Build Command : `npm run build`
+- Output Directory : `dist`
+
+### Option 4 : Hébergement web traditionnel
+
+1. Build : `npm run build`
+2. Upload le contenu de `dist/` via FTP/SFTP
+3. Pointer le domaine vers le dossier uploadé
+4. Configurer le serveur pour servir `index.html` sur toutes les routes (SPA routing)
+
+**Configuration Apache** (`.htaccess`) :
+```apache
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  RewriteRule ^index\.html$ - [L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
+</IfModule>
+```
+
+**Configuration Nginx** :
+```nginx
+location / {
+  try_files $uri $uri/ /index.html;
+}
+```
+
+### Variables d'environnement
+
+Aucune variable d'environnement requise. L'application est entièrement autonome.
+
+### Performance
+
+- Build optimisé avec code splitting automatique
+- Assets compressés (gzip/brotli selon le serveur)
+- Taille du bundle : ~500KB (gzipped)
+- Temps de chargement initial : < 2s (connexion 4G)
+
+## 📁 Structure
 
 ```
 src/
-├── components/        # Composants UI réutilisables
-│   ├── ui/           # Composants de base (Button, Input, Card, etc.)
-│   └── KPIDashboard.tsx
-├── features/         # Modules fonctionnels
-│   ├── inputs/       # Formulaire d'entrée
-│   ├── scenarios/    # Gestion des scénarios
-│   ├── sensitivity/  # Analyses de sensibilité
-│   └── optimization/ # Optimisation
-├── lib/              # Logique métier
-│   ├── calculations.ts  # Moteur de calcul financier
-│   ├── sensitivity.ts   # Analyses de sensibilité
-│   ├── optimizer.ts     # Optimisation
-│   ├── exports.ts       # Exports (Excel, PDF, JSON)
-│   └── utils.ts         # Utilitaires
-├── store/            # State management
-│   └── ProjectContext.tsx
-├── types/            # Types TypeScript
-│   └── index.ts
-└── App.tsx           # Composant principal
+├── components/ui/      # Composants réutilisables (Button, Card, Input...)
+├── features/           # Modules (inputs, scenarios, sensitivity...)
+├── lib/                # Logique métier (calculations, exports, utils)
+├── store/              # State management (Context)
+└── types/              # Types TypeScript
 ```
 
-## Utilisation
+## 📝 Utilisation
 
-1. **Saisir les paramètres** : revenus, dépenses, financement, frais d'acquisition
-2. **Consulter les KPIs** : dashboard en temps réel
-3. **Créer des scénarios** : comparer différentes hypothèses
-4. **Analyser la sensibilité** : identifier les paramètres les plus impactants
-5. **Optimiser** : trouver les meilleures combinaisons
-6. **Enregistrer et exporter** : sauvegarder le projet et générer des rapports
+1. **Paramètres** → Saisir revenus, dépenses, financement
+2. **KPIs** → Consulter le dashboard en temps réel
+3. **Scénarios** → Comparer différentes hypothèses
+4. **Sensibilité** → Identifier les paramètres critiques
+5. **Optimisation** → Trouver les meilleures combinaisons
+6. **Export** → Sauvegarder et générer des rapports
 
-## Formules utilisées
+## 📐 Formules clés
 
-### Revenus
-```
-Nuitées vendues = Jours par an × (Taux d'occupation / 100)
-Revenus annuels = Tarif moyen par nuitée × Nuitées vendues
-```
+**Revenus** : `Tarif moyen × (365 jours × Taux d'occupation)`  
+**Cashflow** : `Revenus - Dépenses - Service de la dette`  
+**Cash-on-Cash** : `(Cashflow annuel / Investissement initial) × 100`  
+**Cap Rate** : `(NOI / Prix d'achat) × 100`
 
-### Service de la dette
-```
-Paiement périodique = (Prêt × r × (1+r)^n) / ((1+r)^n - 1)
-où r = taux périodique, n = nombre de paiements
-```
+## 📄 Licence
 
-### Rentabilité
-```
-Cashflow annuel = Revenus - Dépenses - Service de la dette
-Cash-on-Cash (%) = (Cashflow annuel / Investissement initial) × 100
-Cap Rate (%) = (NOI / Prix d'achat) × 100
-où NOI = Revenus - Dépenses (sans dette)
-```
-
-## Licence
-
-MIT
-
-## Auteur
-
-Développé pour l'analyse de rentabilité de chalets locatifs au Québec.
+MIT — Développé pour l'analyse de chalets locatifs au Québec

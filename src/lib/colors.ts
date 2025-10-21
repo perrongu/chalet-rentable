@@ -1,37 +1,37 @@
 /**
  * Palette de couleurs cohérente pour tous les graphiques du projet
- * Basée sur la sémantique des données
+ * Basée sur la sémantique des données avec tons pastel doux
  */
 
 export const CHART_COLORS = {
   // Composantes du profit
-  cashflow: '#3b82f6',           // Bleu (blue-500) - Liquidités
-  capitalisation: '#f59e0b',     // Orange (amber-500) - Capital remboursé
-  plusValue: '#10b981',          // Vert (emerald-500) - Appréciation
+  cashflow: '#7dd3fc',           // Bleu ciel (sky-300) - Liquidités
+  capitalisation: '#fb923c',     // Orange pastel (orange-400) - Capital remboursé
+  plusValue: '#34d399',          // Vert menthe (emerald-400) - Appréciation
   
   // Valeurs patrimoniales
-  equity: '#059669',             // Vert foncé (emerald-600) - Équité nette
-  propertyValue: '#8b5cf6',      // Violet (violet-500) - Valeur propriété
-  mortgage: '#ef4444',           // Rouge (red-500) - Dette hypothécaire
+  equity: '#10b981',             // Vert (emerald-500) - Équité nette
+  propertyValue: '#a78bfa',      // Violet pastel (violet-400) - Valeur propriété
+  mortgage: '#f87171',           // Rouge pastel (red-400) - Dette hypothécaire
   
   // États généraux
-  positive: '#10b981',           // Vert - Valeurs positives
-  negative: '#ef4444',           // Rouge - Valeurs négatives
-  neutral: '#6b7280',            // Gris (gray-500) - Neutre
+  positive: '#34d399',           // Vert menthe - Valeurs positives
+  negative: '#f87171',           // Rouge pastel - Valeurs négatives
+  neutral: '#94a3b8',            // Gris (slate-400) - Neutre
   nearZero: '#fef9c3',          // Jaune pâle (yellow-100) - Proche de zéro
   
   // Contextuels
-  warning: '#f59e0b',            // Orange - Alerte/Critique
-  info: '#3b82f6',               // Bleu - Information/Référence
-  success: '#10b981',            // Vert - Succès/Optimal
-  danger: '#ef4444',             // Rouge - Danger/Risque
+  warning: '#fb923c',            // Orange pastel - Alerte/Critique
+  info: '#7dd3fc',               // Bleu ciel - Information/Référence
+  success: '#34d399',            // Vert menthe - Succès/Optimal
+  danger: '#f87171',             // Rouge pastel - Danger/Risque
   
   // Gradients pour sensibilité
   gradient: {
-    positiveLight: { r: 220, g: 252, b: 220 },  // Vert pâle
-    positiveDark: { r: 16, g: 185, b: 129 },    // Vert saturé
-    negativeLight: { r: 239, g: 218, b: 218 },  // Rouge pâle
-    negativeDark: { r: 239, g: 68, b: 68 },     // Rouge saturé
+    positiveLight: { r: 220, g: 252, b: 231 },  // Vert pâle emerald-100
+    positiveDark: { r: 52, g: 211, b: 153 },    // Vert menthe emerald-400
+    negativeLight: { r: 254, g: 226, b: 226 },  // Rouge pâle red-100
+    negativeDark: { r: 248, g: 113, b: 113 },   // Rouge pastel red-400
   },
 } as const;
 
@@ -50,37 +50,38 @@ export function hexToRgba(hex: string, opacity: number): string {
 
 /**
  * Couleurs avec opacité pour les graphiques en aires (Area charts)
+ * Opacité réduite pour plus de douceur visuelle
  */
 export const CHART_COLORS_WITH_OPACITY = {
   cashflow: {
     stroke: CHART_COLORS.cashflow,
     fill: CHART_COLORS.cashflow,
-    fillOpacity: 0.6,
+    fillOpacity: 0.4,
   },
   capitalisation: {
     stroke: CHART_COLORS.capitalisation,
     fill: CHART_COLORS.capitalisation,
-    fillOpacity: 0.6,
+    fillOpacity: 0.4,
   },
   plusValue: {
     stroke: CHART_COLORS.plusValue,
     fill: CHART_COLORS.plusValue,
-    fillOpacity: 0.6,
+    fillOpacity: 0.4,
   },
   equity: {
     stroke: CHART_COLORS.equity,
     fill: CHART_COLORS.equity,
-    fillOpacity: 0.6,
+    fillOpacity: 0.4,
   },
   propertyValue: {
     stroke: CHART_COLORS.propertyValue,
     fill: CHART_COLORS.propertyValue,
-    fillOpacity: 0.3,
+    fillOpacity: 0.25,
   },
   mortgage: {
     stroke: CHART_COLORS.mortgage,
     fill: CHART_COLORS.mortgage,
-    fillOpacity: 0.4,
+    fillOpacity: 0.3,
   },
 } as const;
 

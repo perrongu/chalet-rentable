@@ -311,18 +311,18 @@ export function HeatmapChart({ results, objective, labelX, labelY, paramPathX, p
   // Contenu du heatmap (utilisé dans les deux vues)
   const renderHeatmapContent = () => (
     <>
-      <h3 className="text-lg font-semibold">Heatmap - {labelX} vs {labelY}</h3>
+      <h3 className="text-lg font-semibold text-slate-800">Heatmap - {labelX} vs {labelY}</h3>
       
       <div className="overflow-x-auto">
         <div className="inline-block min-w-full">
           <table className="border-collapse text-[10px]">
             <thead>
               <tr>
-                <th className="border border-gray-300 bg-gray-100 px-1 py-0.5 text-[10px] sticky left-0 z-10">
+                <th className="border border-slate-300 bg-slate-100 px-1 py-0.5 text-[10px] sticky left-0 z-10">
                   {labelY} \ {labelX}
                 </th>
                 {xValues.map((x, i) => (
-                  <th key={i} className="border border-gray-300 bg-gray-100 px-1 py-0.5 text-[10px] min-w-[60px]">
+                  <th key={i} className="border border-slate-300 bg-slate-100 px-1 py-0.5 text-[10px] min-w-[60px]">
                     {formatParamValue(x, paramPathX)}
                   </th>
                 ))}
@@ -331,17 +331,17 @@ export function HeatmapChart({ results, objective, labelX, labelY, paramPathX, p
             <tbody>
               {yValues.map((y, j) => (
                 <tr key={j}>
-                  <td className="border border-gray-300 bg-gray-100 px-1 py-0.5 text-[10px] font-medium sticky left-0 z-10">
+                  <td className="border border-slate-300 bg-slate-100 px-1 py-0.5 text-[10px] font-medium sticky left-0 z-10">
                     {formatParamValue(y, paramPathY)}
                   </td>
                   {grid[j].map((value, i) => {
                     const onBoundary = isOnBoundary(i, j);
                     const cellColor = getColor(value);
                     const textColor = isNearZero(value)
-                      ? 'text-gray-700' 
+                      ? 'text-slate-700' 
                       : value < 0 
                         ? 'text-white' 
-                        : 'text-gray-900';
+                        : 'text-slate-900';
                     const symbol = getValueSymbol(value);
                     
                     return (
@@ -368,25 +368,25 @@ export function HeatmapChart({ results, objective, labelX, labelY, paramPathX, p
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-4 text-xs bg-gray-50 p-3 rounded-lg border border-gray-200">
+      <div className="flex flex-wrap items-center gap-4 text-xs bg-slate-50 p-3 rounded-xl border border-slate-200">
         <span className="font-semibold">Légende:</span>
         <div className="flex items-center gap-2">
           <div 
-            className="w-5 h-4 rounded border border-gray-300"
+            className="w-5 h-4 rounded border border-slate-300"
             style={{ backgroundColor: CHART_COLORS.negative }}
           ></div>
           <span>Négatif: {formatValue(minValue)}</span>
         </div>
         <div className="flex items-center gap-2">
           <div 
-            className="w-5 h-4 rounded border border-gray-300" 
+            className="w-5 h-4 rounded border border-slate-300" 
             style={{ backgroundColor: CHART_COLORS.nearZero }}
           ></div>
           <span>Proche de 0</span>
         </div>
         <div className="flex items-center gap-2">
           <div 
-            className="w-5 h-4 rounded border border-gray-300"
+            className="w-5 h-4 rounded border border-slate-300"
             style={{ backgroundColor: CHART_COLORS.positive }}
           ></div>
           <span>Positif: {formatValue(maxValue)}</span>
@@ -456,7 +456,7 @@ export function HeatmapChart({ results, objective, labelX, labelY, paramPathX, p
             {/* Bouton de fermeture */}
             <button
               onClick={handleCloseFullscreen}
-              className="absolute -top-12 right-0 bg-white hover:bg-gray-100 rounded-full p-2 shadow-lg z-10 transition-colors"
+              className="absolute -top-12 right-0 bg-white hover:bg-slate-100 rounded-full p-2 shadow-lg z-10 transition-colors"
               title="Fermer (ESC)"
               aria-label="Fermer le mode plein écran"
             >
@@ -466,7 +466,7 @@ export function HeatmapChart({ results, objective, labelX, labelY, paramPathX, p
             {/* Contenu avec scale */}
             <div
               ref={fullscreenContentRef}
-              className="bg-white p-6 rounded-lg shadow-2xl max-h-[90vh] overflow-auto"
+              className="bg-white p-6 rounded-2xl shadow-2xl max-h-[90vh] overflow-auto"
               style={{
                 transform: `scale(${scale})`,
                 transformOrigin: 'center center',

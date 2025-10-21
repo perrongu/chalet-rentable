@@ -129,14 +129,14 @@ export function RangeInput({
 
   return (
     <div className={className}>
-      <div className="flex items-center justify-between mb-1">
-        <label className="block text-sm font-medium text-gray-700">{label}</label>
-        <label className="flex items-center text-xs text-gray-600 cursor-pointer">
+      <div className="flex items-center justify-between mb-2">
+        <label className="block text-sm font-medium text-slate-700">{label}</label>
+        <label className="flex items-center text-xs text-slate-600 cursor-pointer hover:text-slate-800 transition-colors">
           <input
             type="checkbox"
             checked={useRange}
             onChange={toggleUseRange}
-            className="mr-1"
+            className="mr-1 rounded border-slate-300 text-sky-500 focus:ring-sky-400"
             aria-label={`Activer plage min/max pour ${labelText}`}
           />
           Plage min/max
@@ -147,7 +147,7 @@ export function RangeInput({
         <div className="space-y-2">
           <div className="grid grid-cols-3 gap-2">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Min</label>
+              <label className="block text-xs text-slate-500 mb-1">Min</label>
               <input
                 type="number"
                 value={value.range.min}
@@ -155,12 +155,12 @@ export function RangeInput({
                 min={globalMin}
                 max={globalMax}
                 step={step}
-                className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-2 py-1 text-sm border border-slate-200 rounded-xl hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent transition-all duration-200"
                 aria-label={`Valeur minimale pour ${labelText}`}
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Défaut</label>
+              <label className="block text-xs text-slate-500 mb-1">Défaut</label>
               <input
                 type="number"
                 value={value.range.default}
@@ -168,12 +168,12 @@ export function RangeInput({
                 min={value.range.min}
                 max={value.range.max}
                 step={step}
-                className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-2 py-1 text-sm border border-slate-200 rounded-xl hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent transition-all duration-200"
                 aria-label={`Valeur par défaut pour ${labelText}`}
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Max</label>
+              <label className="block text-xs text-slate-500 mb-1">Max</label>
               <input
                 type="number"
                 value={value.range.max}
@@ -181,12 +181,12 @@ export function RangeInput({
                 min={globalMin}
                 max={globalMax}
                 step={step}
-                className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-2 py-1 text-sm border border-slate-200 rounded-xl hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent transition-all duration-200"
                 aria-label={`Valeur maximale pour ${labelText}`}
               />
             </div>
           </div>
-          {error && <p className="text-xs text-red-600" role="alert">{error}</p>}
+          {error && <p className="text-xs text-red-500" role="alert">{error}</p>}
         </div>
       ) : (
         <input
@@ -196,7 +196,7 @@ export function RangeInput({
           min={globalMin}
           max={globalMax}
           step={step}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-slate-200 rounded-xl hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent transition-all duration-200"
           aria-label={labelText}
         />
       )}

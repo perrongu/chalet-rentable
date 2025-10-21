@@ -28,11 +28,11 @@ export function MetricExplanationModal({
   const getPriorityColor = (priority: MetricAdvice['priority']) => {
     switch (priority) {
       case 'high':
-        return 'bg-red-50 border-red-200 text-red-800';
+        return 'bg-red-50 border-red-200 text-red-700';
       case 'medium':
-        return 'bg-orange-50 border-orange-200 text-orange-800';
+        return 'bg-orange-50 border-orange-200 text-orange-700';
       case 'low':
-        return 'bg-blue-50 border-blue-200 text-blue-800';
+        return 'bg-sky-50 border-sky-200 text-sky-700';
     }
   };
 
@@ -48,14 +48,14 @@ export function MetricExplanationModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <Card className="max-w-2xl w-full my-8">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <Card className="max-w-2xl w-full my-8 shadow-medium">
         <CardHeader>
           <div className="flex items-start justify-between">
             <CardTitle className="text-xl">{title}</CardTitle>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+              className="text-slate-400 hover:text-slate-600 text-2xl leading-none transition-colors"
               aria-label="Fermer"
             >
               ×
@@ -64,18 +64,18 @@ export function MetricExplanationModal({
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Explication */}
-          <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <p className="text-sm text-gray-700 leading-relaxed">{explanation}</p>
+          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+            <p className="text-sm text-slate-700 leading-relaxed">{explanation}</p>
           </div>
 
           {/* Conseils */}
           {advice.length > 0 && (
             <div className="space-y-3">
-              <h4 className="font-semibold text-gray-900">Conseils pour améliorer cette métrique :</h4>
+              <h4 className="font-semibold text-slate-900">Conseils pour améliorer cette métrique :</h4>
               {advice.map((item, index) => (
                 <div
                   key={index}
-                  className={`p-4 rounded-lg border ${getPriorityColor(item.priority)}`}
+                  className={`p-4 rounded-xl border ${getPriorityColor(item.priority)}`}
                 >
                   <div className="flex items-start gap-3">
                     <span className="text-2xl flex-shrink-0">{item.icon}</span>
