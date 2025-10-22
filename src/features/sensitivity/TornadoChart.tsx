@@ -61,61 +61,63 @@ export function TornadoChart({ results, objective }: TornadoChartProps) {
     <div className="space-y-6">
       <h3 className="text-lg font-semibold text-slate-800">Analyse de sensibilité - Plages de valeurs</h3>
       
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+      <div className="bg-white border border-slate-200 rounded-[14px] p-5 shadow-[0_2px_6px_rgba(0,0,0,0.05)]">
         <p className="text-sm text-slate-700">
-          <span className="font-medium">Valeur de base (référence) :</span> {formatValue(results.baseValue)}
+          <span className="font-semibold text-slate-800">Valeur de base (référence) :</span> {formatValue(results.baseValue)}
         </p>
-        <p className="text-xs text-slate-600 mt-1">
+        <p className="text-xs text-slate-500 mt-2">
           Le graphique montre l'étendue des valeurs possibles de l'objectif pour chaque paramètre.
           La ligne verticale noire indique la valeur actuelle (référence).
         </p>
       </div>
 
       {/* Tableau détaillé */}
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm border border-slate-300 rounded-xl overflow-hidden">
-          <thead>
-            <tr className="bg-slate-100 border-b-2 border-slate-300">
-              <th className="text-left py-3 px-4 font-semibold text-slate-700">Paramètre</th>
-              <th className="text-right py-3 px-4 font-semibold text-slate-700">Valeur au Min</th>
-              <th className="text-right py-3 px-4 font-semibold text-slate-700">Valeur au Max</th>
-              <th className="text-right py-3 px-4 font-semibold text-slate-700">Point critique</th>
-              <th className="text-right py-3 px-4 font-semibold text-slate-700">Amplitude</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white">
-            {results.impacts.map((impact, i) => (
-              <tr key={i} className="border-b border-slate-200 hover:bg-slate-50/50 transition-colors">
-                <td className="py-3 px-4 font-medium text-slate-800">{impact.label}</td>
-                <td className={`text-right py-3 px-4 font-medium ${impact.valueLow < 0 ? 'text-red-500' : 'text-emerald-600'}`}>
-                  {formatValue(impact.valueLow)}
-                </td>
-                <td className={`text-right py-3 px-4 font-medium ${impact.valueHigh < 0 ? 'text-red-500' : 'text-emerald-600'}`}>
-                  {formatValue(impact.valueHigh)}
-                </td>
-                <td className="text-right py-3 px-4">
-                  {impact.criticalPoint?.exists ? (
-                    <span 
-                      className="inline-flex items-center px-2 py-1 rounded font-medium border text-xs"
-                      style={{
-                        backgroundColor: hexToRgba(CHART_COLORS.warning, 0.1),
-                        color: CHART_COLORS.warning,
-                        borderColor: hexToRgba(CHART_COLORS.warning, 0.25)
-                      }}
-                    >
-                      {formatParamValue(impact.criticalPoint.paramValue, impact.parameter)}
-                    </span>
-                  ) : (
-                    <span className="text-slate-400 text-xs">Aucun</span>
-                  )}
-                </td>
-                <td className="text-right py-3 px-4 font-semibold text-slate-700">
-                  {formatValue(Math.abs(impact.valueHigh - impact.valueLow))}
-                </td>
+      <div className="bg-white border border-slate-200 rounded-[14px] shadow-[0_2px_6px_rgba(0,0,0,0.05)] overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-white border-b border-slate-200">
+                <th className="text-left py-3 px-4 font-semibold text-slate-800">Paramètre</th>
+                <th className="text-right py-3 px-4 font-semibold text-slate-800">Valeur au Min</th>
+                <th className="text-right py-3 px-4 font-semibold text-slate-800">Valeur au Max</th>
+                <th className="text-right py-3 px-4 font-semibold text-slate-800">Point critique</th>
+                <th className="text-right py-3 px-4 font-semibold text-slate-800">Amplitude</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="bg-white">
+              {results.impacts.map((impact, i) => (
+                <tr key={i} className="border-b border-slate-200 last:border-b-0 hover:bg-slate-50/50 transition-colors">
+                  <td className="py-3 px-4 font-medium text-slate-800">{impact.label}</td>
+                  <td className={`text-right py-3 px-4 font-semibold ${impact.valueLow < 0 ? 'text-red-500' : 'text-emerald-600'}`}>
+                    {formatValue(impact.valueLow)}
+                  </td>
+                  <td className={`text-right py-3 px-4 font-semibold ${impact.valueHigh < 0 ? 'text-red-500' : 'text-emerald-600'}`}>
+                    {formatValue(impact.valueHigh)}
+                  </td>
+                  <td className="text-right py-3 px-4">
+                    {impact.criticalPoint?.exists ? (
+                      <span 
+                        className="inline-flex items-center px-2 py-1 rounded font-medium border text-xs"
+                        style={{
+                          backgroundColor: hexToRgba(CHART_COLORS.warning, 0.1),
+                          color: CHART_COLORS.warning,
+                          borderColor: hexToRgba(CHART_COLORS.warning, 0.25)
+                        }}
+                      >
+                        {formatParamValue(impact.criticalPoint.paramValue, impact.parameter)}
+                      </span>
+                    ) : (
+                      <span className="text-slate-400 text-xs">Aucun</span>
+                    )}
+                  </td>
+                  <td className="text-right py-3 px-4 font-semibold text-slate-700">
+                    {formatValue(Math.abs(impact.valueHigh - impact.valueLow))}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Graphique personnalisé */}
@@ -150,7 +152,7 @@ export function TornadoChart({ results, objective }: TornadoChartProps) {
                   </div>
                   
                   {/* Barre de visualisation */}
-                  <div className="flex-1 w-full relative h-12 bg-slate-50 rounded-xl border border-slate-300">
+                  <div className="flex-1 w-full relative h-12 bg-white rounded-[14px] border border-slate-200 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
                     {/* Ligne de référence (valeur de base) */}
                     <div 
                       className="absolute top-0 bottom-0 w-0.5 bg-black z-20"
@@ -271,7 +273,7 @@ export function TornadoChart({ results, objective }: TornadoChartProps) {
       </div>
       
       {/* Légende */}
-      <div className="flex flex-wrap items-center gap-6 text-xs text-slate-600 p-4 bg-slate-50 rounded-xl border border-slate-300">
+      <div className="flex flex-wrap items-center gap-6 text-xs text-slate-600 p-5 bg-white rounded-[14px] border border-slate-200 shadow-[0_2px_6px_rgba(0,0,0,0.05)]">
         <div className="flex items-center gap-2">
           <div 
             className="w-6 h-4 rounded shadow-sm border-2 border-dashed"
