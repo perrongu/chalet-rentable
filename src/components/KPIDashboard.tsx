@@ -203,62 +203,62 @@ export function KPIDashboard({ kpis, inputs, onInspect }: KPIDashboardProps) {
         </Card>
       </section>
 
-      {/* 4. REVENUS ET DÉPENSES CÔTE À CÔTE */}
+      {/* 4. REVENUS LOCATIFS BRUTS */}
       <section className="mt-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" style={{ alignItems: 'stretch' }}>
-          {/* Revenus */}
-          <div className="flex flex-col">
-            <h3 className="text-xl font-semibold text-slate-900 mb-4">Revenus locatifs bruts</h3>
-            <div className="flex flex-col gap-4 flex-1">
-              <MetricCard
-                title="Nuitées vendues"
-                value={formatNumber(kpis.nightsSold)}
-                color="sky"
-                icon="🌙"
-                onInspect={() => onInspect?.('nightsSold')}
-              />
-              <MetricCard
-                title="Revenus annuels bruts"
-                value={formatCurrency(kpis.annualRevenue)}
-                color="sky"
-                icon="💰"
-                variant="total"
-                onInspect={() => onInspect?.('annualRevenue')}
-              />
-            </div>
-          </div>
-
-          {/* Dépenses */}
-          <div className="flex flex-col">
-            <h3 className="text-xl font-semibold text-slate-900 mb-4">Dépenses opérationnelles</h3>
-            <div className="flex flex-col gap-4 flex-1">
-              <MetricCard
-                title="Dépenses totales"
-                value={formatCurrency(kpis.totalExpenses)}
-                subtitle={`${formatPercent(expenseToRevenueRatio)} des revenus`}
-                color="orange"
-                icon="📊"
-                variant="total"
-                onInspect={() => onInspect?.('totalExpenses')}
-              />
-              
-              {Object.keys(kpis.expensesByCategory).length > 0 && (
-                <div 
-                  className="bg-white border border-slate-200 rounded-[14px] p-5 shadow-[0_2px_6px_rgba(0,0,0,0.05)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 transition-all duration-300 flex flex-col"
-                  style={{ minHeight: '340px' }}
-                >
-                  <h4 className="text-sm font-semibold text-slate-700 mb-3">Répartition des dépenses</h4>
-                  <div className="flex-1" style={{ minHeight: '280px' }}>
-                    <ExpenseBreakdownChart expensesByCategory={kpis.expensesByCategory} />
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+        <h3 className="text-xl font-semibold text-slate-900 mb-4">Revenus locatifs bruts</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <MetricCard
+            title="Nuitées vendues"
+            value={formatNumber(kpis.nightsSold)}
+            color="sky"
+            icon="🌙"
+            onInspect={() => onInspect?.('nightsSold')}
+          />
+          <MetricCard
+            title="Revenus annuels bruts"
+            value={formatCurrency(kpis.annualRevenue)}
+            color="sky"
+            icon="💰"
+            variant="total"
+            onInspect={() => onInspect?.('annualRevenue')}
+          />
         </div>
       </section>
 
-      {/* 5. NOI AVEC PROGRESS BAR ET BADGE EN LIGNE */}
+      {/* 5. DÉPENSES OPÉRATIONNELLES */}
+      <section className="mt-10">
+        <h3 className="text-xl font-semibold text-slate-900 mb-4">Dépenses opérationnelles</h3>
+        <div className="space-y-6">
+          <MetricCard
+            title="Dépenses totales"
+            value={formatCurrency(kpis.totalExpenses)}
+            subtitle={`${formatPercent(expenseToRevenueRatio)} des revenus`}
+            color="orange"
+            icon="📊"
+            variant="total"
+            onInspect={() => onInspect?.('totalExpenses')}
+          />
+
+          {/* Graphique de répartition en pleine largeur */}
+          {Object.keys(kpis.expensesByCategory).length > 0 && (
+            <div>
+              <div className="mb-4">
+                <h4 className="text-lg font-semibold text-slate-800 mb-1">Répartition des dépenses</h4>
+                <p className="text-sm text-slate-500">Détail des dépenses par catégorie</p>
+              </div>
+              <Card className="shadow-[0_2px_6px_rgba(0,0,0,0.05)] rounded-[14px]">
+                <CardContent className="pt-6">
+                  <div className="h-[320px] sm:h-[400px]">
+                    <ExpenseBreakdownChart expensesByCategory={kpis.expensesByCategory} />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* 6. NOI AVEC PROGRESS BAR ET BADGE EN LIGNE */}
       <section className="mt-10">
         <h3 className="text-xl font-semibold text-slate-900 mb-4">Revenu net d'exploitation (NOI)</h3>
         <div 
@@ -311,7 +311,7 @@ export function KPIDashboard({ kpis, inputs, onInspect }: KPIDashboardProps) {
         </div>
       </section>
 
-      {/* 6. SERVICE DE LA DETTE ÉQUILIBRÉ */}
+      {/* 7. SERVICE DE LA DETTE ÉQUILIBRÉ */}
       <section className="mt-10">
         <h3 className="text-xl font-semibold text-slate-900 mb-4">Service de la dette</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -356,7 +356,7 @@ export function KPIDashboard({ kpis, inputs, onInspect }: KPIDashboardProps) {
         </div>
       </section>
 
-      {/* 7. CRÉATION DE RICHESSE AVEC BARRES HORIZONTALES AMÉLIORÉES */}
+      {/* 8. CRÉATION DE RICHESSE AVEC BARRES HORIZONTALES AMÉLIORÉES */}
       <section className="mt-10">
         <h3 className="text-xl font-semibold text-slate-900 mb-4">Création de richesse</h3>
         <div 
@@ -437,7 +437,7 @@ export function KPIDashboard({ kpis, inputs, onInspect }: KPIDashboardProps) {
         </div>
       </section>
 
-      {/* 8. ANALYSE DE RENTABILITÉ - KPI AU-DESSUS */}
+      {/* 9. ANALYSE DE RENTABILITÉ - KPI AU-DESSUS */}
       <section className="mt-10">
         <h3 className="text-xl font-semibold text-slate-900 mb-4">Analyse de rentabilité</h3>
         
@@ -491,7 +491,7 @@ export function KPIDashboard({ kpis, inputs, onInspect }: KPIDashboardProps) {
         </Card>
       </section>
 
-      {/* 9. INVESTISSEMENT REQUIS AVEC SOUS-TEXTE AMÉLIORÉ */}
+      {/* 10. INVESTISSEMENT REQUIS AVEC SOUS-TEXTE AMÉLIORÉ */}
       <section className="mt-10">
         <h3 className="text-xl font-semibold text-slate-900 mb-4">Investissement requis</h3>
         <div 
