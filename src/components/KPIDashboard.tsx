@@ -383,7 +383,7 @@ export function KPIDashboard({ kpis, inputs, onInspect }: KPIDashboardProps) {
             {/* Capitalisation */}
             <div className="flex items-center justify-between gap-4 pb-4 border-b border-slate-100">
               <div className="flex items-center gap-3 min-w-0">
-                <span className="text-2xl shrink-0">🔄</span>
+                <span className="text-2xl shrink-0">🧱</span>
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-slate-600">Capitalisation</p>
                   <p className="text-xl font-bold text-slate-900 whitespace-nowrap">{formatCurrency(kpis.principalPaidFirstYear)}</p>
@@ -400,7 +400,7 @@ export function KPIDashboard({ kpis, inputs, onInspect }: KPIDashboardProps) {
             {/* Plus-value */}
             <div className="flex items-center justify-between gap-4 pb-4 border-b border-slate-100">
               <div className="flex items-center gap-3 min-w-0">
-                <span className="text-2xl shrink-0">📊</span>
+                <span className="text-2xl shrink-0">📈</span>
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-slate-600">Plus-value</p>
                   <p className="text-xl font-bold text-slate-900 whitespace-nowrap">{formatCurrency(kpis.propertyAppreciation)}</p>
@@ -416,7 +416,7 @@ export function KPIDashboard({ kpis, inputs, onInspect }: KPIDashboardProps) {
 
             {/* Total */}
             <div className="flex items-center gap-3 pt-2">
-              <span className="text-3xl shrink-0">✨</span>
+              <span className="text-3xl shrink-0">🏆</span>
               <div>
                 <p className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Total</p>
                 <p className="text-2xl font-black text-slate-900 whitespace-nowrap">{formatCurrency(kpis.totalAnnualProfit)}</p>
