@@ -631,6 +631,44 @@ export function calculateCapRate(
   };
 }
 
+export function calculateDSCR(
+  noi: number,
+  annualDebtService: number,
+  sources?: SourceInfo[]
+): { value: number; trace: CalculationTrace } {
+  // Éviter division par zéro
+  if (annualDebtService <= 0) {
+    return {
+      value: 0,
+      trace: {
+        formula: 'DSCR = NOI / Service de la dette annuel',
+        variables: {
+          'NOI ($)': noi,
+          'Service de la dette annuel ($)': annualDebtService,
+          'Note': 'Division par zéro évitée - service de dette invalide',
+        },
+        result: 0,
+        sources,
+      },
+    };
+  }
+  
+  const dscr = round(noi / annualDebtService, 2);
+
+  return {
+    value: dscr,
+    trace: {
+      formula: 'DSCR = NOI / Service de la dette annuel',
+      variables: {
+        'NOI ($)': noi,
+        'Service de la dette annuel ($)': annualDebtService,
+      },
+      result: dscr,
+      sources,
+    },
+  };
+}
+
 // ============================================================================
 // FONCTION PRINCIPALE DE CALCUL
 // ============================================================================
@@ -743,6 +781,7 @@ export function calculateKPIs(inputs: ProjectInputs): KPIResults {
   
   const cashOnCash = calculateCashOnCash(annualCashflow.value, initialInvestment.value);
   const capRate = calculateCapRate(annualRevenue.value, expenses.total, purchasePrice);
+  const dscr = calculateDSCR(noi.value, annualDebtService.value);
 
   // Construction du résultat
   return {
@@ -767,6 +806,7 @@ export function calculateKPIs(inputs: ProjectInputs): KPIResults {
     totalROI: totalROI.value,
     cashOnCash: cashOnCash.value,
     capRate: capRate.value,
+    dscr: dscr.value,
     traces: {
       nightsSold: nightsSold.trace,
       annualRevenue: annualRevenue.trace,
@@ -803,6 +843,7 @@ export function calculateKPIs(inputs: ProjectInputs): KPIResults {
       totalROI: totalROI.trace,
       cashOnCash: cashOnCash.trace,
       capRate: capRate.trace,
+      dscr: dscr.trace,
     },
   };
 }

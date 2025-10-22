@@ -157,6 +157,7 @@ export interface KPIResults {
   annualCashflow: number;
   cashOnCash: number; // ROI en %
   capRate: number; // Cap rate en %
+  dscr: number; // Debt Service Coverage Ratio
   
   // Rendement détaillé
   principalPaidFirstYear: number; // Capital remboursé la première année (capitalisation)

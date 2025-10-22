@@ -349,7 +349,7 @@ function AppContent() {
                   <CardTitle>Tableau de bord</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <KPIDashboard kpis={kpis} onInspect={setInspectingMetric} />
+                  <KPIDashboard kpis={kpis} inputs={inputs} onInspect={setInspectingMetric} />
                 </CardContent>
               </Card>
             </div>

@@ -3,7 +3,7 @@ import { cn } from '../../lib/utils';
 
 interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
   size?: 'sm' | 'md' | 'lg';
-  variant?: 'sky' | 'emerald' | 'orange' | 'violet' | 'red' | 'slate';
+  variant?: 'sky' | 'emerald' | 'orange' | 'violet' | 'red' | 'slate' | 'amber';
   children: React.ReactNode;
 }
 
@@ -27,6 +27,7 @@ export function Icon({
     violet: 'bg-violet-100 text-violet-600',
     red: 'bg-red-100 text-red-600',
     slate: 'bg-slate-100 text-slate-600',
+    amber: 'bg-amber-100 text-amber-600',
   };
 
   return (
