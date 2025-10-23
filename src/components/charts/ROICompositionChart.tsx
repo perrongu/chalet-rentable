@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { formatCurrency, formatPercent } from '../../lib/utils';
-import { COLORS } from '../../lib/chartConfig';
+import { CHART_COLORS } from '../../lib/colors';
 
 interface ROICompositionChartProps {
   cashflow: number;
@@ -21,9 +21,9 @@ interface ROIDataPoint {
 }
 
 const ROI_COLORS = {
-  cashflow: COLORS.blue.base,
-  capitalization: COLORS.green.base,
-  appreciation: COLORS.violet.base,
+  cashflow: CHART_COLORS.cashflow,
+  capitalization: CHART_COLORS.capitalisation,
+  appreciation: CHART_COLORS.plusValue,
 } as const;
 
 export function ROICompositionChart({

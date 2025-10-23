@@ -374,7 +374,7 @@ export function KPIDashboard({ kpis, inputs, onInspect }: KPIDashboardProps) {
               </div>
               <div className="h-1.5 bg-sky-100 rounded-full flex-1 max-w-[200px]">
                 <div 
-                  className="h-full bg-sky-500 rounded-full transition-all duration-500" 
+                  className="h-full bg-sky-300 rounded-full transition-all duration-500" 
                   style={{ width: `${Math.min((kpis.annualCashflow / kpis.totalAnnualProfit) * 100, 100)}%` }}
                 />
               </div>
@@ -389,9 +389,9 @@ export function KPIDashboard({ kpis, inputs, onInspect }: KPIDashboardProps) {
                   <p className="text-xl font-bold text-slate-900 whitespace-nowrap">{formatCurrency(kpis.principalPaidFirstYear)}</p>
                 </div>
               </div>
-              <div className="h-1.5 bg-emerald-100 rounded-full flex-1 max-w-[200px]">
+              <div className="h-1.5 bg-orange-100 rounded-full flex-1 max-w-[200px]">
                 <div 
-                  className="h-full bg-emerald-500 rounded-full transition-all duration-500" 
+                  className="h-full bg-orange-400 rounded-full transition-all duration-500" 
                   style={{ width: `${Math.min((kpis.principalPaidFirstYear / kpis.totalAnnualProfit) * 100, 100)}%` }}
                 />
               </div>
@@ -406,9 +406,9 @@ export function KPIDashboard({ kpis, inputs, onInspect }: KPIDashboardProps) {
                   <p className="text-xl font-bold text-slate-900 whitespace-nowrap">{formatCurrency(kpis.propertyAppreciation)}</p>
                 </div>
               </div>
-              <div className="h-1.5 bg-violet-100 rounded-full flex-1 max-w-[200px]">
+              <div className="h-1.5 bg-emerald-100 rounded-full flex-1 max-w-[200px]">
                 <div 
-                  className="h-full bg-violet-500 rounded-full transition-all duration-500" 
+                  className="h-full bg-emerald-400 rounded-full transition-all duration-500" 
                   style={{ width: `${Math.min((kpis.propertyAppreciation / kpis.totalAnnualProfit) * 100, 100)}%` }}
                 />
               </div>

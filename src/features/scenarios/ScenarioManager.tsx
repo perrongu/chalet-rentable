@@ -6,6 +6,7 @@ import { useProject, createDefaultProject } from '../../store/ProjectContext';
 import type { Scenario } from '../../types';
 import { calculateKPIs } from '../../lib/calculations';
 import { formatCurrency, formatPercent, generateUUID, formatDateShort, deepMerge, deepClone } from '../../lib/utils';
+import { CHART_COLORS } from '../../lib/colors';
 import {
   BarChart,
   Bar,
@@ -335,7 +336,7 @@ export function ScenarioManager() {
                   <XAxis dataKey="name" />
                   <YAxis />
                   <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                  <Bar dataKey="cashflow" fill="#7dd3fc" name="Cashflow annuel" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="cashflow" fill={CHART_COLORS.cashflow} name="Cashflow annuel" radius={[8, 8, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -350,8 +351,8 @@ export function ScenarioManager() {
                   <YAxis />
                   <Tooltip formatter={(value: number) => formatPercent(value)} />
                   <Legend />
-                  <Bar dataKey="coc" fill="#34d399" name="Cash-on-Cash (%)" radius={[8, 8, 0, 0]} />
-                  <Bar dataKey="capRate" fill="#fb923c" name="Cap Rate (%)" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="coc" fill={CHART_COLORS.plusValue} name="Cash-on-Cash (%)" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="capRate" fill={CHART_COLORS.warning} name="Cap Rate (%)" radius={[8, 8, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
