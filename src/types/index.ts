@@ -20,32 +20,31 @@ export interface InputWithSource<T = number> {
   sourceInfo?: SourceInfo;
 }
 
-export type NumericInputWithSource = InputWithSource<number>;
-
 // ============================================================================
 // TYPES D'INPUTS
 // ============================================================================
 
 export const ExpenseType = {
-  FIXED_ANNUAL: 'FIXED_ANNUAL', // Montant fixe annuel
-  FIXED_MONTHLY: 'FIXED_MONTHLY', // Montant fixe mensuel
-  PERCENTAGE_REVENUE: 'PERCENTAGE_REVENUE', // Pourcentage des revenus
-  PERCENTAGE_PROPERTY_VALUE: 'PERCENTAGE_PROPERTY_VALUE', // Pourcentage de la valeur de la propriété
+  FIXED_ANNUAL: "FIXED_ANNUAL", // Montant fixe annuel
+  FIXED_MONTHLY: "FIXED_MONTHLY", // Montant fixe mensuel
+  PERCENTAGE_REVENUE: "PERCENTAGE_REVENUE", // Pourcentage des revenus
+  PERCENTAGE_PROPERTY_VALUE: "PERCENTAGE_PROPERTY_VALUE", // Pourcentage de la valeur de la propriété
 } as const;
 
-export type ExpenseType = typeof ExpenseType[keyof typeof ExpenseType];
+export type ExpenseType = (typeof ExpenseType)[keyof typeof ExpenseType];
 
 export const ExpenseCategory = {
-  ENTRETIEN: 'Entretien',
-  SERVICES: 'Services',
-  ASSURANCES: 'Assurances',
-  TAXES: 'Taxes',
-  UTILITIES: 'Utilités',
-  GESTION: 'Gestion',
-  AUTRE: 'Autre',
+  ENTRETIEN: "Entretien",
+  SERVICES: "Services",
+  ASSURANCES: "Assurances",
+  TAXES: "Taxes",
+  UTILITIES: "Utilités",
+  GESTION: "Gestion",
+  AUTRE: "Autre",
 } as const;
 
-export type ExpenseCategory = typeof ExpenseCategory[keyof typeof ExpenseCategory];
+export type ExpenseCategory =
+  (typeof ExpenseCategory)[keyof typeof ExpenseCategory];
 
 export interface ExpenseLine {
   id: string;
@@ -56,13 +55,14 @@ export interface ExpenseLine {
 }
 
 export const PaymentFrequency = {
-  MONTHLY: 'MONTHLY',
-  BI_WEEKLY: 'BI_WEEKLY',
-  WEEKLY: 'WEEKLY',
-  ANNUAL: 'ANNUAL',
+  MONTHLY: "MONTHLY",
+  BI_WEEKLY: "BI_WEEKLY",
+  WEEKLY: "WEEKLY",
+  ANNUAL: "ANNUAL",
 } as const;
 
-export type PaymentFrequency = typeof PaymentFrequency[keyof typeof PaymentFrequency];
+export type PaymentFrequency =
+  (typeof PaymentFrequency)[keyof typeof PaymentFrequency];
 
 export interface FinancingInputs {
   purchasePrice: InputWithSource<number>;
@@ -158,7 +158,7 @@ export interface KPIResults {
   cashOnCash: number; // ROI en %
   capRate: number; // Cap rate en %
   dscr: number; // Debt Service Coverage Ratio
-  
+
   // Rendement détaillé
   principalPaidFirstYear: number; // Capital remboursé la première année (capitalisation)
   propertyAppreciation: number; // Plus-value annuelle de la propriété
@@ -169,7 +169,10 @@ export interface KPIResults {
   totalROI: number; // ROI total en %
 
   // Traçabilité des calculs
-  traces: Record<keyof Omit<KPIResults, 'traces' | 'expensesByCategory'>, CalculationTrace>;
+  traces: Record<
+    keyof Omit<KPIResults, "traces" | "expensesByCategory">,
+    CalculationTrace
+  >;
 }
 
 // ============================================================================
@@ -252,19 +255,6 @@ export interface Project {
 // UTILITAIRES
 // ============================================================================
 
-export interface ExportOptions {
-  includeCharts: boolean;
-  includeTraces: boolean;
-  includeSources: boolean;
-  format: 'json' | 'xlsx' | 'csv' | 'pdf';
-}
-
-export interface ChartData {
-  type: 'bar' | 'line' | 'tornado' | 'heatmap';
-  title: string;
-  data: any; // Structure dépend du type de graphique
-}
-
 // ============================================================================
 // PROJECTIONS MULTI-ANNÉES
 // ============================================================================
@@ -284,11 +274,11 @@ export interface YearProjection {
   mortgageBalance: number;
   propertyValue: number;
   equity: number; // Valeur - Solde hypothèque
-  
+
   // Métriques bancaires
   dscr: number; // Debt Service Coverage Ratio (NOI / Service dette)
   ltv: number; // Loan to Value (Solde hypothèque / Valeur propriété)
-  
+
   // Métriques investisseur
   appreciation: number;
   cumulativeAppreciation: number;
@@ -298,12 +288,12 @@ export interface YearProjection {
   roiTotal: number; // ROI total vs investissement initial
   roe: number; // Return on Equity (Profit / Équité actuelle)
   npv: number; // Valeur actuelle nette de ce cashflow
-  
+
   // Fiscal (si implémenté)
   depreciation?: number;
   taxSavings?: number;
   afterTaxCashflow?: number;
-  
+
   // Scénario de sortie
   exitValue?: number; // Si vente cette année
   saleProceeds?: number; // Net après frais de vente
@@ -324,7 +314,7 @@ export interface ExitScenario {
 
 export interface ProjectionResult {
   years: YearProjection[];
-  
+
   // Retour sur investissement
   paybackPeriodCashflow: number | null; // année où cashflow cumulé > 0
   paybackPeriodTotal: number | null; // année où profit total cumulé > investissement initial
@@ -332,13 +322,12 @@ export interface ProjectionResult {
   totalReturn: number;
   averageAnnualReturn: number;
   averageROE: number; // ROE moyen sur la période
-  
+
   // Scénarios de sortie
   exitScenarios: ExitScenario[]; // Vente à différentes années (5, 10, 15, 20, fin)
-  
+
   // Analyse de sensibilité simple
   breakEvenOccupancy?: number; // Taux occupation min pour cashflow = 0
   minDSCR: number; // DSCR le plus bas de la période
   maxLTV: number; // LTV le plus élevé de la période
 }
-

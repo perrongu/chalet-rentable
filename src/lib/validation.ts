@@ -1,24 +1,24 @@
-import { z } from 'zod';
-import { ExpenseType, ExpenseCategory, PaymentFrequency } from '../types';
+import { z } from "zod";
+import { ExpenseType, ExpenseCategory, PaymentFrequency } from "../types";
 
 // ============================================================================
 // SCHÉMAS DE BASE
 // ============================================================================
 
 const SourceInfoSchema = z.object({
-  source: z.string().optional(),
-  remarks: z.string().optional(),
+  source: z.string().max(500).optional(),
+  remarks: z.string().max(2000).optional(),
 });
 
 const RangeValueSchema = z.object({
-  min: z.number(),
-  max: z.number(),
-  default: z.number(),
+  min: z.number().finite(),
+  max: z.number().finite(),
+  default: z.number().finite(),
   useRange: z.boolean(),
 });
 
 const InputWithSourceSchema = z.object({
-  value: z.number(),
+  value: z.number().finite(),
   range: RangeValueSchema.optional(),
   sourceInfo: SourceInfoSchema.optional(),
 });
@@ -28,8 +28,8 @@ const InputWithSourceSchema = z.object({
 // ============================================================================
 
 const ExpenseLineSchema = z.object({
-  id: z.string(),
-  name: z.string(),
+  id: z.string().max(100),
+  name: z.string().max(200),
   type: z.nativeEnum(ExpenseType),
   amount: InputWithSourceSchema,
   category: z.nativeEnum(ExpenseCategory).optional(),
@@ -38,7 +38,7 @@ const ExpenseLineSchema = z.object({
 const RevenueInputsSchema = z.object({
   averageDailyRate: InputWithSourceSchema,
   occupancyRate: InputWithSourceSchema,
-  daysPerYear: z.number().optional(),
+  daysPerYear: z.number().finite().min(1).max(366).optional(),
 });
 
 const FinancingInputsSchema = z.object({
@@ -58,12 +58,23 @@ const AcquisitionFeesSchema = z.object({
   other: InputWithSourceSchema,
 });
 
+const ProjectionSettingsSchema = z
+  .object({
+    revenueEscalationRate: InputWithSourceSchema,
+    expenseEscalationRate: InputWithSourceSchema,
+    capexRate: InputWithSourceSchema,
+    discountRate: InputWithSourceSchema,
+    saleCostsRate: InputWithSourceSchema,
+  })
+  .optional();
+
 const ProjectInputsSchema = z.object({
-  name: z.string(),
+  name: z.string().max(200),
   revenue: RevenueInputsSchema,
-  expenses: z.array(ExpenseLineSchema),
+  expenses: z.array(ExpenseLineSchema).max(100),
   financing: FinancingInputsSchema,
   acquisitionFees: AcquisitionFeesSchema,
+  projectionSettings: ProjectionSettingsSchema,
 });
 
 // ============================================================================
@@ -71,11 +82,11 @@ const ProjectInputsSchema = z.object({
 // ============================================================================
 
 const ScenarioSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  description: z.string().optional(),
+  id: z.string().max(100),
+  name: z.string().max(200),
+  description: z.string().max(1000).optional(),
   isBase: z.boolean(),
-  overrides: z.any().optional(), // Partial<ProjectInputs> - complexe à valider
+  overrides: ProjectInputsSchema.partial().optional(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 });
@@ -85,52 +96,96 @@ const ScenarioSchema = z.object({
 // ============================================================================
 
 const ParameterRangeSchema = z.object({
-  parameter: z.string(),
-  label: z.string(),
-  min: z.number(),
-  base: z.number(),
-  max: z.number(),
-  steps: z.number().optional(),
+  parameter: z.string().max(200),
+  label: z.string().max(200),
+  min: z.number().finite(),
+  base: z.number().finite(),
+  max: z.number().finite(),
+  steps: z.number().finite().int().positive().optional(),
 });
 
 // Liste des KPIs valides pour l'objectif
 const kpiKeys = z.enum([
-  'nightsSold',
-  'annualRevenue',
-  'totalExpenses',
-  'loanAmount',
-  'periodicPayment',
-  'annualDebtService',
-  'transferDuties',
-  'totalAcquisitionFees',
-  'initialInvestment',
-  'annualCashflow',
-  'principalPaidFirstYear',
-  'propertyAppreciation',
-  'cashflowROI',
-  'capitalizationROI',
-  'appreciationROI',
-  'totalROI',
-  'cashOnCash',
-  'capRate',
+  "nightsSold",
+  "annualRevenue",
+  "totalExpenses",
+  "loanAmount",
+  "periodicPayment",
+  "annualDebtService",
+  "transferDuties",
+  "totalAcquisitionFees",
+  "initialInvestment",
+  "annualCashflow",
+  "principalPaidFirstYear",
+  "propertyAppreciation",
+  "cashflowROI",
+  "capitalizationROI",
+  "appreciationROI",
+  "totalROI",
+  "cashOnCash",
+  "capRate",
 ]);
 
+const SensitivityImpactSchema = z.object({
+  parameter: z.string().max(200),
+  label: z.string().max(200),
+  valueLow: z.number().finite(),
+  valueHigh: z.number().finite(),
+  impactLow: z.number().finite(),
+  impactHigh: z.number().finite(),
+  relativeImpact: z.number().finite(),
+  criticalPoint: z
+    .object({ paramValue: z.number().finite(), exists: z.boolean() })
+    .optional(),
+});
+
+const SensitivityResults1DSchema = z
+  .object({
+    impacts: z.array(SensitivityImpactSchema).max(50),
+    detailedResults: z
+      .array(
+        z.object({
+          parameter: z.string().max(200),
+          values: z
+            .array(
+              z.object({
+                paramValue: z.number().finite(),
+                objectiveValue: z.number().finite(),
+              }),
+            )
+            .max(100),
+        }),
+      )
+      .max(50),
+    baseValue: z.number().finite(),
+  })
+  .optional();
+
+const SensitivityResults2DSchema = z
+  .object({
+    xValues: z.array(z.number().finite()).max(100),
+    yValues: z.array(z.number().finite()).max(100),
+    grid: z.array(z.array(z.number().finite()).max(100)).max(100),
+    baseValue: z.number().finite(),
+  })
+  .optional();
+
 const SensitivityAnalysis1DSchema = z.object({
-  id: z.string(),
-  name: z.string(),
+  id: z.string().max(100),
+  name: z.string().max(200),
   objective: kpiKeys,
   parameters: z.array(ParameterRangeSchema),
-  results: z.any().optional(),
+  results: SensitivityResults1DSchema,
   createdAt: z.coerce.date(),
 });
 
 const SensitivityAnalysis2DSchema = z.object({
-  id: z.string(),
-  name: z.string(),
+  id: z.string().max(100),
+  name: z.string().max(200),
   objective: kpiKeys,
   parameterX: ParameterRangeSchema,
   parameterY: ParameterRangeSchema,
-  results: z.any().optional(),
+  results: SensitivityResults2DSchema,
   createdAt: z.coerce.date(),
 });
 
@@ -139,24 +194,28 @@ const SensitivityAnalysis2DSchema = z.object({
 // ============================================================================
 
 export const ProjectSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  description: z.string().optional(),
+  id: z.string().max(100),
+  name: z.string().max(200),
+  description: z.string().max(2000).optional(),
   baseInputs: ProjectInputsSchema,
-  scenarios: z.array(ScenarioSchema),
-  activeScenarioId: z.string(),
+  scenarios: z.array(ScenarioSchema).max(50),
+  activeScenarioId: z.string().max(100),
   sensitivityAnalyses1D: z.array(SensitivityAnalysis1DSchema),
   sensitivityAnalyses2D: z.array(SensitivityAnalysis2DSchema),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
-  version: z.string(),
+  version: z.string().max(20),
 });
 
 // ============================================================================
 // FONCTIONS DE VALIDATION
 // ============================================================================
 
-export function validateProject(data: unknown): { success: true; data: z.infer<typeof ProjectSchema> } | { success: false; error: z.ZodError } {
+export function validateProject(
+  data: unknown,
+):
+  | { success: true; data: z.infer<typeof ProjectSchema> }
+  | { success: false; error: z.ZodError } {
   const result = ProjectSchema.safeParse(data);
   if (result.success) {
     return { success: true, data: result.data };
@@ -165,12 +224,12 @@ export function validateProject(data: unknown): { success: true; data: z.infer<t
   }
 }
 
-export function sanitizeProject(data: unknown): z.infer<typeof ProjectSchema> | null {
+export function sanitizeProject(
+  data: unknown,
+): z.infer<typeof ProjectSchema> | null {
   try {
     return ProjectSchema.parse(data);
-  } catch (error) {
-    console.error('Validation du projet échouée:', error);
+  } catch {
     return null;
   }
 }
-

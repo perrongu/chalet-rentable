@@ -1,15 +1,30 @@
-import { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
-import { Input } from '../../components/ui/Input';
-import { Button } from '../../components/ui/Button';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/Tabs';
-import { MetricExplanationModal } from '../../components/ui/MetricExplanationModal';
-import { useProject } from '../../store/ProjectContext';
-import { calculateProjections } from '../../lib/projections';
-import { ProjectionTable } from './ProjectionTable';
-import { ProjectionCharts } from './ProjectionCharts';
-import { formatCurrency, formatCurrencySigned, formatPercent, formatNumber } from '../../lib/utils';
-import { LIMITS, ADVICE_THRESHOLDS } from '../../lib/constants';
+import { useState, useMemo } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../../components/ui/Card";
+import { Input } from "../../components/ui/Input";
+import { Button } from "../../components/ui/Button";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "../../components/ui/Tabs";
+import { MetricExplanationModal } from "../../components/ui/MetricExplanationModal";
+import { useProject } from "../../store/ProjectContext";
+import { calculateProjections } from "../../lib/projections";
+import { ProjectionTable } from "./ProjectionTable";
+import { ProjectionCharts } from "./ProjectionCharts";
+import {
+  formatCurrency,
+  formatCurrencySigned,
+  formatPercent,
+  formatNumber,
+} from "../../lib/utils";
+import { LIMITS, ADVICE_THRESHOLDS } from "../../lib/constants";
 import {
   getDSCRAdvice,
   getLTVAdvice,
@@ -17,21 +32,28 @@ import {
   getMOICAdvice,
   getTRIAdvice,
   getMetricExplanation,
-} from '../../lib/metricAdvice';
+} from "../../lib/metricAdvice";
 
 export function ProjectionAnalysis() {
   const { getCurrentInputs } = useProject();
   const inputs = getCurrentInputs();
 
-  const [numberOfYears, setNumberOfYears] = useState<number>(LIMITS.DEFAULT_PROJECTION_YEARS);
-  const [openModal, setOpenModal] = useState<'dscr' | 'ltv' | 'breakeven' | null>(null);
-  const [openExitModal, setOpenExitModal] = useState<{ type: 'moic' | 'tri'; year: number } | null>(null);
+  const [numberOfYears, setNumberOfYears] = useState<number>(
+    LIMITS.DEFAULT_PROJECTION_YEARS,
+  );
+  const [openModal, setOpenModal] = useState<
+    "dscr" | "ltv" | "breakeven" | null
+  >(null);
+  const [openExitModal, setOpenExitModal] = useState<{
+    type: "moic" | "tri";
+    year: number;
+  } | null>(null);
 
   // Calculer les projections
   const projection = useMemo(() => {
     const years = Math.max(
       LIMITS.MIN_PROJECTION_YEARS,
-      Math.min(numberOfYears, LIMITS.MAX_PROJECTION_YEARS)
+      Math.min(numberOfYears, LIMITS.MAX_PROJECTION_YEARS),
     );
     return calculateProjections(inputs, years);
   }, [inputs, numberOfYears]);
@@ -39,7 +61,7 @@ export function ProjectionAnalysis() {
   const handleYearsChange = (value: number) => {
     const clamped = Math.max(
       LIMITS.MIN_PROJECTION_YEARS,
-      Math.min(value, LIMITS.MAX_PROJECTION_YEARS)
+      Math.min(value, LIMITS.MAX_PROJECTION_YEARS),
     );
     setNumberOfYears(clamped);
   };
@@ -50,13 +72,18 @@ export function ProjectionAnalysis() {
     const hasGoodLTV = projection.maxLTV <= 75;
     const hasPositiveIRR = projection.irr > 0;
     const hasReasonablePayback = (projection.paybackPeriodCashflow || 999) <= 7;
-    
-    const score = [hasGoodDSCR, hasGoodLTV, hasPositiveIRR, hasReasonablePayback].filter(Boolean).length;
-    
-    if (score >= 3) return { label: 'Excellent', color: 'green', icon: '✓' };
-    if (score === 2) return { label: 'Bon', color: 'blue', icon: '○' };
-    if (score === 1) return { label: 'Moyen', color: 'orange', icon: '△' };
-    return { label: 'Risqué', color: 'red', icon: '✕' };
+
+    const score = [
+      hasGoodDSCR,
+      hasGoodLTV,
+      hasPositiveIRR,
+      hasReasonablePayback,
+    ].filter(Boolean).length;
+
+    if (score >= 3) return { label: "Excellent", color: "green", icon: "✓" };
+    if (score === 2) return { label: "Bon", color: "blue", icon: "○" };
+    if (score === 1) return { label: "Moyen", color: "orange", icon: "△" };
+    return { label: "Risqué", color: "red", icon: "✕" };
   };
 
   const investmentQuality = getInvestmentQuality();
@@ -64,11 +91,17 @@ export function ProjectionAnalysis() {
   return (
     <div className="space-y-6">
       {/* Résumé exécutif */}
-      <Card className={`border-2 border-${investmentQuality.color}-200 bg-${investmentQuality.color}-50`}>
+      <Card
+        className={`border-2 border-${investmentQuality.color}-200 bg-${investmentQuality.color}-50`}
+      >
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Résumé exécutif - Projection {numberOfYears} ans</CardTitle>
-            <div className={`flex items-center gap-2 px-3 py-1 bg-${investmentQuality.color}-100 rounded-full`}>
+            <CardTitle>
+              Résumé exécutif - Projection {numberOfYears} ans
+            </CardTitle>
+            <div
+              className={`flex items-center gap-2 px-3 py-1 bg-${investmentQuality.color}-100 rounded-full`}
+            >
               <span className="text-lg">{investmentQuality.icon}</span>
               <span className={`font-bold text-${investmentQuality.color}-900`}>
                 {investmentQuality.label}
@@ -79,27 +112,42 @@ export function ProjectionAnalysis() {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
             <div>
-              <div className="text-slate-600" title="Taux de rendement interne">TRI</div>
-              <div className={`text-xl font-bold ${projection.irr >= 10 ? 'text-green-700' : projection.irr >= 5 ? 'text-blue-700' : 'text-orange-600'}`}>
+              <div className="text-slate-600" title="Taux de rendement interne">
+                TRI
+              </div>
+              <div
+                className={`text-xl font-bold ${projection.irr >= 10 ? "text-green-700" : projection.irr >= 5 ? "text-blue-700" : "text-orange-600"}`}
+              >
                 {formatPercent(projection.irr)}
               </div>
             </div>
             <div>
               <div className="text-slate-600">Délai de récupération</div>
-              <div className={`text-xl font-bold ${!projection.paybackPeriodCashflow ? 'text-red-700' : projection.paybackPeriodCashflow <= 5 ? 'text-green-700' : 'text-blue-700'}`}>
-                {projection.paybackPeriodCashflow ? `${projection.paybackPeriodCashflow} ans` : 'Jamais'}
+              <div
+                className={`text-xl font-bold ${!projection.paybackPeriodCashflow ? "text-red-700" : projection.paybackPeriodCashflow <= 5 ? "text-green-700" : "text-blue-700"}`}
+              >
+                {projection.paybackPeriodCashflow
+                  ? `${projection.paybackPeriodCashflow} ans`
+                  : "Jamais"}
               </div>
             </div>
             <div>
               <div className="text-slate-600">Cashflow cumulé</div>
-              <div className={`text-xl font-bold ${projection.years[projection.years.length - 1].cumulativeCashflow >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                {formatCurrencySigned(projection.years[projection.years.length - 1].cumulativeCashflow)}
+              <div
+                className={`text-xl font-bold ${projection.years[projection.years.length - 1].cumulativeCashflow >= 0 ? "text-green-700" : "text-red-700"}`}
+              >
+                {formatCurrencySigned(
+                  projection.years[projection.years.length - 1]
+                    .cumulativeCashflow,
+                )}
               </div>
             </div>
             <div>
               <div className="text-slate-600">Équité finale</div>
               <div className="text-xl font-bold text-green-700">
-                {formatCurrency(projection.years[projection.years.length - 1].equity)}
+                {formatCurrency(
+                  projection.years[projection.years.length - 1].equity,
+                )}
               </div>
             </div>
           </div>
@@ -134,40 +182,60 @@ export function ProjectionAnalysis() {
                   onChange={(e) => handleYearsChange(Number(e.target.value))}
                   className="w-24 flex-shrink-0"
                 />
-                <span className="text-sm text-slate-600 flex-shrink-0">ans</span>
+                <span className="text-sm text-slate-600 flex-shrink-0">
+                  ans
+                </span>
               </div>
             </div>
 
             {inputs.projectionSettings && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t border-slate-300">
                 <div>
-                  <label className="block text-sm text-slate-600 mb-1">Escalade revenus</label>
+                  <label className="block text-sm text-slate-600 mb-1">
+                    Escalade revenus
+                  </label>
                   <div className="text-lg font-semibold text-slate-900">
-                    {formatPercent(inputs.projectionSettings.revenueEscalationRate.value)}
+                    {formatPercent(
+                      inputs.projectionSettings.revenueEscalationRate.value,
+                    )}
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm text-slate-600 mb-1">Escalade dépenses</label>
+                  <label className="block text-sm text-slate-600 mb-1">
+                    Escalade dépenses
+                  </label>
                   <div className="text-lg font-semibold text-slate-900">
-                    {formatPercent(inputs.projectionSettings.expenseEscalationRate.value)}
+                    {formatPercent(
+                      inputs.projectionSettings.expenseEscalationRate.value,
+                    )}
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm text-slate-600 mb-1">CAPEX annuel</label>
+                  <label className="block text-sm text-slate-600 mb-1">
+                    CAPEX annuel
+                  </label>
                   <div className="text-lg font-semibold text-slate-900">
                     {formatPercent(inputs.projectionSettings.capexRate.value)}
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm text-slate-600 mb-1">Taux actualisation</label>
+                  <label className="block text-sm text-slate-600 mb-1">
+                    Taux actualisation
+                  </label>
                   <div className="text-lg font-semibold text-slate-900">
-                    {formatPercent(inputs.projectionSettings.discountRate.value)}
+                    {formatPercent(
+                      inputs.projectionSettings.discountRate.value,
+                    )}
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm text-slate-600 mb-1">Frais de vente</label>
+                  <label className="block text-sm text-slate-600 mb-1">
+                    Frais de vente
+                  </label>
                   <div className="text-lg font-semibold text-slate-900">
-                    {formatPercent(inputs.projectionSettings.saleCostsRate.value)}
+                    {formatPercent(
+                      inputs.projectionSettings.saleCostsRate.value,
+                    )}
                   </div>
                 </div>
               </div>
@@ -189,7 +257,7 @@ export function ProjectionAnalysis() {
             <div className="text-2xl font-bold text-blue-900">
               {projection.paybackPeriodCashflow !== null
                 ? `${projection.paybackPeriodCashflow} ans`
-                : 'Jamais'}
+                : "Jamais"}
             </div>
             <div className="text-xs text-slate-600 mt-1">
               Quand cashflow cumulé &gt; 0
@@ -208,7 +276,7 @@ export function ProjectionAnalysis() {
             <div className="text-2xl font-bold text-green-900">
               {projection.paybackPeriodTotal !== null
                 ? `${projection.paybackPeriodTotal} ans`
-                : 'Jamais'}
+                : "Jamais"}
             </div>
             <div className="text-xs text-slate-600 mt-1">
               Quand profit total &gt; investissement
@@ -219,7 +287,10 @@ export function ProjectionAnalysis() {
         {/* TRI (IRR) */}
         <Card className="border-2 border-purple-200 bg-purple-50">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600" title="Taux de rendement interne">
+            <CardTitle
+              className="text-sm font-medium text-slate-600"
+              title="Taux de rendement interne"
+            >
               TRI
             </CardTitle>
           </CardHeader>
@@ -236,7 +307,10 @@ export function ProjectionAnalysis() {
         {/* ROE moyen */}
         <Card className="border-2 border-orange-200 bg-orange-50">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600" title="Return on Equity moyen">
+            <CardTitle
+              className="text-sm font-medium text-slate-600"
+              title="Return on Equity moyen"
+            >
               ROE moyen
             </CardTitle>
           </CardHeader>
@@ -260,11 +334,13 @@ export function ProjectionAnalysis() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-sm text-slate-600">DSCR minimum</label>
+                <label className="block text-sm text-slate-600">
+                  DSCR minimum
+                </label>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setOpenModal('dscr')}
+                  onClick={() => setOpenModal("dscr")}
                   className="h-6 px-2 text-xs"
                   title="Voir les détails et conseils"
                 >
@@ -274,13 +350,18 @@ export function ProjectionAnalysis() {
               <div className="flex items-center gap-2">
                 <div
                   className={`text-2xl font-bold ${
-                    projection.minDSCR >= 1.25 ? 'text-green-700' : 'text-red-700'
+                    projection.minDSCR >= 1.25
+                      ? "text-green-700"
+                      : "text-red-700"
                   }`}
                 >
                   {formatNumber(projection.minDSCR, 2)}
                 </div>
                 {projection.minDSCR < 1.25 && (
-                  <span className="text-lg" title="DSCR insuffisant pour financement bancaire standard">
+                  <span
+                    className="text-lg"
+                    title="DSCR insuffisant pour financement bancaire standard"
+                  >
                     ⚠️
                   </span>
                 )}
@@ -292,11 +373,13 @@ export function ProjectionAnalysis() {
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-sm text-slate-600">LTV maximum</label>
+                <label className="block text-sm text-slate-600">
+                  LTV maximum
+                </label>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setOpenModal('ltv')}
+                  onClick={() => setOpenModal("ltv")}
                   className="h-6 px-2 text-xs"
                   title="Voir les détails et conseils"
                 >
@@ -306,14 +389,21 @@ export function ProjectionAnalysis() {
               <div className="flex items-center gap-2">
                 <div
                   className={`text-2xl font-bold ${
-                    projection.maxLTV <= 75 ? 'text-green-700' : projection.maxLTV <= 85 ? 'text-orange-600' : 'text-red-700'
+                    projection.maxLTV <= 75
+                      ? "text-green-700"
+                      : projection.maxLTV <= 85
+                        ? "text-orange-600"
+                        : "text-red-700"
                   }`}
                 >
                   {formatPercent(projection.maxLTV)}
                 </div>
                 {projection.maxLTV > 75 && (
-                  <span className="text-lg" title="LTV élevé - risque de financement">
-                    {projection.maxLTV > 85 ? '🔴' : '⚠️'}
+                  <span
+                    className="text-lg"
+                    title="LTV élevé - risque de financement"
+                  >
+                    {projection.maxLTV > 85 ? "🔴" : "⚠️"}
                   </span>
                 )}
               </div>
@@ -324,11 +414,13 @@ export function ProjectionAnalysis() {
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-sm text-slate-600">Occupation seuil de rentabilité</label>
+                <label className="block text-sm text-slate-600">
+                  Occupation seuil de rentabilité
+                </label>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setOpenModal('breakeven')}
+                  onClick={() => setOpenModal("breakeven")}
                   className="h-6 px-2 text-xs"
                   title="Voir les détails et conseils"
                 >
@@ -336,10 +428,15 @@ export function ProjectionAnalysis() {
                 </Button>
               </div>
               <div className="flex items-center gap-2">
-                <div className={`text-2xl font-bold ${
-                  (projection.breakEvenOccupancy || 0) <= 50 ? 'text-green-700' : 
-                  (projection.breakEvenOccupancy || 0) <= 70 ? 'text-blue-700' : 'text-orange-600'
-                }`}>
+                <div
+                  className={`text-2xl font-bold ${
+                    (projection.breakEvenOccupancy || 0) <= 50
+                      ? "text-green-700"
+                      : (projection.breakEvenOccupancy || 0) <= 70
+                        ? "text-blue-700"
+                        : "text-orange-600"
+                  }`}
+                >
                   {formatPercent(projection.breakEvenOccupancy || 0)}
                 </div>
               </div>
@@ -347,8 +444,17 @@ export function ProjectionAnalysis() {
                 Occupation min pour cashflow = 0
               </div>
               <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
-                <strong>Marge de sécurité :</strong> {inputs.revenue.occupancyRate.value}% (prévu) - {formatPercent(projection.breakEvenOccupancy || 0)} (BE) = 
-                <strong> {(inputs.revenue.occupancyRate.value - (projection.breakEvenOccupancy || 0)).toFixed(1)}%</strong>
+                <strong>Marge de sécurité :</strong>{" "}
+                {inputs.revenue.occupancyRate.value}% (prévu) -{" "}
+                {formatPercent(projection.breakEvenOccupancy || 0)} (BE) =
+                <strong>
+                  {" "}
+                  {(
+                    inputs.revenue.occupancyRate.value -
+                    (projection.breakEvenOccupancy || 0)
+                  ).toFixed(1)}
+                  %
+                </strong>
               </div>
             </div>
           </div>
@@ -371,39 +477,64 @@ export function ProjectionAnalysis() {
                   <th className="text-right">Solde prêt</th>
                   <th className="text-right">Produit net</th>
                   <th className="text-right">Profit net</th>
-                  <th className="text-right" title="Multiple du capital investi">MOIC</th>
-                  <th className="text-right" title="Taux de rendement interne">TRI</th>
+                  <th
+                    className="text-right"
+                    title="Multiple du capital investi"
+                  >
+                    MOIC
+                  </th>
+                  <th className="text-right" title="Taux de rendement interne">
+                    TRI
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {projection.exitScenarios.map((exit) => {
-                  const needsMOICAdvice = exit.moic < ADVICE_THRESHOLDS.MOIC.GOOD;
+                  const needsMOICAdvice =
+                    exit.moic < ADVICE_THRESHOLDS.MOIC.GOOD;
                   const needsTRIAdvice = exit.irr < ADVICE_THRESHOLDS.TRI.GOOD;
-                  
+
                   return (
                     <tr key={exit.year}>
                       <td className="font-medium">Année {exit.year}</td>
-                      <td className="text-right">{formatCurrency(exit.propertyValue)}</td>
-                      <td className="text-right">{formatCurrency(exit.salePrice)}</td>
-                      <td className="text-right">{formatCurrency(exit.mortgageBalance)}</td>
+                      <td className="text-right">
+                        {formatCurrency(exit.propertyValue)}
+                      </td>
+                      <td className="text-right">
+                        {formatCurrency(exit.salePrice)}
+                      </td>
+                      <td className="text-right">
+                        {formatCurrency(exit.mortgageBalance)}
+                      </td>
                       <td className="text-right font-medium text-blue-700">
                         {formatCurrency(exit.netProceeds)}
                       </td>
                       <td
                         className={`text-right font-medium ${
-                          exit.netProfit >= 0 ? 'text-green-700' : 'text-red-700'
+                          exit.netProfit >= 0
+                            ? "text-green-700"
+                            : "text-red-700"
                         }`}
                       >
                         {formatCurrencySigned(exit.netProfit)}
                       </td>
-                      <td className={`text-right ${exit.moic >= ADVICE_THRESHOLDS.MOIC.GOOD ? 'text-green-700' : exit.moic >= ADVICE_THRESHOLDS.MOIC.ACCEPTABLE ? 'text-orange-600' : 'text-red-700'}`}>
+                      <td
+                        className={`text-right ${exit.moic >= ADVICE_THRESHOLDS.MOIC.GOOD ? "text-green-700" : exit.moic >= ADVICE_THRESHOLDS.MOIC.ACCEPTABLE ? "text-orange-600" : "text-red-700"}`}
+                      >
                         <div className="flex items-center justify-end gap-2">
-                          <span className="font-medium">{exit.moic.toFixed(2)}x</span>
+                          <span className="font-medium">
+                            {exit.moic.toFixed(2)}x
+                          </span>
                           {needsMOICAdvice && (
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => setOpenExitModal({ type: 'moic', year: exit.year })}
+                              onClick={() =>
+                                setOpenExitModal({
+                                  type: "moic",
+                                  year: exit.year,
+                                })
+                              }
                               className="h-5 px-1 text-xs"
                               aria-label={`Voir les conseils pour améliorer le MOIC de l'année ${exit.year}`}
                               title="Voir comment améliorer ce MOIC"
@@ -413,14 +544,23 @@ export function ProjectionAnalysis() {
                           )}
                         </div>
                       </td>
-                      <td className={`text-right ${exit.irr >= ADVICE_THRESHOLDS.TRI.GOOD ? 'text-green-700' : exit.irr >= ADVICE_THRESHOLDS.TRI.ACCEPTABLE ? 'text-orange-600' : exit.irr >= 0 ? 'text-blue-700' : 'text-red-700'}`}>
+                      <td
+                        className={`text-right ${exit.irr >= ADVICE_THRESHOLDS.TRI.GOOD ? "text-green-700" : exit.irr >= ADVICE_THRESHOLDS.TRI.ACCEPTABLE ? "text-orange-600" : exit.irr >= 0 ? "text-blue-700" : "text-red-700"}`}
+                      >
                         <div className="flex items-center justify-end gap-2">
-                          <span className="font-medium">{formatPercent(exit.irr)}</span>
+                          <span className="font-medium">
+                            {formatPercent(exit.irr)}
+                          </span>
                           {needsTRIAdvice && (
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => setOpenExitModal({ type: 'tri', year: exit.year })}
+                              onClick={() =>
+                                setOpenExitModal({
+                                  type: "tri",
+                                  year: exit.year,
+                                })
+                              }
                               className="h-5 px-1 text-xs"
                               aria-label={`Voir les conseils pour améliorer le TRI de l'année ${exit.year}`}
                               title="Voir comment améliorer ce TRI"
@@ -438,21 +578,30 @@ export function ProjectionAnalysis() {
           </div>
           <div className="mt-4 p-3 bg-slate-50 rounded-xl text-xs space-y-1 border border-slate-300">
             <p>
-              <strong>Prix vente net</strong> : Après frais de vente (courtage, notaire)
+              <strong>Prix vente net</strong> : Après frais de vente (courtage,
+              notaire)
             </p>
             <p>
-              <strong>Produit net</strong> : Ce que vous récupérez (Prix vente − Solde prêt)
+              <strong>Produit net</strong> : Ce que vous récupérez (Prix vente −
+              Solde prêt)
             </p>
             <p>
-              <strong>Profit net</strong> : Produit net + Cashflows cumulés − Investissement total
+              <strong>Profit net</strong> : Produit net + Cashflows cumulés −
+              Investissement total
             </p>
             <p>
-              <strong>MOIC</strong> : Multiple du capital investi (Profit net ÷ Investissement). 
-              Seuil optimal : <span className="text-green-700 font-medium">≥ {ADVICE_THRESHOLDS.MOIC.GOOD}x</span>
+              <strong>MOIC</strong> : Multiple du capital investi (Profit net ÷
+              Investissement). Seuil optimal :{" "}
+              <span className="text-green-700 font-medium">
+                ≥ {ADVICE_THRESHOLDS.MOIC.GOOD}x
+              </span>
             </p>
             <p>
-              <strong>TRI</strong> : Taux de rendement interne jusqu'à cette année. 
-              Seuil optimal : <span className="text-green-700 font-medium">≥ {ADVICE_THRESHOLDS.TRI.GOOD} %</span>
+              <strong>TRI</strong> : Taux de rendement interne jusqu'à cette
+              année. Seuil optimal :{" "}
+              <span className="text-green-700 font-medium">
+                ≥ {ADVICE_THRESHOLDS.TRI.GOOD} %
+              </span>
             </p>
           </div>
         </CardContent>
@@ -476,57 +625,63 @@ export function ProjectionAnalysis() {
 
       {/* Modals d'explication */}
       <MetricExplanationModal
-        isOpen={openModal === 'dscr'}
+        isOpen={openModal === "dscr"}
         onClose={() => setOpenModal(null)}
         title="DSCR - Debt Service Coverage Ratio"
-        explanation={getMetricExplanation('dscr')}
+        explanation={getMetricExplanation("dscr")}
         advice={getDSCRAdvice(projection.minDSCR, inputs, projection)}
       />
 
       <MetricExplanationModal
-        isOpen={openModal === 'ltv'}
+        isOpen={openModal === "ltv"}
         onClose={() => setOpenModal(null)}
         title="LTV - Loan-to-Value"
-        explanation={getMetricExplanation('ltv')}
+        explanation={getMetricExplanation("ltv")}
         advice={getLTVAdvice(projection.maxLTV, inputs)}
       />
 
       <MetricExplanationModal
-        isOpen={openModal === 'breakeven'}
+        isOpen={openModal === "breakeven"}
         onClose={() => setOpenModal(null)}
         title="Occupation Break-Even"
-        explanation={getMetricExplanation('breakeven')}
-        advice={getBreakEvenOccupancyAdvice(projection.breakEvenOccupancy || 0, inputs)}
+        explanation={getMetricExplanation("breakeven")}
+        advice={getBreakEvenOccupancyAdvice(
+          projection.breakEvenOccupancy || 0,
+          inputs,
+        )}
       />
 
       {/* Modales pour scénarios de sortie */}
-      {openExitModal && (() => {
-        const exit = projection.exitScenarios.find(e => e.year === openExitModal.year);
-        if (!exit) return null;
-        
-        const modalConfig = openExitModal.type === 'moic' 
-          ? {
-              title: `MOIC - Année ${exit.year}`,
-              explanation: getMetricExplanation('moic'),
-              advice: getMOICAdvice(exit.moic, exit.year, inputs, projection),
-            }
-          : {
-              title: `TRI (Taux de Rendement Interne) - Année ${exit.year}`,
-              explanation: getMetricExplanation('tri'),
-              advice: getTRIAdvice(exit.irr, exit.year, inputs, projection),
-            };
-        
-        return (
-          <MetricExplanationModal
-            isOpen={true}
-            onClose={() => setOpenExitModal(null)}
-            title={modalConfig.title}
-            explanation={modalConfig.explanation}
-            advice={modalConfig.advice}
-          />
-        );
-      })()}
+      {openExitModal &&
+        (() => {
+          const exit = projection.exitScenarios.find(
+            (e) => e.year === openExitModal.year,
+          );
+          if (!exit) return null;
+
+          const modalConfig =
+            openExitModal.type === "moic"
+              ? {
+                  title: `MOIC - Année ${exit.year}`,
+                  explanation: getMetricExplanation("moic"),
+                  advice: getMOICAdvice(exit.moic, exit.year, inputs),
+                }
+              : {
+                  title: `TRI (Taux de Rendement Interne) - Année ${exit.year}`,
+                  explanation: getMetricExplanation("tri"),
+                  advice: getTRIAdvice(exit.irr, exit.year, inputs),
+                };
+
+          return (
+            <MetricExplanationModal
+              isOpen={true}
+              onClose={() => setOpenExitModal(null)}
+              title={modalConfig.title}
+              explanation={modalConfig.explanation}
+              advice={modalConfig.advice}
+            />
+          );
+        })()}
     </div>
   );
 }
-

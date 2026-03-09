@@ -1,12 +1,24 @@
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
-import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
-import { useProject, createDefaultProject } from '../../store/ProjectContext';
-import type { Scenario } from '../../types';
-import { calculateKPIs } from '../../lib/calculations';
-import { formatCurrency, formatPercent, generateUUID, formatDateShort, deepMerge, deepClone } from '../../lib/utils';
-import { CHART_COLORS } from '../../lib/colors';
+import { useState, useMemo } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../../components/ui/Card";
+import { Button } from "../../components/ui/Button";
+import { Input } from "../../components/ui/Input";
+import { useProject, createDefaultProject } from "../../store/ProjectContext";
+import type { Scenario } from "../../types";
+import { calculateKPIs } from "../../lib/calculations";
+import {
+  formatCurrency,
+  formatPercent,
+  generateUUID,
+  formatDateShort,
+  deepMerge,
+  deepClone,
+} from "../../lib/utils";
+import { CHART_COLORS } from "../../lib/colors";
 import {
   BarChart,
   Bar,
@@ -16,15 +28,17 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-} from 'recharts';
+} from "recharts";
 
 export function ScenarioManager() {
   const { project, dispatch } = useProject();
   const [showNewScenarioForm, setShowNewScenarioForm] = useState(false);
-  const [newScenarioName, setNewScenarioName] = useState('');
+  const [newScenarioName, setNewScenarioName] = useState("");
   const [showComparison, setShowComparison] = useState(false);
-  const [editingScenarioId, setEditingScenarioId] = useState<string | null>(null);
-  const [editingScenarioName, setEditingScenarioName] = useState('');
+  const [editingScenarioId, setEditingScenarioId] = useState<string | null>(
+    null,
+  );
+  const [editingScenarioName, setEditingScenarioName] = useState("");
 
   const createScenario = () => {
     if (!newScenarioName.trim()) return;
@@ -34,15 +48,15 @@ export function ScenarioManager() {
     const newScenario: Scenario = {
       id: generateUUID(),
       name: newScenarioName,
-      description: '',
+      description: "",
       isBase: false,
       overrides: deepClone(defaults),
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
-    dispatch({ type: 'ADD_SCENARIO', payload: newScenario });
-    setNewScenarioName('');
+    dispatch({ type: "ADD_SCENARIO", payload: newScenario });
+    setNewScenarioName("");
     setShowNewScenarioForm(false);
   };
 
@@ -50,29 +64,29 @@ export function ScenarioManager() {
     // Résoudre les inputs du scénario source au moment T
     const resolved = scenario.isBase
       ? project.baseInputs
-      : deepMerge(project.baseInputs, scenario.overrides || {} as any);
+      : deepMerge(project.baseInputs, scenario.overrides || {});
 
     const newScenario: Scenario = {
       id: generateUUID(),
       name: `${scenario.name} (copie)`,
-      description: scenario.description || '',
+      description: scenario.description || "",
       isBase: false,
       overrides: deepClone(resolved), // snapshot indépendant
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
-    dispatch({ type: 'ADD_SCENARIO', payload: newScenario });
+    dispatch({ type: "ADD_SCENARIO", payload: newScenario });
   };
 
   const deleteScenario = (id: string) => {
-    if (confirm('Voulez-vous vraiment supprimer ce scénario ?')) {
-      dispatch({ type: 'DELETE_SCENARIO', payload: id });
+    if (confirm("Voulez-vous vraiment supprimer ce scénario ?")) {
+      dispatch({ type: "DELETE_SCENARIO", payload: id });
     }
   };
 
   const setActiveScenario = (id: string) => {
-    dispatch({ type: 'SET_ACTIVE_SCENARIO', payload: id });
+    dispatch({ type: "SET_ACTIVE_SCENARIO", payload: id });
   };
 
   const startRenaming = (scenario: Scenario) => {
@@ -84,37 +98,41 @@ export function ScenarioManager() {
     if (!editingScenarioName.trim() || !editingScenarioId) return;
 
     dispatch({
-      type: 'UPDATE_SCENARIO',
+      type: "UPDATE_SCENARIO",
       payload: {
         id: editingScenarioId,
         updates: { name: editingScenarioName.trim() },
       },
     });
     setEditingScenarioId(null);
-    setEditingScenarioName('');
+    setEditingScenarioName("");
   };
 
   const cancelRename = () => {
     setEditingScenarioId(null);
-    setEditingScenarioName('');
+    setEditingScenarioName("");
   };
 
-  // Données pour la comparaison
-  const comparisonData = project.scenarios.map((scenario) => {
-    const inputs = scenario.isBase
-      ? project.baseInputs
-      : deepMerge(project.baseInputs, scenario.overrides || {} as any);
-    const kpis = calculateKPIs(inputs);
+  // Données pour la comparaison (mémorisées pour éviter recalculs inutiles)
+  const comparisonData = useMemo(
+    () =>
+      project.scenarios.map((scenario) => {
+        const inputs = scenario.isBase
+          ? project.baseInputs
+          : deepMerge(project.baseInputs, scenario.overrides || {});
+        const kpis = calculateKPIs(inputs);
 
-    return {
-      name: scenario.name,
-      revenus: kpis.annualRevenue,
-      dépenses: kpis.totalExpenses,
-      cashflow: kpis.annualCashflow,
-      coc: kpis.cashOnCash,
-      capRate: kpis.capRate,
-    };
-  });
+        return {
+          name: scenario.name,
+          revenus: kpis.annualRevenue,
+          dépenses: kpis.totalExpenses,
+          cashflow: kpis.annualCashflow,
+          coc: kpis.cashOnCash,
+          capRate: kpis.capRate,
+        };
+      }),
+    [project.scenarios, project.baseInputs],
+  );
 
   return (
     <div className="space-y-6">
@@ -128,7 +146,7 @@ export function ScenarioManager() {
                 variant="outline"
                 onClick={() => setShowComparison(!showComparison)}
               >
-                {showComparison ? 'Masquer' : 'Comparer'}
+                {showComparison ? "Masquer" : "Comparer"}
               </Button>
               <Button onClick={() => setShowNewScenarioForm(true)}>
                 + Nouveau scénario
@@ -144,7 +162,9 @@ export function ScenarioManager() {
                 <div
                   key={scenario.id}
                   className={`border rounded-2xl p-4 transition-all ${
-                    isActive ? 'border-sky-400 bg-sky-50 shadow-soft' : 'border-slate-300 hover:border-slate-400'
+                    isActive
+                      ? "border-sky-400 bg-sky-50 shadow-soft"
+                      : "border-slate-300 hover:border-slate-400"
                   }`}
                 >
                   <div className="flex justify-between items-start">
@@ -153,10 +173,12 @@ export function ScenarioManager() {
                         <div className="flex items-center space-x-2 mb-2">
                           <Input
                             value={editingScenarioName}
-                            onChange={(e) => setEditingScenarioName(e.target.value)}
-                            onKeyPress={(e) => {
-                              if (e.key === 'Enter') saveRename();
-                              if (e.key === 'Escape') cancelRename();
+                            onChange={(e) =>
+                              setEditingScenarioName(e.target.value)
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") saveRename();
+                              if (e.key === "Escape") cancelRename();
                             }}
                             className="max-w-xs"
                             autoFocus
@@ -164,7 +186,11 @@ export function ScenarioManager() {
                           <Button size="sm" onClick={saveRename}>
                             Valider
                           </Button>
-                          <Button size="sm" variant="outline" onClick={cancelRename}>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={cancelRename}
+                          >
                             Annuler
                           </Button>
                         </div>
@@ -184,7 +210,9 @@ export function ScenarioManager() {
                         </h4>
                       )}
                       {scenario.description && (
-                        <p className="text-sm text-slate-600 mt-1">{scenario.description}</p>
+                        <p className="text-sm text-slate-600 mt-1">
+                          {scenario.description}
+                        </p>
                       )}
                       <p className="text-xs text-slate-400 mt-1">
                         Créé le {formatDateShort(scenario.createdAt)}
@@ -233,20 +261,22 @@ export function ScenarioManager() {
           {/* Formulaire nouveau scénario */}
           {showNewScenarioForm && (
             <div className="mt-4 border border-sky-200 rounded-2xl p-4 bg-sky-50">
-              <h4 className="font-medium mb-3 text-slate-800">Nouveau scénario</h4>
+              <h4 className="font-medium mb-3 text-slate-800">
+                Nouveau scénario
+              </h4>
               <div className="flex space-x-2">
                 <Input
                   placeholder="Nom du scénario"
                   value={newScenarioName}
                   onChange={(e) => setNewScenarioName(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && createScenario()}
+                  onKeyDown={(e) => e.key === "Enter" && createScenario()}
                 />
                 <Button onClick={createScenario}>Créer</Button>
                 <Button
                   variant="outline"
                   onClick={() => {
                     setShowNewScenarioForm(false);
-                    setNewScenarioName('');
+                    setNewScenarioName("");
                   }}
                 >
                   Annuler
@@ -300,7 +330,7 @@ export function ScenarioManager() {
                       <td
                         key={i}
                         className={`text-right ${
-                          d.cashflow >= 0 ? 'text-emerald-600' : 'text-red-500'
+                          d.cashflow >= 0 ? "text-emerald-600" : "text-red-500"
                         }`}
                       >
                         {formatCurrency(d.cashflow)}
@@ -329,30 +359,53 @@ export function ScenarioManager() {
 
             {/* Graphique Cashflow */}
             <div className="mb-6">
-              <h4 className="font-medium mb-3 text-slate-800">Cashflow annuel par scénario</h4>
+              <h4 className="font-medium mb-3 text-slate-800">
+                Cashflow annuel par scénario
+              </h4>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={comparisonData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                   <XAxis dataKey="name" />
                   <YAxis />
-                  <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                  <Bar dataKey="cashflow" fill={CHART_COLORS.cashflow} name="Cashflow annuel" radius={[8, 8, 0, 0]} />
+                  <Tooltip
+                    formatter={(value: number) => formatCurrency(value)}
+                  />
+                  <Bar
+                    dataKey="cashflow"
+                    fill={CHART_COLORS.cashflow}
+                    name="Cashflow annuel"
+                    radius={[8, 8, 0, 0]}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
 
             {/* Graphique Cash-on-Cash vs Cap Rate */}
             <div>
-              <h4 className="font-medium mb-3 text-slate-800">Métriques de rentabilité</h4>
+              <h4 className="font-medium mb-3 text-slate-800">
+                Métriques de rentabilité
+              </h4>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={comparisonData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                   <XAxis dataKey="name" />
                   <YAxis />
-                  <Tooltip formatter={(value: number) => formatPercent(value)} />
+                  <Tooltip
+                    formatter={(value: number) => formatPercent(value)}
+                  />
                   <Legend />
-                  <Bar dataKey="coc" fill={CHART_COLORS.plusValue} name="Cash-on-Cash (%)" radius={[8, 8, 0, 0]} />
-                  <Bar dataKey="capRate" fill={CHART_COLORS.warning} name="Cap Rate (%)" radius={[8, 8, 0, 0]} />
+                  <Bar
+                    dataKey="coc"
+                    fill={CHART_COLORS.plusValue}
+                    name="Cash-on-Cash (%)"
+                    radius={[8, 8, 0, 0]}
+                  />
+                  <Bar
+                    dataKey="capRate"
+                    fill={CHART_COLORS.warning}
+                    name="Cap Rate (%)"
+                    radius={[8, 8, 0, 0]}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -362,4 +415,3 @@ export function ScenarioManager() {
     </div>
   );
 }
-

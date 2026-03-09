@@ -1,14 +1,22 @@
-import { Card, CardContent, CardHeader, CardTitle } from './ui/Card';
-import { Button } from './ui/Button';
-import { Badge } from './ui/Badge';
-import { ProgressBar } from './ui/ProgressBar';
-import type { KPIResults, ProjectInputs } from '../types';
-import { formatCurrency, formatPercent, formatNumber } from '../lib/utils';
-import { ExecutiveSummary } from './ExecutiveSummary';
-import { KeyAssumptions } from './KeyAssumptions';
-import { ExpenseBreakdownChart } from './charts/ExpenseBreakdownChart';
-import { ROICompositionChart } from './charts/ROICompositionChart';
-import { CashFlowWaterfallChart } from './charts/CashFlowWaterfallChart';
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/Card";
+import { Button } from "./ui/Button";
+import { Badge } from "./ui/Badge";
+import { ProgressBar } from "./ui/ProgressBar";
+import type { KPIResults, ProjectInputs } from "../types";
+import { formatCurrency, formatPercent, formatNumber } from "../lib/utils";
+import { extractValue } from "../lib/calculations";
+import { KPI_THRESHOLDS } from "../lib/constants";
+import { PERFORMANCE_THRESHOLDS } from "../lib/chartConfig";
+import { ExecutiveSummary } from "./ExecutiveSummary";
+import { KeyAssumptions } from "./KeyAssumptions";
+import { ExpenseBreakdownChart } from "./charts/ExpenseBreakdownChart";
+import { ROICompositionChart } from "./charts/ROICompositionChart";
+import { CashFlowWaterfallChart } from "./charts/CashFlowWaterfallChart";
+
+function safePercent(numerator: number, denominator: number): number {
+  if (denominator === 0) return 0;
+  return Math.max(0, Math.min((numerator / denominator) * 100, 100));
+}
 
 interface KPIDashboardProps {
   kpis: KPIResults;
@@ -21,48 +29,59 @@ interface MetricCardProps {
   value: string;
   subtitle?: string;
   badge?: React.ReactNode;
-  color?: 'sky' | 'emerald' | 'orange' | 'red' | 'violet' | 'slate' | 'amber';
+  color?: "sky" | "emerald" | "orange" | "red" | "violet" | "slate" | "amber";
   icon?: string;
   onInspect?: () => void;
-  variant?: 'default' | 'large' | 'total';
+  variant?: "default" | "large" | "total";
   className?: string;
 }
 
-function MetricCard({ title, value, subtitle, badge, color = 'sky', icon, onInspect, variant = 'default', className = '' }: MetricCardProps) {
+function MetricCard({
+  title,
+  value,
+  subtitle,
+  badge,
+  color = "sky",
+  icon,
+  onInspect,
+  variant = "default",
+  className = "",
+}: MetricCardProps) {
   const borderColorClasses = {
-    sky: 'border-l-sky-500',
-    emerald: 'border-l-emerald-500',
-    orange: 'border-l-orange-500',
-    red: 'border-l-red-500',
-    violet: 'border-l-violet-400',
-    slate: 'border-l-slate-500',
-    amber: 'border-l-amber-500',
+    sky: "border-l-sky-500",
+    emerald: "border-l-emerald-500",
+    orange: "border-l-orange-500",
+    red: "border-l-red-500",
+    violet: "border-l-violet-400",
+    slate: "border-l-slate-500",
+    amber: "border-l-amber-500",
   };
 
   const iconBgClasses = {
-    sky: 'bg-sky-100',
-    emerald: 'bg-emerald-100',
-    orange: 'bg-orange-100',
-    red: 'bg-red-100',
-    violet: 'bg-violet-100',
-    slate: 'bg-slate-100',
-    amber: 'bg-amber-100',
+    sky: "bg-sky-100",
+    emerald: "bg-emerald-100",
+    orange: "bg-orange-100",
+    red: "bg-red-100",
+    violet: "bg-violet-100",
+    slate: "bg-slate-100",
+    amber: "bg-amber-100",
   };
 
-  const textColorClass = variant === 'total' ? 'text-slate-900' : 'text-slate-800';
-  
-  const totalBorder = variant === 'total' ? 'border-l-slate-700' : '';
-  
+  const textColorClass =
+    variant === "total" ? "text-slate-900" : "text-slate-800";
+
+  const totalBorder = variant === "total" ? "border-l-slate-700" : "";
+
   const getFontSize = () => {
-    if (variant === 'total') return 'min(1.75rem, 13cqw)';
-    if (variant === 'large') return 'min(2rem, 15cqw)';
-    return 'min(1.25rem, 10cqw)';
+    if (variant === "total") return "min(1.75rem, 13cqw)";
+    if (variant === "large") return "min(2rem, 15cqw)";
+    return "min(1.25rem, 10cqw)";
   };
 
   return (
-    <div 
-      className={`${totalBorder || borderColorClasses[color]} ${className} bg-white border-l-4 border-y border-r border-slate-200 rounded-[14px] p-4 transition-all duration-300 ease-in-out ${variant === 'total' ? 'shadow-md' : 'shadow-[0_2px_6px_rgba(0,0,0,0.05)]'} hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:-translate-y-0.5`}
-      style={{ containerType: 'inline-size' }}
+    <div
+      className={`${totalBorder || borderColorClasses[color]} ${className} bg-white border-l-4 border-y border-r border-slate-200 rounded-[14px] p-4 transition-all duration-300 ease-in-out ${variant === "total" ? "shadow-md" : "shadow-[0_2px_6px_rgba(0,0,0,0.05)]"} hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:-translate-y-0.5`}
+      style={{ containerType: "inline-size" }}
       role="article"
       aria-label={`Métrique ${title}: ${value}`}
       tabIndex={0}
@@ -70,32 +89,34 @@ function MetricCard({ title, value, subtitle, badge, color = 'sky', icon, onInsp
       <div className="flex items-center justify-between gap-3 mb-3">
         <div className="flex items-center gap-3">
           {icon && (
-            <div className={`${iconBgClasses[color]} w-10 h-10 rounded-lg shrink-0 flex items-center justify-center`}>
+            <div
+              className={`${iconBgClasses[color]} w-10 h-10 rounded-lg shrink-0 flex items-center justify-center`}
+            >
               <span className="text-xl leading-none">{icon}</span>
             </div>
           )}
-          <p className={`text-[0.7rem] font-semibold ${variant === 'total' ? 'text-slate-800' : 'text-slate-600'} uppercase tracking-[0.05em] leading-tight`}>
+          <p
+            className={`text-[0.7rem] font-semibold ${variant === "total" ? "text-slate-800" : "text-slate-600"} uppercase tracking-[0.05em] leading-tight`}
+          >
             {title}
           </p>
         </div>
         {badge && <div className="shrink-0">{badge}</div>}
       </div>
-      
+
       <div className="space-y-2">
-        <p 
+        <p
           className={`font-bold ${textColorClass} leading-none tracking-tight whitespace-nowrap`}
-          style={{ 
+          style={{
             fontSize: getFontSize(),
-            containerType: 'normal'
+            containerType: "normal",
           }}
           aria-live="polite"
         >
           {value}
         </p>
         {subtitle && (
-          <p className="text-xs text-slate-500 leading-tight">
-            {subtitle}
-          </p>
+          <p className="text-xs text-slate-500 leading-tight">{subtitle}</p>
         )}
         {onInspect && (
           <Button
@@ -113,16 +134,6 @@ function MetricCard({ title, value, subtitle, badge, color = 'sky', icon, onInsp
   );
 }
 
-function extractValue<T>(input: any): T {
-  if (typeof input === 'object' && input !== null && 'value' in input) {
-    if ('range' in input && input.range && input.range.useRange) {
-      return input.range.default as T;
-    }
-    return input.value;
-  }
-  return input as T;
-}
-
 export function KPIDashboard({ kpis, inputs, onInspect }: KPIDashboardProps) {
   // DSCR Badge variant
   const getDSCRBadge = (dscr: number) => {
@@ -132,23 +143,28 @@ export function KPIDashboard({ kpis, inputs, onInspect }: KPIDashboardProps) {
   };
 
   // Ratios
-  const noiToRevenueRatio = kpis.annualRevenue > 0 
-    ? (kpis.noi / kpis.annualRevenue) * 100 
-    : 0;
-  
-  const expenseToRevenueRatio = kpis.annualRevenue > 0
-    ? (kpis.totalExpenses / kpis.annualRevenue) * 100
-    : 0;
-  
-  const debtToRevenueRatio = kpis.annualRevenue > 0
-    ? (kpis.annualDebtService / kpis.annualRevenue) * 100
-    : 0;
+  const noiToRevenueRatio =
+    kpis.annualRevenue > 0 ? (kpis.noi / kpis.annualRevenue) * 100 : 0;
+
+  const expenseToRevenueRatio =
+    kpis.annualRevenue > 0
+      ? (kpis.totalExpenses / kpis.annualRevenue) * 100
+      : 0;
+
+  const debtToRevenueRatio =
+    kpis.annualRevenue > 0
+      ? (kpis.annualDebtService / kpis.annualRevenue) * 100
+      : 0;
 
   // Inputs
   const occupancyRate = extractValue<number>(inputs.revenue.occupancyRate);
-  const averageDailyRate = extractValue<number>(inputs.revenue.averageDailyRate);
+  const averageDailyRate = extractValue<number>(
+    inputs.revenue.averageDailyRate,
+  );
   const interestRate = extractValue<number>(inputs.financing.interestRate);
-  const appreciationRate = extractValue<number>(inputs.financing.annualAppreciationRate);
+  const appreciationRate = extractValue<number>(
+    inputs.financing.annualAppreciationRate,
+  );
 
   return (
     <div className="space-y-10 pb-8">
@@ -171,12 +187,16 @@ export function KPIDashboard({ kpis, inputs, onInspect }: KPIDashboardProps) {
       {/* 3. FLUX FINANCIER EN CASCADE */}
       <section className="mt-10">
         <div className="mb-4">
-          <h3 className="text-xl font-semibold text-slate-900 mb-1">Flux financier en cascade</h3>
-          <p className="text-sm text-slate-500">Évolution du flux financier : revenus → NOI → cashflow net</p>
+          <h3 className="text-xl font-semibold text-slate-900 mb-1">
+            Flux financier en cascade
+          </h3>
+          <p className="text-sm text-slate-500">
+            Évolution du flux financier : revenus → NOI → cashflow net
+          </p>
         </div>
         <Card className="shadow-[0_2px_6px_rgba(0,0,0,0.05)] rounded-[14px]">
           <CardContent className="pt-6">
-            <div style={{ height: '340px' }}>
+            <div style={{ height: "340px" }}>
               <CashFlowWaterfallChart
                 revenue={kpis.annualRevenue}
                 expenses={kpis.totalExpenses}
@@ -205,14 +225,16 @@ export function KPIDashboard({ kpis, inputs, onInspect }: KPIDashboardProps) {
 
       {/* 4. REVENUS LOCATIFS BRUTS */}
       <section className="mt-10">
-        <h3 className="text-xl font-semibold text-slate-900 mb-4">Revenus locatifs bruts</h3>
+        <h3 className="text-xl font-semibold text-slate-900 mb-4">
+          Revenus locatifs bruts
+        </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <MetricCard
             title="Nuitées vendues"
             value={formatNumber(kpis.nightsSold)}
             color="sky"
             icon="🌙"
-            onInspect={() => onInspect?.('nightsSold')}
+            onInspect={() => onInspect?.("nightsSold")}
           />
           <MetricCard
             title="Revenus annuels bruts"
@@ -220,14 +242,16 @@ export function KPIDashboard({ kpis, inputs, onInspect }: KPIDashboardProps) {
             color="sky"
             icon="💰"
             variant="total"
-            onInspect={() => onInspect?.('annualRevenue')}
+            onInspect={() => onInspect?.("annualRevenue")}
           />
         </div>
       </section>
 
       {/* 5. DÉPENSES OPÉRATIONNELLES */}
       <section className="mt-10">
-        <h3 className="text-xl font-semibold text-slate-900 mb-4">Dépenses opérationnelles</h3>
+        <h3 className="text-xl font-semibold text-slate-900 mb-4">
+          Dépenses opérationnelles
+        </h3>
         <div className="space-y-6">
           <MetricCard
             title="Dépenses totales"
@@ -236,20 +260,26 @@ export function KPIDashboard({ kpis, inputs, onInspect }: KPIDashboardProps) {
             color="orange"
             icon="📊"
             variant="total"
-            onInspect={() => onInspect?.('totalExpenses')}
+            onInspect={() => onInspect?.("totalExpenses")}
           />
 
           {/* Graphique de répartition en pleine largeur */}
           {Object.keys(kpis.expensesByCategory).length > 0 && (
             <div>
               <div className="mb-4">
-                <h4 className="text-lg font-semibold text-slate-800 mb-1">Répartition des dépenses</h4>
-                <p className="text-sm text-slate-500">Détail des dépenses par catégorie</p>
+                <h4 className="text-lg font-semibold text-slate-800 mb-1">
+                  Répartition des dépenses
+                </h4>
+                <p className="text-sm text-slate-500">
+                  Détail des dépenses par catégorie
+                </p>
               </div>
               <Card className="shadow-[0_2px_6px_rgba(0,0,0,0.05)] rounded-[14px]">
                 <CardContent className="pt-6">
                   <div className="h-[320px] sm:h-[400px]">
-                    <ExpenseBreakdownChart expensesByCategory={kpis.expensesByCategory} />
+                    <ExpenseBreakdownChart
+                      expensesByCategory={kpis.expensesByCategory}
+                    />
                   </div>
                 </CardContent>
               </Card>
@@ -260,10 +290,12 @@ export function KPIDashboard({ kpis, inputs, onInspect }: KPIDashboardProps) {
 
       {/* 6. NOI AVEC PROGRESS BAR ET BADGE EN LIGNE */}
       <section className="mt-10">
-        <h3 className="text-xl font-semibold text-slate-900 mb-4">Revenu net d'exploitation (NOI)</h3>
-        <div 
+        <h3 className="text-xl font-semibold text-slate-900 mb-4">
+          Revenu net d'exploitation (NOI)
+        </h3>
+        <div
           className="border-l-emerald-500 bg-white border-l-4 border-y border-r border-slate-200 rounded-[14px] p-5 shadow-[0_2px_6px_rgba(0,0,0,0.05)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 transition-all duration-300"
-          style={{ containerType: 'inline-size' }}
+          style={{ containerType: "inline-size" }}
         >
           <div className="flex items-start justify-between gap-4 mb-4">
             <div className="flex items-start gap-3">
@@ -279,11 +311,11 @@ export function KPIDashboard({ kpis, inputs, onInspect }: KPIDashboardProps) {
                     <Badge variant="success">Excellente marge</Badge>
                   )}
                 </div>
-                <p 
+                <p
                   className="font-bold text-slate-900 leading-none tracking-tight whitespace-nowrap"
-                  style={{ 
-                    fontSize: 'min(2rem, 15cqw)',
-                    containerType: 'normal'
+                  style={{
+                    fontSize: "min(2rem, 15cqw)",
+                    containerType: "normal",
                   }}
                 >
                   {formatCurrency(kpis.noi)}
@@ -291,18 +323,18 @@ export function KPIDashboard({ kpis, inputs, onInspect }: KPIDashboardProps) {
               </div>
             </div>
           </div>
-          
-          <ProgressBar 
-            value={noiToRevenueRatio} 
-            label="Part des revenus" 
+
+          <ProgressBar
+            value={noiToRevenueRatio}
+            label="Part des revenus"
             color="emerald"
           />
-          
+
           {onInspect && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => onInspect('noi')}
+              onClick={() => onInspect("noi")}
               className="h-7 px-2 text-xs mt-3"
             >
               <span className="emoji-icon-sm">ⓘ</span>Détails
@@ -313,7 +345,9 @@ export function KPIDashboard({ kpis, inputs, onInspect }: KPIDashboardProps) {
 
       {/* 7. SERVICE DE LA DETTE ÉQUILIBRÉ */}
       <section className="mt-10">
-        <h3 className="text-xl font-semibold text-slate-900 mb-4">Service de la dette</h3>
+        <h3 className="text-xl font-semibold text-slate-900 mb-4">
+          Service de la dette
+        </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Ligne 1 */}
           <MetricCard
@@ -321,7 +355,7 @@ export function KPIDashboard({ kpis, inputs, onInspect }: KPIDashboardProps) {
             value={formatCurrency(kpis.loanAmount)}
             color="violet"
             icon="🏦"
-            onInspect={() => onInspect?.('loanAmount')}
+            onInspect={() => onInspect?.("loanAmount")}
             className="min-h-[140px] flex flex-col justify-center"
           />
           <MetricCard
@@ -331,26 +365,28 @@ export function KPIDashboard({ kpis, inputs, onInspect }: KPIDashboardProps) {
             color="violet"
             icon="💳"
             variant="total"
-            onInspect={() => onInspect?.('annualDebtService')}
+            onInspect={() => onInspect?.("annualDebtService")}
             className="min-h-[140px]"
           />
-          
+
           {/* Ligne 2 */}
           <MetricCard
             title="Paiement périodique"
             value={formatCurrency(kpis.periodicPayment)}
             color="violet"
             icon="📅"
-            onInspect={() => onInspect?.('periodicPayment')}
+            onInspect={() => onInspect?.("periodicPayment")}
             className="min-h-[140px] flex flex-col justify-center"
           />
           <MetricCard
             title="DSCR"
             value={kpis.dscr.toFixed(2)}
             badge={getDSCRBadge(kpis.dscr)}
-            color={kpis.dscr >= 1.25 ? 'emerald' : kpis.dscr >= 1.1 ? 'amber' : 'red'}
+            color={
+              kpis.dscr >= 1.25 ? "emerald" : kpis.dscr >= 1.1 ? "amber" : "red"
+            }
             icon="🎯"
-            onInspect={() => onInspect?.('dscr')}
+            onInspect={() => onInspect?.("dscr")}
             className="min-h-[140px] flex flex-col justify-center"
           />
         </div>
@@ -358,10 +394,10 @@ export function KPIDashboard({ kpis, inputs, onInspect }: KPIDashboardProps) {
 
       {/* 8. CRÉATION DE RICHESSE AVEC BARRES HORIZONTALES AMÉLIORÉES */}
       <section className="mt-10">
-        <h3 className="text-xl font-semibold text-slate-900 mb-4">Création de richesse</h3>
-        <div 
-          className="border-l-emerald-500 bg-white border-l-4 border-y border-r border-slate-200 rounded-[14px] p-6 shadow-md hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 transition-all duration-300"
-        >
+        <h3 className="text-xl font-semibold text-slate-900 mb-4">
+          Création de richesse
+        </h3>
+        <div className="border-l-emerald-500 bg-white border-l-4 border-y border-r border-slate-200 rounded-[14px] p-6 shadow-md hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 transition-all duration-300">
           <div className="space-y-4">
             {/* Cashflow */}
             <div className="flex items-center justify-between gap-4 pb-4 border-b border-slate-100">
@@ -369,13 +405,17 @@ export function KPIDashboard({ kpis, inputs, onInspect }: KPIDashboardProps) {
                 <span className="text-2xl shrink-0">💵</span>
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-slate-600">Cashflow</p>
-                  <p className="text-xl font-bold text-slate-900 whitespace-nowrap">{formatCurrency(kpis.annualCashflow)}</p>
+                  <p className="text-xl font-bold text-slate-900 whitespace-nowrap">
+                    {formatCurrency(kpis.annualCashflow)}
+                  </p>
                 </div>
               </div>
               <div className="h-1.5 bg-sky-100 rounded-full flex-1 max-w-[200px]">
-                <div 
-                  className="h-full bg-sky-300 rounded-full transition-all duration-500" 
-                  style={{ width: `${Math.min((kpis.annualCashflow / kpis.totalAnnualProfit) * 100, 100)}%` }}
+                <div
+                  className="h-full bg-sky-300 rounded-full transition-all duration-500"
+                  style={{
+                    width: `${safePercent(kpis.annualCashflow, kpis.totalAnnualProfit)}%`,
+                  }}
                 />
               </div>
             </div>
@@ -385,14 +425,20 @@ export function KPIDashboard({ kpis, inputs, onInspect }: KPIDashboardProps) {
               <div className="flex items-center gap-3 min-w-0">
                 <span className="text-2xl shrink-0">🧱</span>
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-slate-600">Capitalisation</p>
-                  <p className="text-xl font-bold text-slate-900 whitespace-nowrap">{formatCurrency(kpis.principalPaidFirstYear)}</p>
+                  <p className="text-sm font-medium text-slate-600">
+                    Capitalisation
+                  </p>
+                  <p className="text-xl font-bold text-slate-900 whitespace-nowrap">
+                    {formatCurrency(kpis.principalPaidFirstYear)}
+                  </p>
                 </div>
               </div>
               <div className="h-1.5 bg-orange-100 rounded-full flex-1 max-w-[200px]">
-                <div 
-                  className="h-full bg-orange-400 rounded-full transition-all duration-500" 
-                  style={{ width: `${Math.min((kpis.principalPaidFirstYear / kpis.totalAnnualProfit) * 100, 100)}%` }}
+                <div
+                  className="h-full bg-orange-400 rounded-full transition-all duration-500"
+                  style={{
+                    width: `${safePercent(kpis.principalPaidFirstYear, kpis.totalAnnualProfit)}%`,
+                  }}
                 />
               </div>
             </div>
@@ -402,14 +448,20 @@ export function KPIDashboard({ kpis, inputs, onInspect }: KPIDashboardProps) {
               <div className="flex items-center gap-3 min-w-0">
                 <span className="text-2xl shrink-0">📈</span>
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-slate-600">Plus-value</p>
-                  <p className="text-xl font-bold text-slate-900 whitespace-nowrap">{formatCurrency(kpis.propertyAppreciation)}</p>
+                  <p className="text-sm font-medium text-slate-600">
+                    Plus-value
+                  </p>
+                  <p className="text-xl font-bold text-slate-900 whitespace-nowrap">
+                    {formatCurrency(kpis.propertyAppreciation)}
+                  </p>
                 </div>
               </div>
               <div className="h-1.5 bg-emerald-100 rounded-full flex-1 max-w-[200px]">
-                <div 
-                  className="h-full bg-emerald-400 rounded-full transition-all duration-500" 
-                  style={{ width: `${Math.min((kpis.propertyAppreciation / kpis.totalAnnualProfit) * 100, 100)}%` }}
+                <div
+                  className="h-full bg-emerald-400 rounded-full transition-all duration-500"
+                  style={{
+                    width: `${safePercent(kpis.propertyAppreciation, kpis.totalAnnualProfit)}%`,
+                  }}
                 />
               </div>
             </div>
@@ -418,17 +470,21 @@ export function KPIDashboard({ kpis, inputs, onInspect }: KPIDashboardProps) {
             <div className="flex items-center gap-3 pt-2">
               <span className="text-3xl shrink-0">🏆</span>
               <div>
-                <p className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Total</p>
-                <p className="text-2xl font-black text-slate-900 whitespace-nowrap">{formatCurrency(kpis.totalAnnualProfit)}</p>
+                <p className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
+                  Total
+                </p>
+                <p className="text-2xl font-black text-slate-900 whitespace-nowrap">
+                  {formatCurrency(kpis.totalAnnualProfit)}
+                </p>
               </div>
             </div>
           </div>
-          
+
           {onInspect && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => onInspect('totalAnnualProfit')}
+              onClick={() => onInspect("totalAnnualProfit")}
               className="h-7 px-2 text-xs mt-4"
             >
               <span className="emoji-icon-sm">ⓘ</span>Détails
@@ -439,42 +495,64 @@ export function KPIDashboard({ kpis, inputs, onInspect }: KPIDashboardProps) {
 
       {/* 9. ANALYSE DE RENTABILITÉ - KPI AU-DESSUS */}
       <section className="mt-10">
-        <h3 className="text-xl font-semibold text-slate-900 mb-4">Analyse de rentabilité</h3>
-        
+        <h3 className="text-xl font-semibold text-slate-900 mb-4">
+          Analyse de rentabilité
+        </h3>
+
         {/* KPI au-dessus */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <MetricCard
             title="ROI Total"
             value={formatPercent(kpis.totalROI)}
             subtitle="Rendement global"
-            color={kpis.totalROI >= 15 ? 'emerald' : kpis.totalROI >= 10 ? 'sky' : 'orange'}
+            color={
+              kpis.totalROI >= PERFORMANCE_THRESHOLDS.roi.excellent
+                ? "emerald"
+                : kpis.totalROI >= PERFORMANCE_THRESHOLDS.roi.good
+                  ? "sky"
+                  : "orange"
+            }
             icon="🎯"
             variant="total"
-            onInspect={() => onInspect?.('totalROI')}
+            onInspect={() => onInspect?.("totalROI")}
           />
           <MetricCard
             title="Cash-on-Cash"
             value={formatPercent(kpis.cashOnCash)}
             subtitle="Rendement liquidités"
-            color={kpis.cashOnCash >= 8 ? 'emerald' : kpis.cashOnCash >= 5 ? 'sky' : 'orange'}
-            onInspect={() => onInspect?.('cashOnCash')}
+            color={
+              kpis.cashOnCash >= KPI_THRESHOLDS.cashOnCash.good
+                ? "emerald"
+                : kpis.cashOnCash >= KPI_THRESHOLDS.cashOnCash.medium
+                  ? "sky"
+                  : "orange"
+            }
+            onInspect={() => onInspect?.("cashOnCash")}
           />
           <MetricCard
             title="Cap Rate"
             value={formatPercent(kpis.capRate)}
             subtitle="Rendement NOI"
-            color={kpis.capRate >= 6 ? 'emerald' : kpis.capRate >= 4 ? 'sky' : 'orange'}
-            onInspect={() => onInspect?.('capRate')}
+            color={
+              kpis.capRate >= KPI_THRESHOLDS.capRate.good
+                ? "emerald"
+                : kpis.capRate >= KPI_THRESHOLDS.capRate.medium
+                  ? "sky"
+                  : "orange"
+            }
+            onInspect={() => onInspect?.("capRate")}
           />
         </div>
 
         {/* Graphique centré en-dessous */}
         <Card className="shadow-[0_2px_6px_rgba(0,0,0,0.05)] rounded-[14px]">
           <CardHeader>
-            <CardTitle className="text-base text-center">Composition du rendement</CardTitle>
+            <CardTitle className="text-base text-center">
+              Composition du rendement
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div style={{ height: '280px', transform: 'scale(0.85)' }}>
+            <div style={{ height: "280px", transform: "scale(0.85)" }}>
               <ROICompositionChart
                 cashflow={kpis.annualCashflow}
                 cashflowROI={kpis.cashflowROI}
@@ -493,10 +571,12 @@ export function KPIDashboard({ kpis, inputs, onInspect }: KPIDashboardProps) {
 
       {/* 10. INVESTISSEMENT REQUIS AVEC SOUS-TEXTE AMÉLIORÉ */}
       <section className="mt-10">
-        <h3 className="text-xl font-semibold text-slate-900 mb-4">Investissement requis</h3>
-        <div 
+        <h3 className="text-xl font-semibold text-slate-900 mb-4">
+          Investissement requis
+        </h3>
+        <div
           className="border-l-amber-500 bg-white border-l-4 border-y border-r border-slate-200 rounded-[14px] p-5 shadow-[0_2px_6px_rgba(0,0,0,0.05)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 transition-all duration-300 flex items-center"
-          style={{ containerType: 'inline-size' }}
+          style={{ containerType: "inline-size" }}
         >
           <div className="flex items-center gap-3 w-full">
             <div className="bg-amber-100 w-12 h-12 rounded-lg shrink-0 flex items-center justify-center">
@@ -506,24 +586,27 @@ export function KPIDashboard({ kpis, inputs, onInspect }: KPIDashboardProps) {
               <p className="text-[0.7rem] font-semibold text-slate-600 uppercase tracking-[0.05em] leading-tight mb-2">
                 Investissement initial total
               </p>
-              <p 
+              <p
                 className="font-bold text-slate-900 leading-none tracking-tight whitespace-nowrap mb-1"
-                style={{ 
-                  fontSize: 'min(1.75rem, 13cqw)',
-                  containerType: 'normal'
+                style={{
+                  fontSize: "min(1.75rem, 13cqw)",
+                  containerType: "normal",
                 }}
               >
                 {formatCurrency(kpis.initialInvestment)}
               </p>
               <p className="text-[0.85rem] text-slate-500 mt-1">
-                dont frais d'acquisition : <span className="font-semibold text-slate-600">{formatCurrency(kpis.totalAcquisitionFees)}</span>
+                dont frais d'acquisition :{" "}
+                <span className="font-semibold text-slate-600">
+                  {formatCurrency(kpis.totalAcquisitionFees)}
+                </span>
               </p>
-              
+
               {onInspect && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => onInspect('initialInvestment')}
+                  onClick={() => onInspect("initialInvestment")}
                   className="h-7 px-2 text-xs mt-3"
                 >
                   <span className="emoji-icon-sm">ⓘ</span>Détails
@@ -536,4 +619,3 @@ export function KPIDashboard({ kpis, inputs, onInspect }: KPIDashboardProps) {
     </div>
   );
 }
-
