@@ -1,20 +1,20 @@
-import type { KPIResults } from '../types';
+import type { KPIResults } from "../types";
 
 // ============================================================================
 // LABELS DES PARAMÈTRES
 // ============================================================================
 
 export const PARAMETER_LABELS: Record<string, string> = {
-  'revenue.averageDailyRate': 'Tarif moyen par nuitée',
-  'revenue.occupancyRate': 'Taux d\'occupation',
-  'financing.purchasePrice': 'Prix d\'achat',
-  'financing.municipalAssessment': 'Évaluation municipale',
-  'financing.downPayment': 'Mise de fonds',
-  'financing.interestRate': 'Taux d\'intérêt',
-  'financing.amortizationYears': 'Amortissement',
-  'financing.annualAppreciationRate': 'Taux d\'appréciation annuel',
-  'acquisitionFees.notaryFees': 'Frais de notaire',
-  'acquisitionFees.other': 'Autres frais d\'acquisition',
+  "revenue.averageDailyRate": "Tarif moyen par nuitée",
+  "revenue.occupancyRate": "Taux d'occupation",
+  "financing.purchasePrice": "Prix d'achat",
+  "financing.municipalAssessment": "Évaluation municipale",
+  "financing.downPayment": "Mise de fonds",
+  "financing.interestRate": "Taux d'intérêt",
+  "financing.amortizationYears": "Amortissement",
+  "financing.annualAppreciationRate": "Taux d'appréciation annuel",
+  "acquisitionFees.notaryFees": "Frais de notaire",
+  "acquisitionFees.other": "Autres frais d'acquisition",
 };
 
 // ============================================================================
@@ -22,24 +22,30 @@ export const PARAMETER_LABELS: Record<string, string> = {
 // ============================================================================
 
 export const KPI_OPTIONS: Array<{ value: keyof KPIResults; label: string }> = [
-  { value: 'annualCashflow', label: 'Cashflow annuel' },
-  { value: 'cashOnCash', label: 'Cash-on-Cash' },
-  { value: 'capRate', label: 'Cap Rate' },
-  { value: 'annualRevenue', label: 'Revenus annuels bruts' },
-  { value: 'totalExpenses', label: 'Dépenses totales' },
-  { value: 'nightsSold', label: 'Nuitées vendues' },
-  { value: 'loanAmount', label: 'Montant du prêt' },
-  { value: 'periodicPayment', label: 'Paiement périodique' },
-  { value: 'annualDebtService', label: 'Service de la dette annuel' },
-  { value: 'transferDuties', label: 'Droits de mutation' },
-  { value: 'totalAcquisitionFees', label: 'Frais d\'acquisition' },
-  { value: 'initialInvestment', label: 'Investissement initial' },
-  { value: 'principalPaidFirstYear', label: 'Capitalisation (capital remboursé 1ère année)' },
-  { value: 'propertyAppreciation', label: 'Plus-value (appréciation annuelle)' },
-  { value: 'cashflowROI', label: 'ROI Cashflow' },
-  { value: 'capitalizationROI', label: 'ROI Capitalisation' },
-  { value: 'appreciationROI', label: 'ROI Plus-value' },
-  { value: 'totalROI', label: 'ROI Total' },
+  { value: "annualCashflow", label: "Cashflow annuel" },
+  { value: "cashOnCash", label: "Cash-on-Cash" },
+  { value: "capRate", label: "Cap Rate" },
+  { value: "annualRevenue", label: "Revenus annuels bruts" },
+  { value: "totalExpenses", label: "Dépenses totales" },
+  { value: "nightsSold", label: "Nuitées vendues" },
+  { value: "loanAmount", label: "Montant du prêt" },
+  { value: "periodicPayment", label: "Paiement périodique" },
+  { value: "annualDebtService", label: "Service de la dette annuel" },
+  { value: "transferDuties", label: "Droits de mutation" },
+  { value: "totalAcquisitionFees", label: "Frais d'acquisition" },
+  { value: "initialInvestment", label: "Investissement initial" },
+  {
+    value: "principalPaidFirstYear",
+    label: "Capitalisation (capital remboursé 1ère année)",
+  },
+  {
+    value: "propertyAppreciation",
+    label: "Plus-value (appréciation annuelle)",
+  },
+  { value: "cashflowROI", label: "ROI Cashflow" },
+  { value: "capitalizationROI", label: "ROI Capitalisation" },
+  { value: "appreciationROI", label: "ROI Plus-value" },
+  { value: "totalROI", label: "ROI Total" },
 ];
 
 // ============================================================================
@@ -48,41 +54,27 @@ export const KPI_OPTIONS: Array<{ value: keyof KPIResults; label: string }> = [
 
 // KPIs en format monétaire ($)
 export const CURRENCY_METRICS: Array<keyof KPIResults> = [
-  'annualRevenue',
-  'totalExpenses',
-  'annualCashflow',
-  'loanAmount',
-  'periodicPayment',
-  'annualDebtService',
-  'transferDuties',
-  'totalAcquisitionFees',
-  'initialInvestment',
-  'principalPaidFirstYear',
-  'propertyAppreciation',
+  "annualRevenue",
+  "totalExpenses",
+  "annualCashflow",
+  "loanAmount",
+  "periodicPayment",
+  "annualDebtService",
+  "transferDuties",
+  "totalAcquisitionFees",
+  "initialInvestment",
+  "principalPaidFirstYear",
+  "propertyAppreciation",
 ];
 
 // KPIs en format pourcentage (%)
 export const PERCENTAGE_METRICS: Array<keyof KPIResults> = [
-  'cashOnCash',
-  'capRate',
-  'cashflowROI',
-  'capitalizationROI',
-  'appreciationROI',
-  'totalROI',
-];
-
-// ============================================================================
-// PARAMÈTRES DISPONIBLES POUR OPTIMISATION/SENSIBILITÉ
-// ============================================================================
-
-export const AVAILABLE_PARAMETERS = [
-  { path: 'revenue.averageDailyRate', label: 'Tarif moyen par nuitée' },
-  { path: 'revenue.occupancyRate', label: 'Taux d\'occupation' },
-  { path: 'financing.purchasePrice', label: 'Prix d\'achat' },
-  { path: 'financing.downPayment', label: 'Mise de fonds' },
-  { path: 'financing.interestRate', label: 'Taux d\'intérêt' },
-  { path: 'financing.amortizationYears', label: 'Amortissement' },
-  { path: 'financing.annualAppreciationRate', label: 'Taux d\'appréciation annuel' },
+  "cashOnCash",
+  "capRate",
+  "cashflowROI",
+  "capitalizationROI",
+  "appreciationROI",
+  "totalROI",
 ];
 
 // ============================================================================
@@ -142,40 +134,24 @@ export const ADVICE_THRESHOLDS = {
 } as const;
 
 // ============================================================================
-// FORMATS DE FICHIERS
-// ============================================================================
-
-export const FILE_TYPES = {
-  PROJECT_JSON: {
-    description: 'Projet Chalet JSON',
-    accept: { 'application/json': ['.json'] },
-  },
-} as const;
-
-// ============================================================================
 // MESSAGES D'ERREUR
 // ============================================================================
 
 export const ERROR_MESSAGES = {
-  SENSITIVITY_1D_FAILED: 'Erreur lors de l\'analyse de sensibilité. Vérifiez les paramètres.',
-  SENSITIVITY_2D_FAILED: 'Erreur lors de l\'analyse de sensibilité 2D. Vérifiez les paramètres.',
-  MONTE_CARLO_FAILED: 'Erreur lors de la simulation Monte Carlo. Vérifiez les paramètres.',
-  MONTE_CARLO_NO_RANGES: 'Aucun paramètre avec plage définie (useRange=true). Activez des plages dans les paramètres.',
-  SAVE_FAILED: 'Erreur lors de la sauvegarde du projet',
-  LOAD_FAILED: 'Erreur lors du chargement du projet',
-  STORAGE_QUOTA_EXCEEDED: 'Espace de stockage local dépassé. Veuillez libérer de l\'espace.',
-  STORAGE_ACCESS_DENIED: 'Accès au stockage local refusé. Vérifiez les paramètres du navigateur.',
-} as const;
-
-// ============================================================================
-// MESSAGES DE SUCCÈS
-// ============================================================================
-
-export const SUCCESS_MESSAGES = {
-  PROJECT_SAVED: 'Projet sauvegardé avec succès',
-  PROJECT_LOADED: 'Projet chargé avec succès',
-  SCENARIO_CREATED: 'Scénario créé avec succès',
-  SCENARIO_DELETED: 'Scénario supprimé avec succès',
+  SENSITIVITY_1D_FAILED:
+    "Erreur lors de l'analyse de sensibilité. Vérifiez les paramètres.",
+  SENSITIVITY_2D_FAILED:
+    "Erreur lors de l'analyse de sensibilité 2D. Vérifiez les paramètres.",
+  MONTE_CARLO_FAILED:
+    "Erreur lors de la simulation Monte Carlo. Vérifiez les paramètres.",
+  MONTE_CARLO_NO_RANGES:
+    "Aucun paramètre avec plage définie (useRange=true). Activez des plages dans les paramètres.",
+  SAVE_FAILED: "Erreur lors de la sauvegarde du projet",
+  LOAD_FAILED: "Erreur lors du chargement du projet",
+  STORAGE_QUOTA_EXCEEDED:
+    "Espace de stockage local dépassé. Veuillez libérer de l'espace.",
+  STORAGE_ACCESS_DENIED:
+    "Accès au stockage local refusé. Vérifiez les paramètres du navigateur.",
 } as const;
 
 // ============================================================================
@@ -205,22 +181,25 @@ export const DEFAULT_PROJECTION_SETTINGS = {
 // Taux de rénovations annuelles par défaut
 export const DEFAULT_ANNUAL_RENOVATION_RATE = 1.0; // 1% pour tenue impeccable
 
+// Taux d'appréciation annuel par défaut
+export const DEFAULT_ANNUAL_APPRECIATION_RATE = 2; // 2% par an
+
 // ============================================================================
 // LABELS DE TYPES DE DÉPENSES (pour réutilisation)
 // ============================================================================
 
 export const EXPENSE_TYPE_LABELS: Record<string, string> = {
-  FIXED_ANNUAL: 'Fixe annuel',
-  FIXED_MONTHLY: 'Fixe mensuel',
-  PERCENTAGE_REVENUE: '% des revenus',
-  PERCENTAGE_PROPERTY_VALUE: '% valeur propriété',
+  FIXED_ANNUAL: "Fixe annuel",
+  FIXED_MONTHLY: "Fixe mensuel",
+  PERCENTAGE_REVENUE: "% des revenus",
+  PERCENTAGE_PROPERTY_VALUE: "% valeur propriété",
 };
 
 export const PAYMENT_FREQUENCY_LABELS: Record<string, string> = {
-  MONTHLY: 'Mensuel',
-  BI_WEEKLY: 'Aux deux semaines',
-  WEEKLY: 'Hebdomadaire',
-  ANNUAL: 'Annuel',
+  MONTHLY: "Mensuel",
+  BI_WEEKLY: "Aux deux semaines",
+  WEEKLY: "Hebdomadaire",
+  ANNUAL: "Annuel",
 };
 
 // ============================================================================
@@ -236,10 +215,24 @@ export const PDF_SPACING = {
   TABLE_SPACING: 8,
 } as const;
 
+export const PDF_SIMPLE = {
+  MARGIN: 20,
+  FONT_SIZE: { TITLE: 20, SECTION: 14, BODY: 10, META: 9 },
+  LINE_HEIGHT: { SECTION: 8, BODY: 6, META: 7, DESCRIPTION: 5 },
+  BOTTOM_MARGIN: 40,
+  CHART_BOTTOM_MARGIN: 100,
+  INDENT: 5,
+  CHART_GAP: 10,
+} as const;
+
+export const PDF_REPORT = {
+  MAX_EXIT_SCENARIOS: 5,
+  YEAR_TABLE_SPLIT: 5,
+  MAX_PROJECTION_YEARS: 10,
+} as const;
+
 // ============================================================================
 // VERSION
 // ============================================================================
 
-export const APP_VERSION = '1.0.0';
-export const DATA_VERSION = '1.0.0';
-
+export const DATA_VERSION = "1.0.0";
