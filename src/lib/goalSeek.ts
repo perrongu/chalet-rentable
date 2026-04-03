@@ -1,6 +1,7 @@
 import type { ProjectInputs, KPIResults } from "../types";
 import { calculateKPIs, setValueByPath } from "./calculations";
 import { extractValue } from "./inputMutator";
+import { round } from "./utils";
 
 // ============================================================================
 // TYPES
@@ -12,6 +13,11 @@ export type GoalSeekVariable =
   | "revenue.averageDailyRate"
   | "revenue.occupancyRate";
 
+export interface GoalSeekDetail {
+  label: string;
+  value: string;
+}
+
 export interface GoalSeekResult {
   solved: boolean;
   value: number;
@@ -21,6 +27,7 @@ export interface GoalSeekResult {
     targetValue: number;
     achievedValue: number;
   };
+  details?: GoalSeekDetail[];
   error?: string;
 }
 
@@ -37,6 +44,18 @@ const BISECTION_UPPER_BOUND_ADR = 5000;
 const BISECTION_LOWER_BOUND_OCC = 1;
 const BISECTION_UPPER_BOUND_OCC = 100;
 
+const TARGET_LABELS: Record<GoalSeekTarget, string> = {
+  dscr: "DSCR",
+  annualCashflow: "Cashflow annuel",
+  capRate: "Cap Rate",
+};
+
+const VARIABLE_LABELS: Record<GoalSeekVariable, string> = {
+  "financing.purchasePrice": "Prix d'achat",
+  "revenue.averageDailyRate": "Tarif moyen (ADR)",
+  "revenue.occupancyRate": "Taux d'occupation",
+};
+
 // ============================================================================
 // EXTRACTION DE KPI CIBLE
 // ============================================================================
@@ -47,6 +66,34 @@ function getTargetKPIValue(kpis: KPIResults, target: GoalSeekTarget): number {
     return 0;
   }
   return value;
+}
+
+// ============================================================================
+// APPLICATION DE VALEUR TEST (avec co-variation mise de fonds)
+// ============================================================================
+
+/**
+ * Applique une valeur test aux inputs en co-variant les champs dépendants.
+ * Quand on fait varier le prix d'achat, la mise de fonds doit maintenir
+ * le même pourcentage pour que le calcul reste cohérent.
+ */
+function applyTestValue(
+  inputs: ProjectInputs,
+  solveFor: GoalSeekVariable,
+  testValue: number,
+  downPaymentPercent: number,
+): ProjectInputs {
+  const withValue = setValueByPath(inputs, solveFor, testValue);
+
+  if (solveFor === "financing.purchasePrice") {
+    return setValueByPath(
+      withValue,
+      "financing.downPayment",
+      round(testValue * downPaymentPercent),
+    );
+  }
+
+  return withValue;
 }
 
 // ============================================================================
@@ -61,12 +108,22 @@ function solveByBisection(
   lowerBound: number,
   upperBound: number,
 ): GoalSeekResult {
+  // Calculer le % de mise de fonds pour co-variation
+  const currentPrice = extractValue(inputs.financing.purchasePrice);
+  const currentDown = extractValue(inputs.financing.downPayment);
+  const rawPercent = currentPrice > 0 ? currentDown / currentPrice : 0;
+  const downPaymentPercent = Number.isFinite(rawPercent) ? rawPercent : 0;
+
   let lo = lowerBound;
   let hi = upperBound;
 
   // Évaluer aux bornes pour vérifier que la solution existe
-  const kpisLo = calculateKPIs(setValueByPath(inputs, solveFor, lo));
-  const kpisHi = calculateKPIs(setValueByPath(inputs, solveFor, hi));
+  const kpisLo = calculateKPIs(
+    applyTestValue(inputs, solveFor, lo, downPaymentPercent),
+  );
+  const kpisHi = calculateKPIs(
+    applyTestValue(inputs, solveFor, hi, downPaymentPercent),
+  );
   const valLo = getTargetKPIValue(kpisLo, target);
   const valHi = getTargetKPIValue(kpisHi, target);
 
@@ -91,11 +148,20 @@ function solveByBisection(
   let mid = (lo + hi) / 2;
   for (let i = 0; i < MAX_ITERATIONS; i++) {
     mid = (lo + hi) / 2;
-    const kpisMid = calculateKPIs(setValueByPath(inputs, solveFor, mid));
+    const kpisMid = calculateKPIs(
+      applyTestValue(inputs, solveFor, mid, downPaymentPercent),
+    );
     const valMid = getTargetKPIValue(kpisMid, target);
 
     if (Math.abs(valMid - targetValue) < TOLERANCE) {
-      return buildResult(inputs, target, targetValue, solveFor, mid);
+      return buildResult(
+        inputs,
+        target,
+        targetValue,
+        solveFor,
+        mid,
+        downPaymentPercent,
+      );
     }
 
     if (increasing) {
@@ -114,7 +180,14 @@ function solveByBisection(
   }
 
   // Retourner la meilleure approximation
-  return buildResult(inputs, target, targetValue, solveFor, mid);
+  return buildResult(
+    inputs,
+    target,
+    targetValue,
+    solveFor,
+    mid,
+    downPaymentPercent,
+  );
 }
 
 // ============================================================================
@@ -127,23 +200,16 @@ function buildResult(
   targetValue: number,
   solveFor: GoalSeekVariable,
   solvedValue: number,
+  downPaymentPercent: number,
 ): GoalSeekResult {
-  const verificationKPIs = calculateKPIs(
-    setValueByPath(inputs, solveFor, solvedValue),
+  const testInputs = applyTestValue(
+    inputs,
+    solveFor,
+    solvedValue,
+    downPaymentPercent,
   );
+  const verificationKPIs = calculateKPIs(testInputs);
   const achievedValue = getTargetKPIValue(verificationKPIs, target);
-
-  const targetLabels: Record<GoalSeekTarget, string> = {
-    dscr: "DSCR",
-    annualCashflow: "Cashflow annuel",
-    capRate: "Cap Rate",
-  };
-
-  const variableLabels: Record<GoalSeekVariable, string> = {
-    "financing.purchasePrice": "Prix d'achat",
-    "revenue.averageDailyRate": "Tarif moyen (ADR)",
-    "revenue.occupancyRate": "Taux d'occupation",
-  };
 
   const currentValue = extractValue(
     solveFor === "financing.purchasePrice"
@@ -154,20 +220,90 @@ function buildResult(
   );
 
   const formula =
-    `Pour atteindre ${targetLabels[target]} = ${targetValue}, ` +
-    `${variableLabels[solveFor]} doit passer de ${formatValue(currentValue, solveFor)} ` +
-    `à ${formatValue(Math.round(solvedValue * 100) / 100, solveFor)}`;
+    `Pour atteindre ${TARGET_LABELS[target]} = ${targetValue}, ` +
+    `${VARIABLE_LABELS[solveFor]} doit passer de ${formatValue(currentValue, solveFor)} ` +
+    `à ${formatValue(round(solvedValue, 2), solveFor)}`;
+
+  // Construire les détails intermédiaires
+  const details = buildDetails(
+    verificationKPIs,
+    solveFor,
+    target,
+    solvedValue,
+    downPaymentPercent,
+  );
 
   return {
     solved: Math.abs(achievedValue - targetValue) < TOLERANCE * 10,
-    value: Math.round(solvedValue * 100) / 100,
+    value: round(solvedValue, 2),
     formula,
     verification: {
-      targetKPI: targetLabels[target],
+      targetKPI: TARGET_LABELS[target],
       targetValue,
-      achievedValue: Math.round(achievedValue * 100) / 100,
+      achievedValue: round(achievedValue, 2),
     },
+    details,
   };
+}
+
+function buildDetails(
+  kpis: KPIResults,
+  solveFor: GoalSeekVariable,
+  target: GoalSeekTarget,
+  solvedValue: number,
+  downPaymentPercent: number,
+): GoalSeekDetail[] {
+  const fmt = (n: number) => `${Math.round(n).toLocaleString("fr-CA")} $`;
+  const pct = (n: number) => `${round(n, 1)} %`;
+
+  const kpiValue =
+    target === "annualCashflow"
+      ? fmt(kpis[target])
+      : target === "capRate"
+        ? pct(kpis[target])
+        : String(round(kpis[target], 2));
+
+  switch (solveFor) {
+    case "financing.purchasePrice": {
+      const downPayment = round(solvedValue * downPaymentPercent);
+      const loan = round(solvedValue - downPayment);
+      return [
+        { label: "Prix d'achat", value: fmt(solvedValue) },
+        {
+          label: "Mise de fonds",
+          value: `${fmt(downPayment)} (${pct(downPaymentPercent * 100)})`,
+        },
+        { label: "Emprunt", value: fmt(loan) },
+        {
+          label: "Service de dette annuel",
+          value: fmt(kpis.annualDebtService),
+        },
+        { label: TARGET_LABELS[target], value: kpiValue },
+      ];
+    }
+    case "revenue.averageDailyRate":
+      return [
+        { label: "Tarif moyen (ADR)", value: fmt(solvedValue) },
+        { label: "Revenus annuels", value: fmt(kpis.annualRevenue) },
+        { label: "NOI", value: fmt(kpis.noi) },
+        { label: TARGET_LABELS[target], value: kpiValue },
+      ];
+    case "revenue.occupancyRate":
+      return [
+        { label: "Taux d'occupation", value: pct(solvedValue) },
+        {
+          label: "Nuitées vendues",
+          value: `${Math.round(kpis.nightsSold)}`,
+        },
+        { label: "Revenus annuels", value: fmt(kpis.annualRevenue) },
+        { label: "NOI", value: fmt(kpis.noi) },
+        { label: TARGET_LABELS[target], value: kpiValue },
+      ];
+    default: {
+      const _exhaustive: never = solveFor;
+      return _exhaustive;
+    }
+  }
 }
 
 function formatValue(value: number, solveFor: GoalSeekVariable): string {
