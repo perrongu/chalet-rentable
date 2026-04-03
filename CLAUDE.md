@@ -23,8 +23,7 @@ No test runner is configured. There are no test files.
 - **Tailwind CSS v4** (via PostCSS plugin, not the old `tailwind.config.js` — custom colors/shadows extended there)
 - **Recharts 3** for all charts (Tornado, Heatmap, Waterfall, Area, Bar, Pie)
 - **Zod v4** for project data validation on load
-- **jspdf + html2canvas + dom-to-image-more** for PDF/PNG exports
-- **exceljs** for Excel export
+- **jspdf + dom-to-image-more** for PDF/PNG exports
 - **lucide-react** for icons
 
 ## Architecture
@@ -37,12 +36,14 @@ Single global state via **React Context + useReducer** in `src/store/ProjectCont
 - Autosave to `localStorage` with 2-second debounce
 - `getCurrentInputs()` deep-merges base inputs with active scenario overrides (immutable clone + merge)
 - `getCurrentKPIs()` computes KPIs on demand from current inputs
+- Default project factory in `src/store/defaultProject.ts` (separated for React fast-refresh compatibility)
 
 ### Scenario System
 
 - One `baseInputs` on the Project; each scenario holds only `overrides: Partial<ProjectInputs>`
 - Deep merge at read time: `deepMerge(deepClone(baseInputs), scenario.overrides)`
 - Base scenario always has `isBase: true` and `id: 'base'`
+- New scenarios can be created blank or copied from any existing scenario
 
 ### Calculation Engine (`src/lib/calculations.ts`)
 
@@ -50,6 +51,10 @@ Pure function `calculateKPIs(inputs)` returns `KPIResults` with **full traceabil
 
 - Uses `extractValue()` from `src/lib/inputMutator.ts` to unwrap `InputWithSource<T>` wrapper type, respecting `useRange`/`default` for sensitivity mode
 - `setValueByPath()` in `src/lib/inputMutator.ts` for dynamic parameter mutation during sensitivity sweeps (operates on cloned objects only)
+
+### Goal Seek Engine (`src/lib/goalSeek.ts`)
+
+Inverse solver using bisection method. Finds the value of a variable (purchase price, ADR, occupancy) needed to reach a target KPI (DSCR, cashflow, cap rate). Bounded at 50 iterations with domain-range validation on inputs.
 
 ### Key Type: `InputWithSource<T>`
 
@@ -71,11 +76,12 @@ Centralized chart palette in `src/lib/colors.ts` (`CHART_COLORS`). All charts mu
 
 | Path | Purpose |
 |------|---------|
-| `src/lib/` | Pure business logic (calculations, projections, sensitivity, Monte Carlo) — no React |
-| `src/lib/exports/` | Export modules split by domain (jsonIO, fileSystem, dataExports, chartExports, reportExports, reportAnnexes) with barrel `index.ts` |
+| `src/lib/` | Pure business logic (calculations, projections, sensitivity, Monte Carlo, goalSeek) — no React |
+| `src/lib/exports/` | Export modules split by domain (jsonIO, fileSystem, reportExports, reportAnnexes) with barrel `index.ts` |
 | `src/lib/inputMutator.ts` | `extractValue()`, `setValueByPath()` — input unwrapping and dynamic path mutation |
+| `src/lib/goalSeek.ts` | Inverse solver (bisection) for goal-seek analysis |
 | `src/lib/constants.ts` | App-wide constants, thresholds, labels, limits, Quebec tax tiers |
-| `src/store/` | ProjectContext with global state, reducer, and data migration |
+| `src/store/` | ProjectContext (state, reducer, migration) + defaultProject (factory) |
 | `src/types/` | All TypeScript interfaces (`ProjectInputs`, `KPIResults`, `Scenario`, etc.) |
 | `src/components/ui/` | Reusable UI primitives (Button, Card, Input, Badge, ProgressBar, etc.) |
 | `src/components/charts/` | Domain-specific chart components |
@@ -87,12 +93,13 @@ Centralized chart palette in `src/lib/colors.ts` (`CHART_COLORS`). All charts mu
 Defined in `index.html` via meta tag. Includes `frame-ancestors 'none'` (clickjacking), `base-uri 'self'` (injection), `connect-src 'none'` (offline SPA).
 
 ### Prototype Pollution Guard
-`setValueByPath()` in `src/lib/inputMutator.ts` and `deepMerge()` in `src/lib/utils.ts` both block `__proto__`, `constructor`, `prototype` keys. Any new function accepting dynamic paths/keys must include this guard.
+`setValueByPath()` in `src/lib/inputMutator.ts`, `deepMerge()` in `src/lib/utils.ts`, and `getBaseValue()`/`getOverrideValue()` in `InputForm.tsx` all block `__proto__`, `constructor`, `prototype` keys. Any new function accepting dynamic paths/keys must include this guard.
 
 ### File Import Validation
 - Max file size: 10 Mo (checked before `.text()` in `src/lib/exports/fileSystem.ts`)
 - JSON parsed in try/catch with domain-specific error (`src/lib/exports/jsonIO.ts`)
-- Zod schema validation with `.max()` bounds on all arrays (`expenses.max(100)`, `scenarios.max(50)`)
+- Zod schema validation with `.max()` bounds on all arrays (`expenses.max(100)`, `scenarios.max(50)`, `sensitivityAnalyses.max(50)`)
+- Failed Zod validation resets to default project (no unvalidated fallback)
 
 ### Production Logging
 No `console.error` in production paths — use user-facing messages (alerts, banners). The `saveError` state in `ProjectContext` surfaces autosave failures via a red banner in `App.tsx`.
@@ -100,21 +107,19 @@ No `console.error` in production paths — use user-facing messages (alerts, ban
 ## Module Splitting Convention
 
 ### Barrel Re-export Pattern
-`src/lib/exports/` uses a barrel `index.ts` so consumers import from `./lib/exports` unchanged. When splitting a large module:
-1. Group by domain concern (jsonIO, fileSystem, dataExports, chartExports, reportExports, reportAnnexes)
-2. Create `index.ts` with re-exports
-3. Keep shared config in `shared.ts`
-4. Dependencies flow one direction (no circular imports)
-5. Each file stays under 800 lines
+`src/lib/exports/` uses a barrel `index.ts` so consumers import from `./lib/exports` unchanged. The barrel only exposes actively consumed exports (`saveProjectFile`, `loadProjectFile`, `exportProfessionalReportToPDF`). Internal modules (`jsonIO`) are imported directly by sibling modules.
 
 ### File Size Limits
 - Target: 200-600 lines per file, 800 max
 - If a file exceeds 800 lines, split by domain boundary
-- Current largest files: `calculations.ts` (~800), `reportAnnexes.ts` (~570), `reportExports.ts` (~400)
+- Current largest files: `calculations.ts` (~710), `InputForm.tsx` (~750), `reportAnnexes.ts` (~570)
 
 ## Domain Conventions
 
 - All user-facing text, labels, and error messages are in **French**
 - Financial formulas follow Quebec real estate conventions (transfer duties use Quebec tier system in `TRANSFER_DUTIES_TIERS`)
 - Expense lines support 4 types: `FIXED_ANNUAL`, `FIXED_MONTHLY`, `PERCENTAGE_REVENUE`, `PERCENTAGE_PROPERTY_VALUE`
-- KPIs are color-coded using thresholds in `KPI_THRESHOLDS` (e.g., cash-on-cash >= 8% = green, >= 5% = orange, < 5% = red)
+- Expenses display Fixe/Variable badges with subtotals in the Parameters tab
+- KPIs are color-coded using thresholds in `KPI_THRESHOLDS` (cash-on-cash, cap rate, DSCR)
+- Scenario comparison table includes: Revenus, Dépenses, NOI, Cashflow, Cash-on-Cash, Cap Rate, DSCR
+- Sensitivity tab has 5 analysis modes: Tornado, Heatmap, Monte Carlo, ADR x Occupation matrix, Goal Seek

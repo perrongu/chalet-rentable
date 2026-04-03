@@ -7,7 +7,8 @@ import {
 } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
-import { useProject, createDefaultProject } from "../../store/ProjectContext";
+import { useProject } from "../../store/ProjectContext";
+import { createDefaultProject } from "../../store/defaultProject";
 import type { Scenario } from "../../types";
 import { calculateKPIs } from "../../lib/calculations";
 import {
@@ -19,6 +20,8 @@ import {
   deepClone,
 } from "../../lib/utils";
 import { CHART_COLORS } from "../../lib/colors";
+import { KPI_THRESHOLDS } from "../../lib/constants";
+import { Select } from "../../components/ui/Select";
 import {
   BarChart,
   Bar,
@@ -39,24 +42,44 @@ export function ScenarioManager() {
     null,
   );
   const [editingScenarioName, setEditingScenarioName] = useState("");
+  const [copyFromScenarioId, setCopyFromScenarioId] = useState<string | null>(
+    null,
+  );
 
   const createScenario = () => {
     if (!newScenarioName.trim()) return;
 
-    // Utiliser les valeurs d'usine d'un nouveau projet comme overrides
-    const defaults = createDefaultProject().baseInputs;
+    let overrides;
+    if (copyFromScenarioId) {
+      // Copier depuis un scénario existant
+      const sourceScenario = project.scenarios.find(
+        (s) => s.id === copyFromScenarioId,
+      );
+      if (sourceScenario) {
+        const resolved = sourceScenario.isBase
+          ? project.baseInputs
+          : deepMerge(project.baseInputs, sourceScenario.overrides || {});
+        overrides = deepClone(resolved);
+      } else {
+        overrides = deepClone(createDefaultProject().baseInputs);
+      }
+    } else {
+      overrides = deepClone(createDefaultProject().baseInputs);
+    }
+
     const newScenario: Scenario = {
       id: generateUUID(),
       name: newScenarioName,
       description: "",
       isBase: false,
-      overrides: deepClone(defaults),
+      overrides,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
     dispatch({ type: "ADD_SCENARIO", payload: newScenario });
     setNewScenarioName("");
+    setCopyFromScenarioId(null);
     setShowNewScenarioForm(false);
   };
 
@@ -123,12 +146,15 @@ export function ScenarioManager() {
         const kpis = calculateKPIs(inputs);
 
         return {
+          id: scenario.id,
           name: scenario.name,
           revenus: kpis.annualRevenue,
           dépenses: kpis.totalExpenses,
+          noi: kpis.noi,
           cashflow: kpis.annualCashflow,
           coc: kpis.cashOnCash,
           capRate: kpis.capRate,
+          dscr: kpis.dscr,
         };
       }),
     [project.scenarios, project.baseInputs],
@@ -170,7 +196,7 @@ export function ScenarioManager() {
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       {editingScenarioId === scenario.id ? (
-                        <div className="flex items-center space-x-2 mb-2">
+                        <div className="flex items-center gap-2 w-full mb-2">
                           <Input
                             value={editingScenarioName}
                             onChange={(e) =>
@@ -180,7 +206,8 @@ export function ScenarioManager() {
                               if (e.key === "Enter") saveRename();
                               if (e.key === "Escape") cancelRename();
                             }}
-                            className="max-w-xs"
+                            onFocus={(e) => e.target.select()}
+                            className="w-full"
                             autoFocus
                           />
                           <Button size="sm" onClick={saveRename}>
@@ -264,23 +291,48 @@ export function ScenarioManager() {
               <h4 className="font-medium mb-3 text-slate-800">
                 Nouveau scénario
               </h4>
-              <div className="flex space-x-2">
+              <div className="space-y-3">
                 <Input
                   placeholder="Nom du scénario"
                   value={newScenarioName}
                   onChange={(e) => setNewScenarioName(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && createScenario()}
+                  autoFocus
                 />
-                <Button onClick={createScenario}>Créer</Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowNewScenarioForm(false);
-                    setNewScenarioName("");
-                  }}
-                >
-                  Annuler
-                </Button>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Point de départ
+                  </label>
+                  <Select
+                    value={copyFromScenarioId || ""}
+                    onChange={(e) =>
+                      setCopyFromScenarioId(e.target.value || null)
+                    }
+                    options={[
+                      {
+                        value: "",
+                        label: "Scénario vierge (valeurs par défaut)",
+                      },
+                      ...project.scenarios.map((s) => ({
+                        value: s.id,
+                        label: `Copier depuis : ${s.name}`,
+                      })),
+                    ]}
+                  />
+                </div>
+                <div className="flex space-x-2">
+                  <Button onClick={createScenario}>Créer</Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowNewScenarioForm(false);
+                      setNewScenarioName("");
+                      setCopyFromScenarioId(null);
+                    }}
+                  >
+                    Annuler
+                  </Button>
+                </div>
               </div>
             </div>
           )}
@@ -310,25 +362,38 @@ export function ScenarioManager() {
                 <tbody className="bg-white">
                   <tr>
                     <td>Revenus annuels bruts</td>
-                    {comparisonData.map((d, i) => (
-                      <td key={i} className="text-right">
+                    {comparisonData.map((d) => (
+                      <td key={d.id} className="text-right">
                         {formatCurrency(d.revenus)}
                       </td>
                     ))}
                   </tr>
                   <tr>
                     <td>Dépenses totales</td>
-                    {comparisonData.map((d, i) => (
-                      <td key={i} className="text-right">
+                    {comparisonData.map((d) => (
+                      <td key={d.id} className="text-right">
                         {formatCurrency(d.dépenses)}
                       </td>
                     ))}
                   </tr>
                   <tr>
-                    <td>Cashflow annuel</td>
-                    {comparisonData.map((d, i) => (
+                    <td className="font-medium">NOI (avant dette)</td>
+                    {comparisonData.map((d) => (
                       <td
-                        key={i}
+                        key={d.id}
+                        className={`text-right font-medium ${
+                          d.noi >= 0 ? "text-emerald-600" : "text-red-500"
+                        }`}
+                      >
+                        {formatCurrency(d.noi)}
+                      </td>
+                    ))}
+                  </tr>
+                  <tr>
+                    <td>Cashflow annuel</td>
+                    {comparisonData.map((d) => (
+                      <td
+                        key={d.id}
                         className={`text-right ${
                           d.cashflow >= 0 ? "text-emerald-600" : "text-red-500"
                         }`}
@@ -339,19 +404,38 @@ export function ScenarioManager() {
                   </tr>
                   <tr>
                     <td>Cash-on-Cash</td>
-                    {comparisonData.map((d, i) => (
-                      <td key={i} className="text-right">
+                    {comparisonData.map((d) => (
+                      <td key={d.id} className="text-right">
                         {formatPercent(d.coc)}
                       </td>
                     ))}
                   </tr>
                   <tr>
                     <td>Cap Rate</td>
-                    {comparisonData.map((d, i) => (
-                      <td key={i} className="text-right">
+                    {comparisonData.map((d) => (
+                      <td key={d.id} className="text-right">
                         {formatPercent(d.capRate)}
                       </td>
                     ))}
+                  </tr>
+                  <tr>
+                    <td className="font-medium">DSCR</td>
+                    {comparisonData.map((d) => {
+                      const dscrColor =
+                        d.dscr >= KPI_THRESHOLDS.dscr.good
+                          ? "text-emerald-600"
+                          : d.dscr >= KPI_THRESHOLDS.dscr.medium
+                            ? "text-amber-600"
+                            : "text-red-500";
+                      return (
+                        <td
+                          key={d.id}
+                          className={`text-right font-medium ${dscrColor}`}
+                        >
+                          {d.dscr.toFixed(2)}
+                        </td>
+                      );
+                    })}
                   </tr>
                 </tbody>
               </table>
