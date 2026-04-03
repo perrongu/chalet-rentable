@@ -15,184 +15,22 @@ import type {
   SensitivityAnalysis1D,
   SensitivityAnalysis2D,
 } from "../types";
-import { ExpenseType, ExpenseCategory, PaymentFrequency } from "../types";
+import { ExpenseCategory } from "../types";
 import { calculateKPIs } from "../lib/calculations";
-import { generateUUID, debounce, deepMerge, deepClone } from "../lib/utils";
+import { debounce, deepMerge, deepClone } from "../lib/utils";
 import { validateProject } from "../lib/validation";
 import {
-  DEFAULT_ANNUAL_RENOVATION_RATE,
   DEFAULT_ANNUAL_APPRECIATION_RATE,
   DATA_VERSION,
   LIMITS,
 } from "../lib/constants";
+import { createDefaultProject } from "./defaultProject";
 
 // ============================================================================
 // INITIAL STATE
 // ============================================================================
 
 const STORAGE_KEY = "chalet-rentable-project";
-
-export function createDefaultProject(): Project {
-  const now = new Date();
-  const baseInputs: ProjectInputs = {
-    name: "Mon Projet",
-    revenue: {
-      averageDailyRate: {
-        value: 280,
-        sourceInfo: { source: "", remarks: "" },
-      },
-      occupancyRate: {
-        value: 75,
-        sourceInfo: { source: "", remarks: "" },
-      },
-      daysPerYear: 365,
-    },
-    expenses: [
-      {
-        id: "1",
-        name: "Attestation CITQ",
-        type: ExpenseType.FIXED_ANNUAL,
-        amount: { value: 875 },
-        category: ExpenseCategory.SERVICES,
-      },
-      {
-        id: "2",
-        name: "Compagnie de gestion",
-        type: ExpenseType.PERCENTAGE_REVENUE,
-        amount: {
-          value: 15,
-        },
-        category: ExpenseCategory.GESTION,
-      },
-      {
-        id: "3",
-        name: "Déneigement et pelouse",
-        type: ExpenseType.FIXED_ANNUAL,
-        amount: { value: 800 },
-        category: ExpenseCategory.ENTRETIEN,
-      },
-      {
-        id: "4",
-        name: "Câble / Internet / Netflix",
-        type: ExpenseType.FIXED_ANNUAL,
-        amount: { value: 1200 },
-        category: ExpenseCategory.UTILITIES,
-      },
-      {
-        id: "5",
-        name: "Taxes municipales",
-        type: ExpenseType.FIXED_ANNUAL,
-        amount: { value: 1500 },
-        category: ExpenseCategory.TAXES,
-      },
-      {
-        id: "6",
-        name: "Taxes scolaires",
-        type: ExpenseType.FIXED_ANNUAL,
-        amount: { value: 180 },
-        category: ExpenseCategory.TAXES,
-      },
-      {
-        id: "7",
-        name: "Frais énergie",
-        type: ExpenseType.FIXED_MONTHLY,
-        amount: {
-          value: 250,
-        },
-        category: ExpenseCategory.UTILITIES,
-      },
-      {
-        id: "8",
-        name: "Assurances habitation",
-        type: ExpenseType.FIXED_ANNUAL,
-        amount: { value: 3000 },
-        category: ExpenseCategory.ASSURANCES,
-      },
-      {
-        id: "9",
-        name: "Rénovations annuelles",
-        type: ExpenseType.PERCENTAGE_PROPERTY_VALUE,
-        amount: {
-          value: DEFAULT_ANNUAL_RENOVATION_RATE,
-          sourceInfo: {
-            source: "",
-            remarks: "Entretien courant et préventif pour tenue impeccable",
-          },
-        },
-        category: ExpenseCategory.ENTRETIEN,
-      },
-    ],
-    financing: {
-      purchasePrice: {
-        value: 550000,
-      },
-      municipalAssessment: undefined, // Optionnel, utilise prix d'achat si non défini
-      downPayment: { value: 27500 },
-      interestRate: {
-        value: 5.5,
-      },
-      amortizationYears: { value: 30 },
-      paymentFrequency: PaymentFrequency.MONTHLY,
-      annualAppreciationRate: {
-        value: DEFAULT_ANNUAL_APPRECIATION_RATE,
-        sourceInfo: { source: "", remarks: "" },
-      },
-    },
-    acquisitionFees: {
-      transferDuties: { value: 6666 },
-      notaryFees: { value: 1500 },
-      other: { value: 0 },
-    },
-    projectionSettings: {
-      revenueEscalationRate: {
-        value: 2.5,
-        sourceInfo: { source: "", remarks: "Inflation typique" },
-      },
-      expenseEscalationRate: {
-        value: 3.0,
-        sourceInfo: { source: "", remarks: "Inflation + coûts croissants" },
-      },
-      capexRate: {
-        value: 1.0,
-        sourceInfo: {
-          source: "",
-          remarks: "Réserve pour rénovations majeures",
-        },
-      },
-      discountRate: {
-        value: 8.0,
-        sourceInfo: { source: "", remarks: "Coût d'opportunité du capital" },
-      },
-      saleCostsRate: {
-        value: 6.0,
-        sourceInfo: { source: "", remarks: "Courtage + frais notaire" },
-      },
-    },
-  };
-
-  const baseScenario: Scenario = {
-    id: "base",
-    name: "Scénario de base",
-    description: "Scénario avec les valeurs initiales",
-    isBase: true,
-    createdAt: now,
-    updatedAt: now,
-  };
-
-  return {
-    id: generateUUID(),
-    name: "Nouveau Projet",
-    description: "",
-    baseInputs,
-    scenarios: [baseScenario],
-    activeScenarioId: "base",
-    sensitivityAnalyses1D: [],
-    sensitivityAnalyses2D: [],
-    createdAt: now,
-    updatedAt: now,
-    version: DATA_VERSION,
-  };
-}
 
 function migrateInputWithSource(input: unknown): InputWithSource<number> {
   if (typeof input === "number") {
@@ -267,12 +105,14 @@ function loadProjectFromStorage(): Project {
       // Validation du schéma avec Zod
       const validationResult = validateProject(parsed);
 
-      // Si la validation échoue et qu'il n'y a pas de baseInputs, les données sont irrécupérables
-      if (!validationResult.success && (!parsed || !parsed.baseInputs)) {
+      // Si la validation échoue, les données sont potentiellement corrompues — reset
+      if (!validationResult.success) {
         return createDefaultProject();
       }
 
-      const source = validationResult.success ? validationResult.data : parsed;
+      // Zod-validated data, cast pour compatibilité avec les fonctions de migration legacy
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const source = validationResult.data as any;
 
       // Migration immuable des données
       const migratedRevenue = source.baseInputs?.revenue
@@ -624,6 +464,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
 // HOOK
 // ============================================================================
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useProject() {
   const context = useContext(ProjectContext);
   if (!context) {

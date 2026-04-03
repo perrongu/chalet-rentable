@@ -132,34 +132,6 @@ export function debounce<T extends unknown[]>(
 }
 
 // ============================================================================
-// ESCAPE CSV RFC 4180
-// ============================================================================
-
-function escapeCSVField(field: unknown): string {
-  // Convertir en string
-  const value = String(field ?? "");
-
-  // Si le champ contient une virgule, un guillemet double, ou un retour à la ligne
-  // il doit être encadré par des guillemets doubles
-  if (
-    value.includes(",") ||
-    value.includes('"') ||
-    value.includes("\n") ||
-    value.includes("\r")
-  ) {
-    // Échapper les guillemets doubles en les doublant
-    const escaped = value.replace(/"/g, '""');
-    return `"${escaped}"`;
-  }
-
-  return value;
-}
-
-export function arrayToCSVLine(arr: unknown[]): string {
-  return arr.map(escapeCSVField).join(",");
-}
-
-// ============================================================================
 // FRÉQUENCES DE PAIEMENT
 // ============================================================================
 

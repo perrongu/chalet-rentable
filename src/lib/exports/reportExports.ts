@@ -1,10 +1,7 @@
-import { jsPDF } from "jspdf";
-import html2canvas from "html2canvas";
 import type { Project, ProjectInputs, KPIResults } from "../../types";
 import type { PDFContext } from "../pdfHelpers";
 import { formatDateShort } from "../utils";
-import { KPI_THRESHOLDS, PDF_SPACING, PDF_SIMPLE } from "../constants";
-import { HTML2CANVAS_OPTIONS } from "./shared";
+import { KPI_THRESHOLDS, PDF_SPACING } from "../constants";
 import {
   formatCashflowValue,
   buildAnnexeA,
@@ -28,108 +25,6 @@ function getKPIColor(
   if (value >= thresholds.good) return "success";
   if (value >= thresholds.medium) return "warning";
   return "danger";
-}
-
-// ============================================================================
-// EXPORT PDF (RAPPORT SIMPLE)
-// ============================================================================
-
-export async function exportReportToPDF(
-  project: Project,
-  scenarios: Array<{ name: string; kpis: KPIResults }>,
-  chartElementIds: string[] = [],
-  filename: string = "rapport-rentabilite.pdf",
-): Promise<void> {
-  const {
-    MARGIN,
-    FONT_SIZE,
-    LINE_HEIGHT,
-    BOTTOM_MARGIN,
-    CHART_BOTTOM_MARGIN,
-    INDENT,
-    CHART_GAP,
-  } = PDF_SIMPLE;
-  const pdf = new jsPDF("p", "mm", "a4");
-  const pageWidth = pdf.internal.pageSize.getWidth();
-  const pageHeight = pdf.internal.pageSize.getHeight();
-  let yPosition = MARGIN;
-
-  pdf.setFontSize(FONT_SIZE.TITLE);
-  pdf.text("Analyse de Rentabilité", MARGIN, yPosition);
-  yPosition += PDF_SPACING.SECTION_SPACING;
-
-  pdf.setFontSize(FONT_SIZE.SECTION);
-  pdf.text(`Projet: ${project.name}`, MARGIN, yPosition);
-  yPosition += LINE_HEIGHT.META;
-
-  if (project.description) {
-    pdf.setFontSize(FONT_SIZE.BODY);
-    const splitDescription = pdf.splitTextToSize(
-      project.description,
-      pageWidth - 2 * MARGIN,
-    );
-    pdf.text(splitDescription, MARGIN, yPosition);
-    yPosition +=
-      splitDescription.length * LINE_HEIGHT.DESCRIPTION +
-      LINE_HEIGHT.DESCRIPTION;
-  }
-
-  pdf.setFontSize(FONT_SIZE.META);
-  pdf.text(`Date: ${formatDateShort(new Date())}`, MARGIN, yPosition);
-  yPosition += PDF_SPACING.SECTION_SPACING;
-
-  scenarios.forEach((scenario) => {
-    if (yPosition > pageHeight - BOTTOM_MARGIN) {
-      pdf.addPage();
-      yPosition = MARGIN;
-    }
-
-    pdf.setFontSize(FONT_SIZE.SECTION);
-    pdf.text(`Scénario: ${scenario.name}`, MARGIN, yPosition);
-    yPosition += LINE_HEIGHT.SECTION;
-
-    pdf.setFontSize(FONT_SIZE.BODY);
-    const kpiData = [
-      `Revenus annuels bruts: ${scenario.kpis.annualRevenue.toLocaleString("fr-CA")} $`,
-      `Dépenses totales: ${scenario.kpis.totalExpenses.toLocaleString("fr-CA")} $`,
-      `Service de la dette: ${scenario.kpis.annualDebtService.toLocaleString("fr-CA")} $`,
-      `Cashflow annuel: ${scenario.kpis.annualCashflow.toLocaleString("fr-CA")} $`,
-      `Cash-on-Cash: ${scenario.kpis.cashOnCash.toFixed(2)} %`,
-      `Cap Rate: ${scenario.kpis.capRate.toFixed(2)} %`,
-    ];
-
-    kpiData.forEach((line) => {
-      pdf.text(line, MARGIN + INDENT, yPosition);
-      yPosition += LINE_HEIGHT.BODY;
-    });
-
-    yPosition += LINE_HEIGHT.DESCRIPTION;
-  });
-
-  for (const chartId of chartElementIds) {
-    const element = document.getElementById(chartId);
-    if (element) {
-      if (yPosition > pageHeight - CHART_BOTTOM_MARGIN) {
-        pdf.addPage();
-        yPosition = MARGIN;
-      }
-
-      try {
-        const canvas = await html2canvas(element, HTML2CANVAS_OPTIONS);
-
-        const imgData = canvas.toDataURL("image/png");
-        const imgWidth = pageWidth - 2 * MARGIN;
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-        pdf.addImage(imgData, "PNG", MARGIN, yPosition, imgWidth, imgHeight);
-        yPosition += imgHeight + CHART_GAP;
-      } catch {
-        // Ignorer les erreurs de capture de graphiques
-      }
-    }
-  }
-
-  pdf.save(filename);
 }
 
 // ============================================================================

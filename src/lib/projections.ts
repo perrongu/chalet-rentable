@@ -39,7 +39,10 @@ function calculateIRR(
       dnpv += (-i * cashflows[i]) / Math.pow(1 + rate, i + 1);
     }
 
+    if (Math.abs(dnpv) < 1e-12) return 0;
     const newRate = rate - npv / dnpv;
+
+    if (!Number.isFinite(newRate)) return 0;
 
     if (Math.abs(newRate - rate) < tolerance) {
       return round(newRate * 100, 2); // Retourner en pourcentage
@@ -378,9 +381,10 @@ export function calculateProjections(
     const moic = totalInvested > 0 ? round(netProfit / totalInvested, 2) : 0;
 
     // Calculer l'IRR pour ce scénario de sortie
+    // Note: years[].cashflow inclut déjà le capex (noi - debtService - capex)
     const cashflows: number[] = [-initialInvestment];
     for (let y = 1; y <= year; y++) {
-      const yearCashflow = years[y - 1].cashflow - years[y - 1].capex;
+      const yearCashflow = years[y - 1].cashflow;
       if (y === year) {
         // Dernière année : ajouter le produit de la vente
         cashflows.push(yearCashflow + netProceeds);
@@ -404,9 +408,10 @@ export function calculateProjections(
   });
 
   // Calculer l'IRR global (sur toute la période)
+  // Note: years[].cashflow inclut déjà le capex (noi - debtService - capex)
   const cashflowsForIRR: number[] = [-initialInvestment];
   for (let i = 0; i < years.length; i++) {
-    const yearCashflow = years[i].cashflow - years[i].capex;
+    const yearCashflow = years[i].cashflow;
     if (i === years.length - 1) {
       // Dernière année : ajouter la valeur de sortie
       const lastExitScenario = exitScenarios[exitScenarios.length - 1];

@@ -1,40 +1,81 @@
-import { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
-import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
-import { Select } from '../../components/ui/Select';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/Tabs';
-import { Spinner } from '../../components/ui/Spinner';
-import { useProject } from '../../store/ProjectContext';
-import type { KPIResults, ParameterRange, ProjectInputs, SensitivityAnalysis1D, SensitivityAnalysis2D } from '../../types';
-import { runSensitivityAnalysis1D, runSensitivityAnalysis2D } from '../../lib/sensitivity';
-import { runMonteCarloAnalysis, type MonteCarloResult } from '../../lib/montecarlo';
-import { TornadoChart } from './TornadoChart';
-import { HeatmapChart } from './HeatmapChart';
-import { MonteCarloChart } from './MonteCarloChart';
-import { PARAMETER_LABELS, KPI_OPTIONS, ERROR_MESSAGES, LIMITS } from '../../lib/constants';
+import { useState, useMemo } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../../components/ui/Card";
+import { Button } from "../../components/ui/Button";
+import { Input } from "../../components/ui/Input";
+import { Select } from "../../components/ui/Select";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "../../components/ui/Tabs";
+import { Spinner } from "../../components/ui/Spinner";
+import { useProject } from "../../store/ProjectContext";
+import type {
+  KPIResults,
+  ParameterRange,
+  ProjectInputs,
+  SensitivityAnalysis1D,
+  SensitivityAnalysis2D,
+} from "../../types";
+import {
+  runSensitivityAnalysis1D,
+  runSensitivityAnalysis2D,
+} from "../../lib/sensitivity";
+import {
+  runMonteCarloAnalysis,
+  type MonteCarloResult,
+} from "../../lib/montecarlo";
+import { TornadoChart } from "./TornadoChart";
+import { HeatmapChart } from "./HeatmapChart";
+import { MonteCarloChart } from "./MonteCarloChart";
+import { GoalSeek } from "./GoalSeek";
+import { CrossSensitivityMatrix } from "./CrossSensitivityMatrix";
+import {
+  PARAMETER_LABELS,
+  KPI_OPTIONS,
+  ERROR_MESSAGES,
+  LIMITS,
+} from "../../lib/constants";
 
 // Fonction pour récupérer les paramètres disponibles avec plages
-function getAvailableParameters(inputs: ProjectInputs): Array<{ path: string; label: string; min: number; max: number; default: number }> {
-  const parameters: Array<{ path: string; label: string; min: number; max: number; default: number }> = [];
+function getAvailableParameters(inputs: ProjectInputs): Array<{
+  path: string;
+  label: string;
+  min: number;
+  max: number;
+  default: number;
+}> {
+  const parameters: Array<{
+    path: string;
+    label: string;
+    min: number;
+    max: number;
+    default: number;
+  }> = [];
 
   // Vérifier les revenus
   if (inputs.revenue.averageDailyRate.range?.useRange) {
     const r = inputs.revenue.averageDailyRate.range;
     parameters.push({
-      path: 'revenue.averageDailyRate',
-      label: PARAMETER_LABELS['revenue.averageDailyRate'],
+      path: "revenue.averageDailyRate",
+      label: PARAMETER_LABELS["revenue.averageDailyRate"],
       min: r.min,
       max: r.max,
       default: r.default,
     });
   }
-  
+
   if (inputs.revenue.occupancyRate.range?.useRange) {
     const r = inputs.revenue.occupancyRate.range;
     parameters.push({
-      path: 'revenue.occupancyRate',
-      label: PARAMETER_LABELS['revenue.occupancyRate'],
+      path: "revenue.occupancyRate",
+      label: PARAMETER_LABELS["revenue.occupancyRate"],
       min: r.min,
       max: r.max,
       default: r.default,
@@ -45,41 +86,41 @@ function getAvailableParameters(inputs: ProjectInputs): Array<{ path: string; la
   if (inputs.financing.purchasePrice.range?.useRange) {
     const r = inputs.financing.purchasePrice.range;
     parameters.push({
-      path: 'financing.purchasePrice',
-      label: PARAMETER_LABELS['financing.purchasePrice'],
+      path: "financing.purchasePrice",
+      label: PARAMETER_LABELS["financing.purchasePrice"],
       min: r.min,
       max: r.max,
       default: r.default,
     });
   }
-  
+
   if (inputs.financing.downPayment.range?.useRange) {
     const r = inputs.financing.downPayment.range;
     parameters.push({
-      path: 'financing.downPayment',
-      label: PARAMETER_LABELS['financing.downPayment'],
+      path: "financing.downPayment",
+      label: PARAMETER_LABELS["financing.downPayment"],
       min: r.min,
       max: r.max,
       default: r.default,
     });
   }
-  
+
   if (inputs.financing.interestRate.range?.useRange) {
     const r = inputs.financing.interestRate.range;
     parameters.push({
-      path: 'financing.interestRate',
-      label: PARAMETER_LABELS['financing.interestRate'],
+      path: "financing.interestRate",
+      label: PARAMETER_LABELS["financing.interestRate"],
       min: r.min,
       max: r.max,
       default: r.default,
     });
   }
-  
+
   if (inputs.financing.amortizationYears.range?.useRange) {
     const r = inputs.financing.amortizationYears.range;
     parameters.push({
-      path: 'financing.amortizationYears',
-      label: PARAMETER_LABELS['financing.amortizationYears'],
+      path: "financing.amortizationYears",
+      label: PARAMETER_LABELS["financing.amortizationYears"],
       min: r.min,
       max: r.max,
       default: r.default,
@@ -90,19 +131,19 @@ function getAvailableParameters(inputs: ProjectInputs): Array<{ path: string; la
   if (inputs.acquisitionFees.notaryFees.range?.useRange) {
     const r = inputs.acquisitionFees.notaryFees.range;
     parameters.push({
-      path: 'acquisitionFees.notaryFees',
-      label: PARAMETER_LABELS['acquisitionFees.notaryFees'],
+      path: "acquisitionFees.notaryFees",
+      label: PARAMETER_LABELS["acquisitionFees.notaryFees"],
       min: r.min,
       max: r.max,
       default: r.default,
     });
   }
-  
+
   if (inputs.acquisitionFees.other.range?.useRange) {
     const r = inputs.acquisitionFees.other.range;
     parameters.push({
-      path: 'acquisitionFees.other',
-      label: PARAMETER_LABELS['acquisitionFees.other'],
+      path: "acquisitionFees.other",
+      label: PARAMETER_LABELS["acquisitionFees.other"],
       min: r.min,
       max: r.max,
       default: r.default,
@@ -129,21 +170,34 @@ function getAvailableParameters(inputs: ProjectInputs): Array<{ path: string; la
 export function SensitivityAnalysis() {
   const { getCurrentInputs } = useProject();
   const inputs = getCurrentInputs();
-  
+
   // Récupérer dynamiquement les paramètres disponibles
-  const availableParameters = useMemo(() => getAvailableParameters(inputs), [inputs]);
+  const availableParameters = useMemo(
+    () => getAvailableParameters(inputs),
+    [inputs],
+  );
 
   // État pour analyse 1D
-  const [objective1D, setObjective1D] = useState<keyof KPIResults>('annualCashflow');
+  const [objective1D, setObjective1D] =
+    useState<keyof KPIResults>("annualCashflow");
   const [selectedParams, setSelectedParams] = useState<string[]>([]);
-  const [paramRanges, setParamRanges] = useState<Record<string, { min: number; max: number }>>({});
-  const [results1D, setResults1D] = useState<SensitivityAnalysis1D['results'] | null>(null);
+  const [paramRanges, setParamRanges] = useState<
+    Record<string, { min: number; max: number }>
+  >({});
+  const [results1D, setResults1D] = useState<
+    SensitivityAnalysis1D["results"] | null
+  >(null);
   const [isRunning1D, setIsRunning1D] = useState(false);
 
   // État pour analyse 2D - initialiser avec les premiers paramètres disponibles
-  const [objective2D, setObjective2D] = useState<keyof KPIResults>('annualCashflow');
-  const [paramX, setParamX] = useState<string>(() => availableParameters[0]?.path || '');
-  const [paramY, setParamY] = useState<string>(() => availableParameters[1]?.path || availableParameters[0]?.path || '');
+  const [objective2D, setObjective2D] =
+    useState<keyof KPIResults>("annualCashflow");
+  const [paramX, setParamX] = useState<string>(
+    () => availableParameters[0]?.path || "",
+  );
+  const [paramY, setParamY] = useState<string>(
+    () => availableParameters[1]?.path || availableParameters[0]?.path || "",
+  );
   const [rangeX, setRangeX] = useState(() => ({
     min: availableParameters[0]?.min || 0,
     max: availableParameters[0]?.max || 100,
@@ -152,12 +206,17 @@ export function SensitivityAnalysis() {
     min: availableParameters[1]?.min || availableParameters[0]?.min || 0,
     max: availableParameters[1]?.max || availableParameters[0]?.max || 100,
   }));
-  const [results2D, setResults2D] = useState<SensitivityAnalysis2D['results'] | null>(null);
+  const [results2D, setResults2D] = useState<
+    SensitivityAnalysis2D["results"] | null
+  >(null);
   const [isRunning2D, setIsRunning2D] = useState(false);
 
   // État pour analyse Monte Carlo
-  const [objectiveMC, setObjectiveMC] = useState<keyof KPIResults>('annualCashflow');
-  const [iterations, setIterations] = useState<number>(LIMITS.DEFAULT_MONTE_CARLO_ITERATIONS);
+  const [objectiveMC, setObjectiveMC] =
+    useState<keyof KPIResults>("annualCashflow");
+  const [iterations, setIterations] = useState<number>(
+    LIMITS.DEFAULT_MONTE_CARLO_ITERATIONS,
+  );
   const [resultsMC, setResultsMC] = useState<MonteCarloResult | null>(null);
   const [isRunningMC, setIsRunningMC] = useState(false);
 
@@ -167,7 +226,7 @@ export function SensitivityAnalysis() {
     } else {
       setSelectedParams([...selectedParams, path]);
       // Initialiser les plages avec les valeurs prédéfinies du paramètre
-      const param = availableParameters.find(p => p.path === path);
+      const param = availableParameters.find((p) => p.path === path);
       if (param) {
         setParamRanges({
           ...paramRanges,
@@ -183,11 +242,11 @@ export function SensitivityAnalysis() {
   const runAnalysis1D = async () => {
     setIsRunning1D(true);
     setResults1D(null);
-    
+
     try {
       // Petite pause pour permettre l'affichage du spinner
-      await new Promise(resolve => setTimeout(resolve, 50));
-      
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
       const parameters: ParameterRange[] = selectedParams.map((path) => {
         const param = availableParameters.find((p) => p.path === path);
         return {
@@ -202,8 +261,7 @@ export function SensitivityAnalysis() {
 
       const result = runSensitivityAnalysis1D(inputs, parameters, objective1D);
       setResults1D(result);
-    } catch (error) {
-      console.error('Erreur lors de l\'analyse 1D:', error);
+    } catch {
       alert(ERROR_MESSAGES.SENSITIVITY_1D_FAILED);
     } finally {
       setIsRunning1D(false);
@@ -212,7 +270,7 @@ export function SensitivityAnalysis() {
 
   const updateParamX = (newPath: string) => {
     setParamX(newPath);
-    const param = availableParameters.find(p => p.path === newPath);
+    const param = availableParameters.find((p) => p.path === newPath);
     if (param) {
       setRangeX({ min: param.min, max: param.max });
     }
@@ -220,7 +278,7 @@ export function SensitivityAnalysis() {
 
   const updateParamY = (newPath: string) => {
     setParamY(newPath);
-    const param = availableParameters.find(p => p.path === newPath);
+    const param = availableParameters.find((p) => p.path === newPath);
     if (param) {
       setRangeY({ min: param.min, max: param.max });
     }
@@ -229,14 +287,14 @@ export function SensitivityAnalysis() {
   const runAnalysis2D = async () => {
     setIsRunning2D(true);
     setResults2D(null);
-    
+
     try {
       // Petite pause pour permettre l'affichage du spinner
-      await new Promise(resolve => setTimeout(resolve, 50));
-      
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
       const paramX_data = availableParameters.find((p) => p.path === paramX);
       const paramY_data = availableParameters.find((p) => p.path === paramY);
-      
+
       const parameterX: ParameterRange = {
         parameter: paramX,
         label: paramX_data?.label || paramX,
@@ -255,10 +313,14 @@ export function SensitivityAnalysis() {
         steps: 15,
       };
 
-      const result = runSensitivityAnalysis2D(inputs, parameterX, parameterY, objective2D);
+      const result = runSensitivityAnalysis2D(
+        inputs,
+        parameterX,
+        parameterY,
+        objective2D,
+      );
       setResults2D(result);
-    } catch (error) {
-      console.error('Erreur lors de l\'analyse 2D:', error);
+    } catch {
       alert(ERROR_MESSAGES.SENSITIVITY_2D_FAILED);
     } finally {
       setIsRunning2D(false);
@@ -268,7 +330,7 @@ export function SensitivityAnalysis() {
   const runAnalysisMC = async () => {
     setIsRunningMC(true);
     setResultsMC(null);
-    
+
     try {
       // Vérifier qu'il y a au moins un paramètre avec useRange=true
       if (availableParameters.length === 0) {
@@ -276,21 +338,20 @@ export function SensitivityAnalysis() {
         setIsRunningMC(false);
         return;
       }
-      
+
       // Petite pause pour permettre l'affichage du spinner
-      await new Promise(resolve => setTimeout(resolve, 50));
-      
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
       const result = runMonteCarloAnalysis(inputs, {
         objective: objectiveMC,
         iterations: Math.max(
           LIMITS.MIN_MONTE_CARLO_ITERATIONS,
-          Math.min(iterations, LIMITS.MAX_MONTE_CARLO_ITERATIONS)
+          Math.min(iterations, LIMITS.MAX_MONTE_CARLO_ITERATIONS),
         ),
       });
-      
+
       setResultsMC(result);
-    } catch (error) {
-      console.error('Erreur lors de la simulation Monte Carlo:', error);
+    } catch {
       alert(ERROR_MESSAGES.MONTE_CARLO_FAILED);
     } finally {
       setIsRunningMC(false);
@@ -306,9 +367,11 @@ export function SensitivityAnalysis() {
         <CardContent>
           <Tabs defaultValue="1d">
             <TabsList>
-              <TabsTrigger value="1d">Analyse 1D (Tornado)</TabsTrigger>
-              <TabsTrigger value="2d">Analyse 2D (Heatmap)</TabsTrigger>
+              <TabsTrigger value="1d">Tornado</TabsTrigger>
+              <TabsTrigger value="2d">Heatmap</TabsTrigger>
               <TabsTrigger value="montecarlo">Monte Carlo</TabsTrigger>
+              <TabsTrigger value="cross-matrix">ADR x Occupation</TabsTrigger>
+              <TabsTrigger value="goal-seek">Objectif inversé</TabsTrigger>
             </TabsList>
 
             {/* Analyse 1D */}
@@ -317,7 +380,9 @@ export function SensitivityAnalysis() {
                 <Select
                   label="Objectif à analyser"
                   value={objective1D}
-                  onChange={(e) => setObjective1D(e.target.value as keyof KPIResults)}
+                  onChange={(e) =>
+                    setObjective1D(e.target.value as keyof KPIResults)
+                  }
                   options={KPI_OPTIONS}
                 />
 
@@ -375,19 +440,21 @@ export function SensitivityAnalysis() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <Button 
-                    onClick={runAnalysis1D} 
+                  <Button
+                    onClick={runAnalysis1D}
                     disabled={selectedParams.length === 0 || isRunning1D}
                     className="flex items-center justify-center space-x-2"
                   >
                     {isRunning1D && <Spinner size="sm" />}
-                    <span>{isRunning1D ? 'Analyse en cours...' : 'Lancer l\'analyse'}</span>
+                    <span>
+                      {isRunning1D ? "Analyse en cours..." : "Lancer l'analyse"}
+                    </span>
                   </Button>
-                  
+
                   {results1D && (
-                    <Button 
+                    <Button
                       variant="outline"
-                      onClick={() => setResults1D(null)} 
+                      onClick={() => setResults1D(null)}
                       disabled={isRunning1D}
                     >
                       Effacer les résultats
@@ -409,7 +476,9 @@ export function SensitivityAnalysis() {
                 <Select
                   label="Objectif à analyser"
                   value={objective2D}
-                  onChange={(e) => setObjective2D(e.target.value as keyof KPIResults)}
+                  onChange={(e) =>
+                    setObjective2D(e.target.value as keyof KPIResults)
+                  }
                   options={KPI_OPTIONS}
                 />
 
@@ -476,19 +545,21 @@ export function SensitivityAnalysis() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <Button 
+                  <Button
                     onClick={runAnalysis2D}
                     disabled={isRunning2D}
                     className="flex items-center justify-center space-x-2"
                   >
                     {isRunning2D && <Spinner size="sm" />}
-                    <span>{isRunning2D ? 'Analyse en cours...' : 'Lancer l\'analyse'}</span>
+                    <span>
+                      {isRunning2D ? "Analyse en cours..." : "Lancer l'analyse"}
+                    </span>
                   </Button>
-                  
+
                   {results2D && (
-                    <Button 
+                    <Button
                       variant="outline"
-                      onClick={() => setResults2D(null)} 
+                      onClick={() => setResults2D(null)}
                       disabled={isRunning2D}
                     >
                       Effacer les résultats
@@ -501,8 +572,14 @@ export function SensitivityAnalysis() {
                     <HeatmapChart
                       results={results2D}
                       objective={objective2D}
-                      labelX={availableParameters.find((p) => p.path === paramX)?.label || paramX}
-                      labelY={availableParameters.find((p) => p.path === paramY)?.label || paramY}
+                      labelX={
+                        availableParameters.find((p) => p.path === paramX)
+                          ?.label || paramX
+                      }
+                      labelY={
+                        availableParameters.find((p) => p.path === paramY)
+                          ?.label || paramY
+                      }
                       paramPathX={paramX}
                       paramPathY={paramY}
                     />
@@ -516,17 +593,22 @@ export function SensitivityAnalysis() {
               <div className="space-y-6">
                 {availableParameters.length === 0 ? (
                   <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm text-yellow-800">
-                    Aucun paramètre avec plage définie (useRange=true). Pour utiliser la simulation Monte Carlo, 
-                    activez les plages pour au moins un paramètre dans l'onglet "Paramètres".
+                    Aucun paramètre avec plage définie (useRange=true). Pour
+                    utiliser la simulation Monte Carlo, activez les plages pour
+                    au moins un paramètre dans l'onglet "Paramètres".
                   </div>
                 ) : (
                   <>
                     <div>
-                      <h3 className="text-lg font-semibold text-slate-800 mb-3">Simulation Monte Carlo</h3>
+                      <h3 className="text-lg font-semibold text-slate-800 mb-3">
+                        Simulation Monte Carlo
+                      </h3>
                       <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-slate-700">
-                        <strong>Description:</strong> Analyse stochastique qui échantillonne aléatoirement 
-                        tous les paramètres avec plages selon une distribution normale, puis calcule des milliers 
-                        de scénarios possibles pour estimer la distribution probabiliste du résultat.
+                        <strong>Description:</strong> Analyse stochastique qui
+                        échantillonne aléatoirement tous les paramètres avec
+                        plages selon une distribution normale, puis calcule des
+                        milliers de scénarios possibles pour estimer la
+                        distribution probabiliste du résultat.
                       </div>
                     </div>
 
@@ -534,10 +616,12 @@ export function SensitivityAnalysis() {
                       <Select
                         label="Objectif à analyser"
                         value={objectiveMC}
-                        onChange={(e) => setObjectiveMC(e.target.value as keyof KPIResults)}
+                        onChange={(e) =>
+                          setObjectiveMC(e.target.value as keyof KPIResults)
+                        }
                         options={KPI_OPTIONS}
                       />
-                      
+
                       <Input
                         type="number"
                         label={`Nombre d'itérations (${LIMITS.MIN_MONTE_CARLO_ITERATIONS}-${LIMITS.MAX_MONTE_CARLO_ITERATIONS})`}
@@ -549,19 +633,23 @@ export function SensitivityAnalysis() {
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <Button 
+                      <Button
                         onClick={runAnalysisMC}
                         disabled={isRunningMC}
                         className="flex items-center justify-center space-x-2"
                       >
                         {isRunningMC && <Spinner size="sm" />}
-                        <span>{isRunningMC ? 'Simulation en cours...' : 'Lancer la simulation'}</span>
+                        <span>
+                          {isRunningMC
+                            ? "Simulation en cours..."
+                            : "Lancer la simulation"}
+                        </span>
                       </Button>
-                      
+
                       {resultsMC && (
-                        <Button 
+                        <Button
                           variant="outline"
-                          onClick={() => setResultsMC(null)} 
+                          onClick={() => setResultsMC(null)}
                           disabled={isRunningMC}
                         >
                           Effacer les résultats
@@ -571,12 +659,25 @@ export function SensitivityAnalysis() {
 
                     {resultsMC && (
                       <div className="mt-6">
-                        <MonteCarloChart results={resultsMC} objective={objectiveMC} />
+                        <MonteCarloChart
+                          results={resultsMC}
+                          objective={objectiveMC}
+                        />
                       </div>
                     )}
                   </>
                 )}
               </div>
+            </TabsContent>
+
+            {/* Matrice ADR x Occupation */}
+            <TabsContent value="cross-matrix" className="bg-slate-50">
+              <CrossSensitivityMatrix />
+            </TabsContent>
+
+            {/* Recherche d'objectif */}
+            <TabsContent value="goal-seek" className="bg-slate-50">
+              <GoalSeek />
             </TabsContent>
           </Tabs>
         </CardContent>
@@ -584,4 +685,3 @@ export function SensitivityAnalysis() {
     </div>
   );
 }
-
