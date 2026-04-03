@@ -10,6 +10,7 @@ import { ProjectionAnalysis } from "./features/projections/ProjectionAnalysis";
 import { saveProjectFile, loadProjectFile } from "./lib/exports";
 import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/Card";
 import { ConfirmDialog } from "./components/ui/ConfirmDialog";
+import type { CalculationTrace, SourceInfo } from "./types";
 
 function InspectionModal({
   metric,
@@ -20,7 +21,9 @@ function InspectionModal({
 }) {
   const { getCurrentKPIs } = useProject();
   const kpis = getCurrentKPIs();
-  const trace = (kpis.traces as any)[metric];
+  const trace = kpis.traces[metric as keyof typeof kpis.traces] as
+    | CalculationTrace
+    | undefined;
 
   if (!trace) return null;
 
@@ -66,7 +69,7 @@ function InspectionModal({
             <div>
               <h4 className="font-medium mb-2 text-slate-700">Sources</h4>
               <div className="space-y-2">
-                {trace.sources.map((source: any, i: number) => (
+                {trace.sources.map((source: SourceInfo, i: number) => (
                   <div key={i} className="text-sm">
                     {source.source && (
                       <div>
@@ -248,7 +251,7 @@ function AppContent() {
   const inputs = getCurrentInputs();
   const kpis = useMemo(() => {
     return getCurrentKPIs();
-  }, [inputs, getCurrentKPIs]);
+  }, [getCurrentKPIs]);
 
   const activeScenario = project.scenarios.find(
     (s) => s.id === project.activeScenarioId,

@@ -1,26 +1,41 @@
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
-import { Input } from '../../components/ui/Input';
-import { RangeInput } from '../../components/ui/RangeInput';
-import { Select } from '../../components/ui/Select';
-import { Button } from '../../components/ui/Button';
-import { useProject } from '../../store/ProjectContext';
-import type { ExpenseLine, InputWithSource } from '../../types';
-import { ExpenseType, ExpenseCategory, PaymentFrequency } from '../../types';
-import { useMemo, useState } from 'react';
-import { generateUUID, formatCurrency } from '../../lib/utils';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../../components/ui/Card";
+import { Input } from "../../components/ui/Input";
+import { RangeInput } from "../../components/ui/RangeInput";
+import { Select } from "../../components/ui/Select";
+import { Button } from "../../components/ui/Button";
+import { useProject } from "../../store/ProjectContext";
+import type { ExpenseLine, InputWithSource, ProjectInputs } from "../../types";
+import { ExpenseType, ExpenseCategory, PaymentFrequency } from "../../types";
+import { useMemo, useState } from "react";
+import { Badge } from "../../components/ui/Badge";
+import { generateUUID, formatCurrency } from "../../lib/utils";
+import { extractValue } from "../../lib/inputMutator";
 
 // Composant pour afficher un indicateur de modification
-function OverrideIndicator({ baseValue, tooltip }: { baseValue: any; tooltip?: string }) {
-  const formatValue = (val: any): string => {
-    if (val === null || val === undefined) return 'non défini';
-    if (typeof val === 'object' && 'value' in val) return String(val.value);
+function OverrideIndicator({
+  baseValue,
+  tooltip,
+}: {
+  baseValue: unknown;
+  tooltip?: string;
+}) {
+  const formatValue = (val: unknown): string => {
+    if (val === null || val === undefined) return "non défini";
+    if (typeof val === "object" && "value" in val) return String(val.value);
     return String(val);
   };
 
   return (
     <span
       className="inline-flex items-center ml-2 text-xs text-orange-500 font-medium"
-      title={tooltip || `Valeur du scénario de base : ${formatValue(baseValue)}`}
+      title={
+        tooltip || `Valeur du scénario de base : ${formatValue(baseValue)}`
+      }
     >
       🔄
     </span>
@@ -31,15 +46,22 @@ export function InputForm() {
   const { project, dispatch, getCurrentInputs, getCurrentKPIs } = useProject();
   const inputs = getCurrentInputs();
   const kpis = getCurrentKPIs();
-  const [showMunicipalAssessmentInfo, setShowMunicipalAssessmentInfo] = useState(false);
-  
+  const [showMunicipalAssessmentInfo, setShowMunicipalAssessmentInfo] =
+    useState(false);
+
   // Vérifier si on est dans le scénario de base
-  const activeScenario = project.scenarios.find((s) => s.id === project.activeScenarioId);
+  const activeScenario = project.scenarios.find(
+    (s) => s.id === project.activeScenarioId,
+  );
   const isBaseScenario = activeScenario?.isBase || false;
 
+  const FORBIDDEN_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+
   // Fonction pour obtenir la valeur de base
-  const getBaseValue = (path: string[]): any => {
-    let current = project.baseInputs as any;
+  const getBaseValue = (path: string[]): unknown => {
+    if (path.some((k) => FORBIDDEN_KEYS.has(k))) return undefined;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let current: any = project.baseInputs;
     for (const key of path) {
       if (current[key] === undefined) return undefined;
       current = current[key];
@@ -48,10 +70,12 @@ export function InputForm() {
   };
 
   // Fonction pour obtenir la valeur dans les overrides
-  const getOverrideValue = (path: string[]): any => {
+  const getOverrideValue = (path: string[]): unknown => {
+    if (path.some((k) => FORBIDDEN_KEYS.has(k))) return undefined;
     if (!activeScenario?.overrides) return undefined;
-    
-    let current = activeScenario.overrides as any;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let current: any = activeScenario.overrides;
     for (const key of path) {
       if (current[key] === undefined) return undefined;
       current = current[key];
@@ -60,30 +84,30 @@ export function InputForm() {
   };
 
   // Fonction pour comparer deux valeurs (incluant les objets InputWithSource)
-  const areValuesEqual = (val1: any, val2: any): boolean => {
+  const areValuesEqual = (val1: unknown, val2: unknown): boolean => {
     if (val1 === val2) return true;
     if (val1 == null || val2 == null) return false;
-    
+
     // Si les deux sont des objets
-    if (typeof val1 === 'object' && typeof val2 === 'object') {
+    if (typeof val1 === "object" && typeof val2 === "object") {
       // Comparer les objets InputWithSource
-      if ('value' in val1 && 'value' in val2) {
+      if ("value" in val1 && "value" in val2) {
         return JSON.stringify(val1) === JSON.stringify(val2);
       }
     }
-    
+
     return false;
   };
 
   // Fonction pour vérifier si un champ est overridé et différent de la base
   const isFieldOverridden = (path: string[]): boolean => {
     if (isBaseScenario) return false;
-    
+
     const overrideValue = getOverrideValue(path);
     if (overrideValue === undefined) return false;
-    
+
     const baseValue = getBaseValue(path);
-    
+
     // Comparer les valeurs - si elles sont égales, pas d'override effectif
     return !areValuesEqual(overrideValue, baseValue);
   };
@@ -92,7 +116,7 @@ export function InputForm() {
   const expensesByCategory = useMemo(() => {
     const grouped: Record<string, ExpenseLine[]> = {};
     inputs.expenses.forEach((expense) => {
-      const category = expense.category || 'Autre';
+      const category = expense.category || "Autre";
       if (!grouped[category]) {
         grouped[category] = [];
       }
@@ -101,25 +125,53 @@ export function InputForm() {
     return grouped;
   }, [inputs.expenses]);
 
-  const updateRevenue = (field: string, value: InputWithSource<number> | number) => {
+  // Calculer les sous-totaux fixes vs variables
+  const expenseSubtotals = useMemo(() => {
+    let fixedTotal = 0;
+    let variableTotal = 0;
+
+    inputs.expenses.forEach((line) => {
+      const amount = extractValue(line.amount);
+      switch (line.type) {
+        case ExpenseType.FIXED_ANNUAL:
+          fixedTotal += amount;
+          break;
+        case ExpenseType.FIXED_MONTHLY:
+          fixedTotal += amount * 12;
+          break;
+        case ExpenseType.PERCENTAGE_REVENUE:
+          variableTotal += (kpis.annualRevenue * amount) / 100;
+          break;
+        case ExpenseType.PERCENTAGE_PROPERTY_VALUE:
+          variableTotal +=
+            (extractValue(inputs.financing.purchasePrice) * amount) / 100;
+          break;
+      }
+    });
+
+    return { fixedTotal, variableTotal };
+  }, [inputs.expenses, kpis.annualRevenue, inputs.financing.purchasePrice]);
+
+  const updateRevenue = (
+    field: string,
+    value: InputWithSource<number> | number,
+  ) => {
     if (isBaseScenario) {
       const updatedRevenue = {
         ...inputs.revenue,
         [field]: value,
       };
       dispatch({
-        type: 'UPDATE_BASE_INPUTS',
-        payload: { revenue: updatedRevenue } as any,
+        type: "UPDATE_BASE_INPUTS",
+        payload: { revenue: updatedRevenue } as Partial<ProjectInputs>,
       });
     } else {
       // Pour les scénarios, merger avec les overrides existants, pas avec les inputs actuels
-      const currentOverrideRevenue = (activeScenario?.overrides as any)?.revenue || {};
-      const updatedRevenue = {
-        ...currentOverrideRevenue,
-        [field]: value,
-      };
+      const currentOverrideRevenue =
+        (activeScenario?.overrides as any)?.revenue ?? {}; // eslint-disable-line @typescript-eslint/no-explicit-any
+      const updatedRevenue = { ...currentOverrideRevenue, [field]: value };
       dispatch({
-        type: 'UPDATE_SCENARIO',
+        type: "UPDATE_SCENARIO",
         payload: {
           id: project.activeScenarioId,
           updates: {
@@ -133,25 +185,29 @@ export function InputForm() {
     }
   };
 
-  const updateFinancing = (field: string, value: InputWithSource<number> | number | PaymentFrequency) => {
+  const updateFinancing = (
+    field: string,
+    value: InputWithSource<number> | number | PaymentFrequency | undefined,
+  ) => {
     if (isBaseScenario) {
       const updatedFinancing = {
         ...inputs.financing,
         [field]: value,
       };
       dispatch({
-        type: 'UPDATE_BASE_INPUTS',
-        payload: { financing: updatedFinancing } as any,
+        type: "UPDATE_BASE_INPUTS",
+        payload: { financing: updatedFinancing } as Partial<ProjectInputs>,
       });
     } else {
       // Pour les scénarios, merger avec les overrides existants, pas avec les inputs actuels
-      const currentOverrideFinancing = (activeScenario?.overrides as any)?.financing || {};
+      const currentOverrideFinancing =
+        (activeScenario?.overrides as any)?.financing || {}; // eslint-disable-line @typescript-eslint/no-explicit-any
       const updatedFinancing = {
         ...currentOverrideFinancing,
         [field]: value,
       };
       dispatch({
-        type: 'UPDATE_SCENARIO',
+        type: "UPDATE_SCENARIO",
         payload: {
           id: project.activeScenarioId,
           updates: {
@@ -165,25 +221,29 @@ export function InputForm() {
     }
   };
 
-  const updateAcquisitionFees = (field: string, value: InputWithSource<number>) => {
+  const updateAcquisitionFees = (
+    field: string,
+    value: InputWithSource<number>,
+  ) => {
     if (isBaseScenario) {
       const updatedAcquisitionFees = {
         ...inputs.acquisitionFees,
         [field]: value,
       };
       dispatch({
-        type: 'UPDATE_BASE_INPUTS',
+        type: "UPDATE_BASE_INPUTS",
         payload: { acquisitionFees: updatedAcquisitionFees },
       });
     } else {
       // Pour les scénarios, merger avec les overrides existants, pas avec les inputs actuels
-      const currentOverrideAcquisitionFees = (activeScenario?.overrides as any)?.acquisitionFees || {};
+      const currentOverrideAcquisitionFees =
+        (activeScenario?.overrides as any)?.acquisitionFees || {}; // eslint-disable-line @typescript-eslint/no-explicit-any
       const updatedAcquisitionFees = {
         ...currentOverrideAcquisitionFees,
         [field]: value,
       };
       dispatch({
-        type: 'UPDATE_SCENARIO',
+        type: "UPDATE_SCENARIO",
         payload: {
           id: project.activeScenarioId,
           updates: {
@@ -197,25 +257,31 @@ export function InputForm() {
     }
   };
 
-  const updateProjectionSettings = (field: string, value: InputWithSource<number>) => {
+  const updateProjectionSettings = (
+    field: string,
+    value: InputWithSource<number>,
+  ) => {
     if (isBaseScenario) {
       const updatedProjectionSettings = {
         ...(inputs.projectionSettings || {}),
         [field]: value,
       };
       dispatch({
-        type: 'UPDATE_BASE_INPUTS',
-        payload: { projectionSettings: updatedProjectionSettings } as any,
+        type: "UPDATE_BASE_INPUTS",
+        payload: {
+          projectionSettings: updatedProjectionSettings,
+        } as Partial<ProjectInputs>,
       });
     } else {
       // Pour les scénarios, merger avec les overrides existants, pas avec les inputs actuels
-      const currentOverrideProjectionSettings = (activeScenario?.overrides as any)?.projectionSettings || {};
+      const currentOverrideProjectionSettings =
+        (activeScenario?.overrides as any)?.projectionSettings || {}; // eslint-disable-line @typescript-eslint/no-explicit-any
       const updatedProjectionSettings = {
         ...currentOverrideProjectionSettings,
         [field]: value,
       };
       dispatch({
-        type: 'UPDATE_SCENARIO',
+        type: "UPDATE_SCENARIO",
         payload: {
           id: project.activeScenarioId,
           updates: {
@@ -232,23 +298,23 @@ export function InputForm() {
   const addExpenseLine = (category?: ExpenseCategory) => {
     const newLine: ExpenseLine = {
       id: generateUUID(),
-      name: 'Nouvelle dépense',
+      name: "Nouvelle dépense",
       type: ExpenseType.FIXED_ANNUAL,
       amount: { value: 0 },
       category: category || ExpenseCategory.AUTRE,
     };
-    
+
     // Pour les expenses, on utilise les inputs actuels car c'est une liste complète
     const updatedExpenses = [...inputs.expenses, newLine];
 
     if (isBaseScenario) {
       dispatch({
-        type: 'UPDATE_BASE_INPUTS',
+        type: "UPDATE_BASE_INPUTS",
         payload: { expenses: updatedExpenses },
       });
     } else {
       dispatch({
-        type: 'UPDATE_SCENARIO',
+        type: "UPDATE_SCENARIO",
         payload: {
           id: project.activeScenarioId,
           updates: {
@@ -264,17 +330,17 @@ export function InputForm() {
 
   const updateExpenseLine = (id: string, updates: Partial<ExpenseLine>) => {
     const updatedExpenses = inputs.expenses.map((line) =>
-      line.id === id ? { ...line, ...updates } : line
+      line.id === id ? { ...line, ...updates } : line,
     );
-    
+
     if (isBaseScenario) {
       dispatch({
-        type: 'UPDATE_BASE_INPUTS',
+        type: "UPDATE_BASE_INPUTS",
         payload: { expenses: updatedExpenses },
       });
     } else {
       dispatch({
-        type: 'UPDATE_SCENARIO',
+        type: "UPDATE_SCENARIO",
         payload: {
           id: project.activeScenarioId,
           updates: {
@@ -292,17 +358,17 @@ export function InputForm() {
     if (!window.confirm(`Confirmer la suppression de "${name}" ?`)) {
       return;
     }
-    
+
     const updatedExpenses = inputs.expenses.filter((line) => line.id !== id);
-    
+
     if (isBaseScenario) {
       dispatch({
-        type: 'UPDATE_BASE_INPUTS',
+        type: "UPDATE_BASE_INPUTS",
         payload: { expenses: updatedExpenses },
       });
     } else {
       dispatch({
-        type: 'UPDATE_SCENARIO',
+        type: "UPDATE_SCENARIO",
         payload: {
           id: project.activeScenarioId,
           updates: {
@@ -330,13 +396,18 @@ export function InputForm() {
                 label={
                   <span>
                     Tarif moyen par nuitée ($)
-                    {isFieldOverridden(['revenue', 'averageDailyRate']) && (
-                      <OverrideIndicator baseValue={getBaseValue(['revenue', 'averageDailyRate'])} />
+                    {isFieldOverridden(["revenue", "averageDailyRate"]) && (
+                      <OverrideIndicator
+                        baseValue={getBaseValue([
+                          "revenue",
+                          "averageDailyRate",
+                        ])}
+                      />
                     )}
                   </span>
                 }
                 value={inputs.revenue.averageDailyRate}
-                onChange={(value) => updateRevenue('averageDailyRate', value)}
+                onChange={(value) => updateRevenue("averageDailyRate", value)}
                 min={0}
                 step={10}
               />
@@ -346,13 +417,15 @@ export function InputForm() {
                 label={
                   <span>
                     Taux d'occupation (%)
-                    {isFieldOverridden(['revenue', 'occupancyRate']) && (
-                      <OverrideIndicator baseValue={getBaseValue(['revenue', 'occupancyRate'])} />
+                    {isFieldOverridden(["revenue", "occupancyRate"]) && (
+                      <OverrideIndicator
+                        baseValue={getBaseValue(["revenue", "occupancyRate"])}
+                      />
                     )}
                   </span>
                 }
                 value={inputs.revenue.occupancyRate}
-                onChange={(value) => updateRevenue('occupancyRate', value)}
+                onChange={(value) => updateRevenue("occupancyRate", value)}
                 min={0}
                 max={100}
                 step={1}
@@ -360,16 +433,17 @@ export function InputForm() {
             </div>
           </div>
           <div className="text-sm text-slate-600 pt-1 border-t border-slate-300">
-            Revenu annuel estimé:{' '}
+            Revenu annuel estimé:{" "}
             <span className="font-semibold text-slate-900">
-              {kpis.annualRevenue.toLocaleString('fr-CA', {
-                style: 'currency',
-                currency: 'CAD',
+              {kpis.annualRevenue.toLocaleString("fr-CA", {
+                style: "currency",
+                currency: "CAD",
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 0,
               })}
-            </span>
-            {' '}({kpis.nightsSold.toFixed(0)} nuitées × {inputs.revenue.averageDailyRate.value} $)
+            </span>{" "}
+            ({kpis.nightsSold.toFixed(0)} nuitées ×{" "}
+            {inputs.revenue.averageDailyRate.value} $)
           </div>
         </CardContent>
       </Card>
@@ -395,7 +469,9 @@ export function InputForm() {
                       <div className="col-span-4">
                         <Input
                           value={line.name}
-                          onChange={(e) => updateExpenseLine(line.id, { name: e.target.value })}
+                          onChange={(e) =>
+                            updateExpenseLine(line.id, { name: e.target.value })
+                          }
                           className="text-sm"
                         />
                       </div>
@@ -403,13 +479,27 @@ export function InputForm() {
                         <Select
                           value={line.type}
                           onChange={(e) =>
-                            updateExpenseLine(line.id, { type: e.target.value as ExpenseType })
+                            updateExpenseLine(line.id, {
+                              type: e.target.value as ExpenseType,
+                            })
                           }
                           options={[
-                            { value: ExpenseType.FIXED_ANNUAL, label: 'Annuel' },
-                            { value: ExpenseType.FIXED_MONTHLY, label: 'Mensuel' },
-                            { value: ExpenseType.PERCENTAGE_REVENUE, label: '% revenus bruts' },
-                            { value: ExpenseType.PERCENTAGE_PROPERTY_VALUE, label: '% valeur propriété' },
+                            {
+                              value: ExpenseType.FIXED_ANNUAL,
+                              label: "Annuel",
+                            },
+                            {
+                              value: ExpenseType.FIXED_MONTHLY,
+                              label: "Mensuel",
+                            },
+                            {
+                              value: ExpenseType.PERCENTAGE_REVENUE,
+                              label: "% revenus bruts",
+                            },
+                            {
+                              value: ExpenseType.PERCENTAGE_PROPERTY_VALUE,
+                              label: "% valeur propriété",
+                            },
                           ]}
                           className="text-sm"
                         />
@@ -418,14 +508,26 @@ export function InputForm() {
                         <Select
                           value={line.category || ExpenseCategory.AUTRE}
                           onChange={(e) =>
-                            updateExpenseLine(line.id, { category: e.target.value as ExpenseCategory })
+                            updateExpenseLine(line.id, {
+                              category: e.target.value as ExpenseCategory,
+                            })
                           }
-                          options={Object.values(ExpenseCategory).map(cat => ({
-                            value: cat,
-                            label: cat,
-                          }))}
+                          options={Object.values(ExpenseCategory).map(
+                            (cat) => ({
+                              value: cat,
+                              label: cat,
+                            }),
+                          )}
                           className="text-sm"
                         />
+                      </div>
+                      <div className="col-span-1 flex items-center justify-center">
+                        {line.type === ExpenseType.PERCENTAGE_REVENUE ||
+                        line.type === ExpenseType.PERCENTAGE_PROPERTY_VALUE ? (
+                          <Badge variant="warning">Variable</Badge>
+                        ) : (
+                          <Badge variant="info">Fixe</Badge>
+                        )}
                       </div>
                       <div className="col-span-2 flex items-center justify-center">
                         <button
@@ -448,25 +550,42 @@ export function InputForm() {
                           </svg>
                         </button>
                       </div>
-                      <div className="col-span-1"></div>
                     </div>
                     <div className="pl-2">
                       <RangeInput
                         label=""
                         value={line.amount}
-                        onChange={(value) => updateExpenseLine(line.id, { amount: value })}
+                        onChange={(value) =>
+                          updateExpenseLine(line.id, { amount: value })
+                        }
                         min={0}
-                        step={line.type === ExpenseType.PERCENTAGE_REVENUE || line.type === ExpenseType.PERCENTAGE_PROPERTY_VALUE ? 0.1 : 10}
+                        step={
+                          line.type === ExpenseType.PERCENTAGE_REVENUE ||
+                          line.type === ExpenseType.PERCENTAGE_PROPERTY_VALUE
+                            ? 0.1
+                            : 10
+                        }
                         className="text-sm"
                       />
                       {line.type === ExpenseType.PERCENTAGE_REVENUE && (
                         <div className="text-xs text-slate-500 mt-1 ml-2">
-                          ≈ {formatCurrency((kpis.annualRevenue * (line.amount.value || 0)) / 100)}/an
+                          ≈{" "}
+                          {formatCurrency(
+                            (kpis.annualRevenue * (line.amount.value || 0)) /
+                              100,
+                          )}
+                          /an
                         </div>
                       )}
                       {line.type === ExpenseType.PERCENTAGE_PROPERTY_VALUE && (
                         <div className="text-xs text-slate-500 mt-1 ml-2">
-                          ≈ {formatCurrency(((inputs.financing.purchasePrice.value || 0) * (line.amount.value || 0)) / 100)}/an
+                          ≈{" "}
+                          {formatCurrency(
+                            ((inputs.financing.purchasePrice.value || 0) *
+                              (line.amount.value || 0)) /
+                              100,
+                          )}
+                          /an
                         </div>
                       )}
                     </div>
@@ -483,13 +602,46 @@ export function InputForm() {
           ))}
           {inputs.expenses.length === 0 && (
             <div className="text-center py-4">
-              <p className="text-slate-500 text-sm mb-2">Aucune dépense configurée</p>
+              <p className="text-slate-500 text-sm mb-2">
+                Aucune dépense configurée
+              </p>
               <button
                 onClick={() => addExpenseLine(ExpenseCategory.AUTRE)}
                 className="text-sm text-sky-600 hover:text-sky-700 transition-colors"
               >
                 + Ajouter une dépense
               </button>
+            </div>
+          )}
+
+          {/* Sous-totaux fixes vs variables */}
+          {inputs.expenses.length > 0 && (
+            <div className="pt-3 mt-3 border-t border-slate-300">
+              <div className="flex flex-wrap gap-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <Badge variant="info">Fixe</Badge>
+                  <span className="font-semibold text-slate-800">
+                    {formatCurrency(expenseSubtotals.fixedTotal)}/an
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="warning">Variable</Badge>
+                  <span className="font-semibold text-slate-800">
+                    {formatCurrency(expenseSubtotals.variableTotal)}/an
+                  </span>
+                  <span className="text-slate-500 text-xs">
+                    (à revenus actuels)
+                  </span>
+                </div>
+                <div className="ml-auto font-semibold text-slate-900">
+                  Total :{" "}
+                  {formatCurrency(
+                    expenseSubtotals.fixedTotal +
+                      expenseSubtotals.variableTotal,
+                  )}
+                  /an
+                </div>
+              </div>
             </div>
           )}
         </CardContent>
@@ -507,13 +659,15 @@ export function InputForm() {
                 label={
                   <span>
                     Prix d'achat ($)
-                    {isFieldOverridden(['financing', 'purchasePrice']) && (
-                      <OverrideIndicator baseValue={getBaseValue(['financing', 'purchasePrice'])} />
+                    {isFieldOverridden(["financing", "purchasePrice"]) && (
+                      <OverrideIndicator
+                        baseValue={getBaseValue(["financing", "purchasePrice"])}
+                      />
                     )}
                   </span>
                 }
                 value={inputs.financing.purchasePrice}
-                onChange={(value) => updateFinancing('purchasePrice', value)}
+                onChange={(value) => updateFinancing("purchasePrice", value)}
                 min={0}
                 step={1000}
               />
@@ -523,8 +677,16 @@ export function InputForm() {
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-sm font-medium text-slate-700">
                     Évaluation municipale ($)
-                    {isFieldOverridden(['financing', 'municipalAssessment']) && (
-                      <OverrideIndicator baseValue={getBaseValue(['financing', 'municipalAssessment'])} />
+                    {isFieldOverridden([
+                      "financing",
+                      "municipalAssessment",
+                    ]) && (
+                      <OverrideIndicator
+                        baseValue={getBaseValue([
+                          "financing",
+                          "municipalAssessment",
+                        ])}
+                      />
                     )}
                   </label>
                   <Button
@@ -539,10 +701,13 @@ export function InputForm() {
                 </div>
                 <input
                   type="number"
-                  value={inputs.financing.municipalAssessment?.value || ''}
+                  value={inputs.financing.municipalAssessment?.value || ""}
                   onChange={(e) => {
-                    const newValue = e.target.value === '' ? undefined : { value: Number(e.target.value) };
-                    updateFinancing('municipalAssessment', newValue as any);
+                    const newValue =
+                      e.target.value === ""
+                        ? undefined
+                        : { value: Number(e.target.value) };
+                    updateFinancing("municipalAssessment", newValue);
                   }}
                   min={0}
                   step={1000}
@@ -561,13 +726,15 @@ export function InputForm() {
                 label={
                   <span>
                     Mise de fonds ($)
-                    {isFieldOverridden(['financing', 'downPayment']) && (
-                      <OverrideIndicator baseValue={getBaseValue(['financing', 'downPayment'])} />
+                    {isFieldOverridden(["financing", "downPayment"]) && (
+                      <OverrideIndicator
+                        baseValue={getBaseValue(["financing", "downPayment"])}
+                      />
                     )}
                   </span>
                 }
                 value={inputs.financing.downPayment}
-                onChange={(value) => updateFinancing('downPayment', value)}
+                onChange={(value) => updateFinancing("downPayment", value)}
                 min={0}
                 step={1000}
               />
@@ -579,13 +746,15 @@ export function InputForm() {
                 label={
                   <span>
                     Taux d'intérêt (%)
-                    {isFieldOverridden(['financing', 'interestRate']) && (
-                      <OverrideIndicator baseValue={getBaseValue(['financing', 'interestRate'])} />
+                    {isFieldOverridden(["financing", "interestRate"]) && (
+                      <OverrideIndicator
+                        baseValue={getBaseValue(["financing", "interestRate"])}
+                      />
                     )}
                   </span>
                 }
                 value={inputs.financing.interestRate}
-                onChange={(value) => updateFinancing('interestRate', value)}
+                onChange={(value) => updateFinancing("interestRate", value)}
                 min={0}
                 max={20}
                 step={0.1}
@@ -596,13 +765,20 @@ export function InputForm() {
                 label={
                   <span>
                     Amortissement (années)
-                    {isFieldOverridden(['financing', 'amortizationYears']) && (
-                      <OverrideIndicator baseValue={getBaseValue(['financing', 'amortizationYears'])} />
+                    {isFieldOverridden(["financing", "amortizationYears"]) && (
+                      <OverrideIndicator
+                        baseValue={getBaseValue([
+                          "financing",
+                          "amortizationYears",
+                        ])}
+                      />
                     )}
                   </span>
                 }
                 value={inputs.financing.amortizationYears}
-                onChange={(value) => updateFinancing('amortizationYears', value)}
+                onChange={(value) =>
+                  updateFinancing("amortizationYears", value)
+                }
                 min={1}
                 max={50}
                 step={1}
@@ -613,18 +789,31 @@ export function InputForm() {
                 label={
                   <span>
                     Fréquence de paiement
-                    {isFieldOverridden(['financing', 'paymentFrequency']) && (
-                      <OverrideIndicator baseValue={getBaseValue(['financing', 'paymentFrequency'])} />
+                    {isFieldOverridden(["financing", "paymentFrequency"]) && (
+                      <OverrideIndicator
+                        baseValue={getBaseValue([
+                          "financing",
+                          "paymentFrequency",
+                        ])}
+                      />
                     )}
                   </span>
                 }
                 value={inputs.financing.paymentFrequency}
-                onChange={(e) => updateFinancing('paymentFrequency', e.target.value as PaymentFrequency)}
+                onChange={(e) =>
+                  updateFinancing(
+                    "paymentFrequency",
+                    e.target.value as PaymentFrequency,
+                  )
+                }
                 options={[
-                  { value: PaymentFrequency.MONTHLY, label: 'Mensuel' },
-                  { value: PaymentFrequency.BI_WEEKLY, label: 'Aux 2 semaines' },
-                  { value: PaymentFrequency.WEEKLY, label: 'Hebdomadaire' },
-                  { value: PaymentFrequency.ANNUAL, label: 'Annuel' },
+                  { value: PaymentFrequency.MONTHLY, label: "Mensuel" },
+                  {
+                    value: PaymentFrequency.BI_WEEKLY,
+                    label: "Aux 2 semaines",
+                  },
+                  { value: PaymentFrequency.WEEKLY, label: "Hebdomadaire" },
+                  { value: PaymentFrequency.ANNUAL, label: "Annuel" },
                 ]}
               />
             </div>
@@ -635,13 +824,23 @@ export function InputForm() {
                 label={
                   <span>
                     Taux d'appréciation annuel (%)
-                    {isFieldOverridden(['financing', 'annualAppreciationRate']) && (
-                      <OverrideIndicator baseValue={getBaseValue(['financing', 'annualAppreciationRate'])} />
+                    {isFieldOverridden([
+                      "financing",
+                      "annualAppreciationRate",
+                    ]) && (
+                      <OverrideIndicator
+                        baseValue={getBaseValue([
+                          "financing",
+                          "annualAppreciationRate",
+                        ])}
+                      />
                     )}
                   </span>
                 }
                 value={inputs.financing.annualAppreciationRate}
-                onChange={(value) => updateFinancing('annualAppreciationRate', value)}
+                onChange={(value) =>
+                  updateFinancing("annualAppreciationRate", value)
+                }
                 min={0}
                 max={20}
                 step={0.1}
@@ -656,7 +855,8 @@ export function InputForm() {
         <CardHeader className="pb-3">
           <CardTitle>Paramètres de projection multi-années</CardTitle>
           <p className="text-sm text-slate-600 mt-1">
-            Utilisés dans l'onglet "Projections" pour modéliser l'évolution de l'investissement
+            Utilisés dans l'onglet "Projections" pour modéliser l'évolution de
+            l'investissement
           </p>
         </CardHeader>
         <CardContent>
@@ -666,13 +866,27 @@ export function InputForm() {
                 label={
                   <span>
                     Escalade revenus annuelle (%)
-                    {isFieldOverridden(['projectionSettings', 'revenueEscalationRate']) && (
-                      <OverrideIndicator baseValue={getBaseValue(['projectionSettings', 'revenueEscalationRate'])} />
+                    {isFieldOverridden([
+                      "projectionSettings",
+                      "revenueEscalationRate",
+                    ]) && (
+                      <OverrideIndicator
+                        baseValue={getBaseValue([
+                          "projectionSettings",
+                          "revenueEscalationRate",
+                        ])}
+                      />
                     )}
                   </span>
                 }
-                value={inputs.projectionSettings?.revenueEscalationRate || { value: 2.5 }}
-                onChange={(value) => updateProjectionSettings('revenueEscalationRate', value)}
+                value={
+                  inputs.projectionSettings?.revenueEscalationRate || {
+                    value: 2.5,
+                  }
+                }
+                onChange={(value) =>
+                  updateProjectionSettings("revenueEscalationRate", value)
+                }
                 min={0}
                 max={10}
                 step={0.1}
@@ -683,13 +897,27 @@ export function InputForm() {
                 label={
                   <span>
                     Escalade dépenses annuelle (%)
-                    {isFieldOverridden(['projectionSettings', 'expenseEscalationRate']) && (
-                      <OverrideIndicator baseValue={getBaseValue(['projectionSettings', 'expenseEscalationRate'])} />
+                    {isFieldOverridden([
+                      "projectionSettings",
+                      "expenseEscalationRate",
+                    ]) && (
+                      <OverrideIndicator
+                        baseValue={getBaseValue([
+                          "projectionSettings",
+                          "expenseEscalationRate",
+                        ])}
+                      />
                     )}
                   </span>
                 }
-                value={inputs.projectionSettings?.expenseEscalationRate || { value: 3.0 }}
-                onChange={(value) => updateProjectionSettings('expenseEscalationRate', value)}
+                value={
+                  inputs.projectionSettings?.expenseEscalationRate || {
+                    value: 3.0,
+                  }
+                }
+                onChange={(value) =>
+                  updateProjectionSettings("expenseEscalationRate", value)
+                }
                 min={0}
                 max={10}
                 step={0.1}
@@ -700,13 +928,20 @@ export function InputForm() {
                 label={
                   <span>
                     CAPEX annuel (% valeur)
-                    {isFieldOverridden(['projectionSettings', 'capexRate']) && (
-                      <OverrideIndicator baseValue={getBaseValue(['projectionSettings', 'capexRate'])} />
+                    {isFieldOverridden(["projectionSettings", "capexRate"]) && (
+                      <OverrideIndicator
+                        baseValue={getBaseValue([
+                          "projectionSettings",
+                          "capexRate",
+                        ])}
+                      />
                     )}
                   </span>
                 }
                 value={inputs.projectionSettings?.capexRate || { value: 1.0 }}
-                onChange={(value) => updateProjectionSettings('capexRate', value)}
+                onChange={(value) =>
+                  updateProjectionSettings("capexRate", value)
+                }
                 min={0}
                 max={5}
                 step={0.1}
@@ -717,13 +952,25 @@ export function InputForm() {
                 label={
                   <span>
                     Taux d'actualisation (%)
-                    {isFieldOverridden(['projectionSettings', 'discountRate']) && (
-                      <OverrideIndicator baseValue={getBaseValue(['projectionSettings', 'discountRate'])} />
+                    {isFieldOverridden([
+                      "projectionSettings",
+                      "discountRate",
+                    ]) && (
+                      <OverrideIndicator
+                        baseValue={getBaseValue([
+                          "projectionSettings",
+                          "discountRate",
+                        ])}
+                      />
                     )}
                   </span>
                 }
-                value={inputs.projectionSettings?.discountRate || { value: 5.0 }}
-                onChange={(value) => updateProjectionSettings('discountRate', value)}
+                value={
+                  inputs.projectionSettings?.discountRate || { value: 5.0 }
+                }
+                onChange={(value) =>
+                  updateProjectionSettings("discountRate", value)
+                }
                 min={0}
                 max={15}
                 step={0.1}
@@ -734,13 +981,25 @@ export function InputForm() {
                 label={
                   <span>
                     Frais de vente (%)
-                    {isFieldOverridden(['projectionSettings', 'saleCostsRate']) && (
-                      <OverrideIndicator baseValue={getBaseValue(['projectionSettings', 'saleCostsRate'])} />
+                    {isFieldOverridden([
+                      "projectionSettings",
+                      "saleCostsRate",
+                    ]) && (
+                      <OverrideIndicator
+                        baseValue={getBaseValue([
+                          "projectionSettings",
+                          "saleCostsRate",
+                        ])}
+                      />
                     )}
                   </span>
                 }
-                value={inputs.projectionSettings?.saleCostsRate || { value: 6.0 }}
-                onChange={(value) => updateProjectionSettings('saleCostsRate', value)}
+                value={
+                  inputs.projectionSettings?.saleCostsRate || { value: 6.0 }
+                }
+                onChange={(value) =>
+                  updateProjectionSettings("saleCostsRate", value)
+                }
                 min={0}
                 max={15}
                 step={0.5}
@@ -765,7 +1024,7 @@ export function InputForm() {
                 <input
                   type="text"
                   readOnly
-                  value={kpis.transferDuties.toLocaleString('fr-CA', {
+                  value={kpis.transferDuties.toLocaleString("fr-CA", {
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 0,
                   })}
@@ -782,13 +1041,18 @@ export function InputForm() {
                 label={
                   <span>
                     Frais de notaire ($)
-                    {isFieldOverridden(['acquisitionFees', 'notaryFees']) && (
-                      <OverrideIndicator baseValue={getBaseValue(['acquisitionFees', 'notaryFees'])} />
+                    {isFieldOverridden(["acquisitionFees", "notaryFees"]) && (
+                      <OverrideIndicator
+                        baseValue={getBaseValue([
+                          "acquisitionFees",
+                          "notaryFees",
+                        ])}
+                      />
                     )}
                   </span>
                 }
                 value={inputs.acquisitionFees.notaryFees}
-                onChange={(value) => updateAcquisitionFees('notaryFees', value)}
+                onChange={(value) => updateAcquisitionFees("notaryFees", value)}
                 min={0}
                 step={100}
               />
@@ -798,13 +1062,15 @@ export function InputForm() {
                 label={
                   <span>
                     Autres frais ($)
-                    {isFieldOverridden(['acquisitionFees', 'other']) && (
-                      <OverrideIndicator baseValue={getBaseValue(['acquisitionFees', 'other'])} />
+                    {isFieldOverridden(["acquisitionFees", "other"]) && (
+                      <OverrideIndicator
+                        baseValue={getBaseValue(["acquisitionFees", "other"])}
+                      />
                     )}
                   </span>
                 }
                 value={inputs.acquisitionFees.other}
-                onChange={(value) => updateAcquisitionFees('other', value)}
+                onChange={(value) => updateAcquisitionFees("other", value)}
                 min={0}
                 step={100}
               />
@@ -820,24 +1086,34 @@ export function InputForm() {
             <CardHeader>
               <div className="flex justify-between items-center">
                 <CardTitle>Évaluation municipale</CardTitle>
-                <Button variant="ghost" size="sm" onClick={() => setShowMunicipalAssessmentInfo(false)}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowMunicipalAssessmentInfo(false)}
+                >
                   ×
                 </Button>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <h4 className="font-medium mb-2 text-slate-800">À quoi sert l'évaluation municipale ?</h4>
+                <h4 className="font-medium mb-2 text-slate-800">
+                  À quoi sert l'évaluation municipale ?
+                </h4>
                 <p className="text-sm text-slate-700">
-                  L'évaluation municipale est utilisée pour calculer les <strong>droits de mutation</strong> (taxe de bienvenue) 
-                  lors de l'achat d'une propriété au Québec.
+                  L'évaluation municipale est utilisée pour calculer les{" "}
+                  <strong>droits de mutation</strong> (taxe de bienvenue) lors
+                  de l'achat d'une propriété au Québec.
                 </p>
               </div>
 
               <div>
-                <h4 className="font-medium mb-2 text-slate-800">Comment est-elle utilisée ?</h4>
+                <h4 className="font-medium mb-2 text-slate-800">
+                  Comment est-elle utilisée ?
+                </h4>
                 <p className="text-sm text-slate-700 mb-2">
-                  Les droits de mutation sont calculés sur la <strong>valeur la plus élevée</strong> entre :
+                  Les droits de mutation sont calculés sur la{" "}
+                  <strong>valeur la plus élevée</strong> entre :
                 </p>
                 <ul className="list-disc list-inside text-sm text-slate-700 space-y-1 ml-2">
                   <li>Le prix d'achat de la propriété</li>
@@ -846,7 +1122,9 @@ export function InputForm() {
               </div>
 
               <div>
-                <h4 className="font-medium mb-2 text-slate-800">Barème des droits de mutation (Québec)</h4>
+                <h4 className="font-medium mb-2 text-slate-800">
+                  Barème des droits de mutation (Québec)
+                </h4>
                 <div className="bg-slate-50 p-3 rounded-xl text-sm space-y-1 border border-slate-300">
                   <div>• 0,5% sur la tranche jusqu'à 52 800 $</div>
                   <div>• 1,0% sur la tranche de 52 800 $ à 264 000 $</div>
@@ -855,17 +1133,21 @@ export function InputForm() {
               </div>
 
               <div>
-                <h4 className="font-medium mb-2 text-slate-800">Exemple de calcul</h4>
+                <h4 className="font-medium mb-2 text-slate-800">
+                  Exemple de calcul
+                </h4>
                 <div className="bg-sky-50 p-3 rounded-xl text-sm space-y-2 border border-sky-100">
                   <div>
                     <strong>Prix d'achat :</strong> 340 000 $<br />
                     <strong>Évaluation municipale :</strong> 600 000 $
                   </div>
                   <div>
-                    <strong>Base de calcul :</strong> max(340 000 $, 600 000 $) = <span className="font-bold text-sky-700">600 000 $</span>
+                    <strong>Base de calcul :</strong> max(340 000 $, 600 000 $)
+                    = <span className="font-bold text-sky-700">600 000 $</span>
                   </div>
                   <div>
-                    <strong>Droits de mutation :</strong><br />
+                    <strong>Droits de mutation :</strong>
+                    <br />
                     52 800 $ × 0,5% = 264 $<br />
                     (264 000 $ - 52 800 $) × 1,0% = 2 112 $<br />
                     (600 000 $ - 264 000 $) × 1,5% = 5 040 $<br />
@@ -875,10 +1157,13 @@ export function InputForm() {
               </div>
 
               <div>
-                <h4 className="font-medium mb-2 text-slate-800">Que faire si je ne connais pas l'évaluation municipale ?</h4>
+                <h4 className="font-medium mb-2 text-slate-800">
+                  Que faire si je ne connais pas l'évaluation municipale ?
+                </h4>
                 <p className="text-sm text-slate-700">
-                  Vous pouvez laisser ce champ vide. Dans ce cas, le calculateur utilisera automatiquement 
-                  le <strong>prix d'achat</strong> comme base de calcul pour les droits de mutation.
+                  Vous pouvez laisser ce champ vide. Dans ce cas, le calculateur
+                  utilisera automatiquement le <strong>prix d'achat</strong>{" "}
+                  comme base de calcul pour les droits de mutation.
                 </p>
               </div>
             </CardContent>
@@ -888,4 +1173,3 @@ export function InputForm() {
     </div>
   );
 }
-

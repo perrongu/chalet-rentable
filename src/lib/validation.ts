@@ -193,15 +193,15 @@ const SensitivityAnalysis2DSchema = z.object({
 // SCHÉMA PRINCIPAL DU PROJET
 // ============================================================================
 
-export const ProjectSchema = z.object({
+const ProjectSchema = z.object({
   id: z.string().max(100),
   name: z.string().max(200),
   description: z.string().max(2000).optional(),
   baseInputs: ProjectInputsSchema,
   scenarios: z.array(ScenarioSchema).max(50),
   activeScenarioId: z.string().max(100),
-  sensitivityAnalyses1D: z.array(SensitivityAnalysis1DSchema),
-  sensitivityAnalyses2D: z.array(SensitivityAnalysis2DSchema),
+  sensitivityAnalyses1D: z.array(SensitivityAnalysis1DSchema).max(50),
+  sensitivityAnalyses2D: z.array(SensitivityAnalysis2DSchema).max(50),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
   version: z.string().max(20),

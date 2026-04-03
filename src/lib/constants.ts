@@ -46,6 +46,8 @@ export const KPI_OPTIONS: Array<{ value: keyof KPIResults; label: string }> = [
   { value: "capitalizationROI", label: "ROI Capitalisation" },
   { value: "appreciationROI", label: "ROI Plus-value" },
   { value: "totalROI", label: "ROI Total" },
+  { value: "noi", label: "NOI (avant dette)" },
+  { value: "dscr", label: "DSCR" },
 ];
 
 // ============================================================================
@@ -65,6 +67,7 @@ export const CURRENCY_METRICS: Array<keyof KPIResults> = [
   "initialInvestment",
   "principalPaidFirstYear",
   "propertyAppreciation",
+  "noi",
 ];
 
 // KPIs en format pourcentage (%)
@@ -111,6 +114,11 @@ export const KPI_THRESHOLDS = {
     good: 6, // >= 6% = vert
     medium: 4, // >= 4% = orange
     // < 4% = rouge
+  },
+  dscr: {
+    good: 1.3, // >= 1.3 = vert (excellent)
+    medium: 1.2, // >= 1.2 = jaune (acceptable)
+    // < 1.2 = rouge (risqué)
   },
 } as const;
 
@@ -213,16 +221,6 @@ export const PDF_SPACING = {
   SUBSECTION_SPACING: 5,
   PARAGRAPH_SPACING: 3,
   TABLE_SPACING: 8,
-} as const;
-
-export const PDF_SIMPLE = {
-  MARGIN: 20,
-  FONT_SIZE: { TITLE: 20, SECTION: 14, BODY: 10, META: 9 },
-  LINE_HEIGHT: { SECTION: 8, BODY: 6, META: 7, DESCRIPTION: 5 },
-  BOTTOM_MARGIN: 40,
-  CHART_BOTTOM_MARGIN: 100,
-  INDENT: 5,
-  CHART_GAP: 10,
 } as const;
 
 export const PDF_REPORT = {
