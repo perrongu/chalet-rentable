@@ -1,5 +1,6 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { ProjectProvider, useProject } from "./store/ProjectContext";
+import type { SaveStatus } from "./store/ProjectContext";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./components/ui/Tabs";
 import { Button } from "./components/ui/Button";
 import { KPIDashboard } from "./components/KPIDashboard";
@@ -8,6 +9,7 @@ import { ScenarioManager } from "./features/scenarios/ScenarioManager";
 import { SensitivityAnalysis } from "./features/sensitivity/SensitivityAnalysis";
 import { ProjectionAnalysis } from "./features/projections/ProjectionAnalysis";
 import { saveProjectFile, loadProjectFile } from "./lib/exports";
+import type { FileSystemFileHandle } from "./lib/exports";
 import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/Card";
 import { ConfirmDialog } from "./components/ui/ConfirmDialog";
 import type { CalculationTrace, SourceInfo } from "./types";
@@ -105,6 +107,35 @@ function InspectionModal({
   );
 }
 
+const SAVE_STATUS_LABELS: Record<SaveStatus, string> = {
+  idle: "",
+  saving: "Enregistrement...",
+  saved: "Enregistr\u00e9",
+  error: "Erreur",
+};
+
+function SaveIndicator({ status }: { status: SaveStatus }) {
+  const isVisible = status !== "idle";
+
+  const colorClass =
+    status === "error"
+      ? "text-red-500"
+      : status === "saving"
+        ? "text-slate-400"
+        : "text-emerald-500";
+
+  return (
+    <span
+      className={`text-xs ${colorClass} transition-opacity duration-300 ${isVisible ? "opacity-100" : "opacity-0"}`}
+      role="status"
+      aria-live="polite"
+      data-save-status={status}
+    >
+      {isVisible ? SAVE_STATUS_LABELS[status] : "\u00A0"}
+    </span>
+  );
+}
+
 function AppContent() {
   const {
     project,
@@ -113,6 +144,7 @@ function AppContent() {
     dispatch,
     hasUnsavedChanges,
     saveError,
+    saveStatus,
   } = useProject();
   const [inspectingMetric, setInspectingMetric] = useState<string | null>(null);
   const [isEditingProjectName, setIsEditingProjectName] = useState(false);
@@ -122,13 +154,19 @@ function AppContent() {
     null,
   );
 
-  const handleSave = async () => {
+  // FileHandle pour Save vs Save As (File System Access API)
+  const fileHandleRef = useRef<FileSystemFileHandle | null>(null);
+
+  const handleSave = async (): Promise<boolean> => {
     try {
-      await saveProjectFile(project);
+      const result = await saveProjectFile(project, fileHandleRef.current);
+      fileHandleRef.current = result.handle;
       dispatch({ type: "MARK_AS_SAVED" });
-      alert("Projet sauvegardé avec succès");
+      return true;
     } catch {
+      fileHandleRef.current = null;
       alert("Erreur lors de la sauvegarde du projet");
+      return false;
     }
   };
 
@@ -161,11 +199,11 @@ function AppContent() {
 
   const performLoad = async () => {
     try {
-      const loadedProject = await loadProjectFile();
-      if (loadedProject) {
-        dispatch({ type: "LOAD_PROJECT", payload: loadedProject });
+      const result = await loadProjectFile();
+      if (result) {
+        dispatch({ type: "LOAD_PROJECT", payload: result.project });
         dispatch({ type: "MARK_AS_SAVED" });
-        alert("Projet chargé avec succès");
+        fileHandleRef.current = result.handle;
       }
     } catch {
       alert("Erreur lors du chargement du projet");
@@ -184,11 +222,16 @@ function AppContent() {
   const performNewProject = () => {
     dispatch({ type: "RESET_PROJECT" });
     dispatch({ type: "MARK_AS_SAVED" });
+    fileHandleRef.current = null;
   };
 
   const handleConfirmSave = async () => {
     setShowConfirmDialog(false);
-    await handleSave();
+    const saved = await handleSave();
+    if (!saved) {
+      setPendingAction(null);
+      return;
+    }
     if (pendingAction === "new") {
       performNewProject();
     } else if (pendingAction === "load") {
@@ -292,6 +335,7 @@ function AppContent() {
                     {project.name}
                   </p>
                 )}
+                <SaveIndicator status={saveStatus} />
                 {activeScenario && (
                   <span
                     className={`text-xs px-3 py-1.5 rounded-full ${
