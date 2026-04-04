@@ -146,6 +146,20 @@ export function GoalSeek() {
                   </span>{" "}
                   (cible : {result.verification.targetValue})
                 </div>
+                {result.details && result.details.length > 0 && (
+                  <div className="bg-slate-50 rounded-xl p-3 text-sm border border-slate-200 space-y-1">
+                    <span className="font-medium">Détails du calcul :</span>
+                    {result.details.map((detail, i) => (
+                      <div
+                        key={`${detail.label}-${i}`}
+                        className="flex justify-between text-slate-700"
+                      >
+                        <span>{detail.label}</span>
+                        <span className="font-semibold">{detail.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </>
             ) : (
               <div className="flex items-center gap-2">
