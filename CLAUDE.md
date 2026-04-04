@@ -33,7 +33,10 @@ No test runner is configured. There are no test files.
 Single global state via **React Context + useReducer** in `src/store/ProjectContext.tsx`:
 - Root state is a `Project` object containing `baseInputs`, scenarios, sensitivity configs, and projections
 - 14 typed action types dispatched via `ProjectAction` union
-- Autosave to `localStorage` with 2-second debounce
+- Autosave to `localStorage` with 2-second debounce (`DebouncedFunction` with `.flush()` and `.cancel()` from `src/lib/utils.ts`)
+- `saveStatus` state (`idle` | `saving` | `saved` | `error`) exposed via context for the `SaveIndicator` component in `App.tsx`
+- `beforeunload` + `pagehide` handlers flush the debounce to prevent data loss on tab close; uses `projectRef` (stable ref) to avoid stale closures
+- Debounce cancelled on component unmount (strict mode safe)
 - `getCurrentInputs()` deep-merges base inputs with active scenario overrides (immutable clone + merge)
 - `getCurrentKPIs()` computes KPIs on demand from current inputs
 - Default project factory in `src/store/defaultProject.ts` (separated for React fast-refresh compatibility)
@@ -100,11 +103,23 @@ Defined in `index.html` via meta tag. Includes `frame-ancestors 'none'` (clickja
 ### Prototype Pollution Guard
 `setValueByPath()` in `src/lib/inputMutator.ts`, `deepMerge()` in `src/lib/utils.ts`, and `getBaseValue()`/`getOverrideValue()` in `InputForm.tsx` all block `__proto__`, `constructor`, `prototype` keys. Any new function accepting dynamic paths/keys must include this guard.
 
-### File Import Validation
+### File Import/Export Validation
 - Max file size: 10 Mo (checked before `.text()` in `src/lib/exports/fileSystem.ts`)
+- MIME type validation: accepts `application/json`, `text/json`, or empty (some OS don't set MIME for `.json`)
 - JSON parsed in try/catch with domain-specific error (`src/lib/exports/jsonIO.ts`)
 - Zod schema validation with `.max()` bounds on all arrays (`expenses.max(100)`, `scenarios.max(50)`, `sensitivityAnalyses.max(50)`)
 - Failed Zod validation resets to default project (no unvalidated fallback)
+- File picker cancel detection: `input.addEventListener("cancel", ...)` (Chrome 113+, Safari 16.4+, Firefox 91+)
+- API detection split: `isSavePickerSupported()` / `isOpenPickerSupported()` — checks each API independently
+
+### File Handle Persistence
+`App.tsx` retains a `FileSystemFileHandle` via `useRef` for Save vs Save As behavior:
+- **Save**: reuses existing handle (silent overwrite, no picker)
+- **Save As / first save**: opens picker, stores returned handle
+- **Open**: `loadProjectFile()` returns `{ project, handle }` — handle stored for subsequent saves
+- **New project**: clears the handle
+- Handle cleared on save error (stale handle protection)
+- `handleSave()` returns `boolean`; `handleConfirmSave` aborts pending action if save fails
 
 ### Production Logging
 No `console.error` in production paths — use user-facing messages (alerts, banners). The `saveError` state in `ProjectContext` surfaces autosave failures via a red banner in `App.tsx`.
@@ -112,7 +127,7 @@ No `console.error` in production paths — use user-facing messages (alerts, ban
 ## Module Splitting Convention
 
 ### Barrel Re-export Pattern
-`src/lib/exports/` uses a barrel `index.ts` so consumers import from `./lib/exports` unchanged. The barrel only exposes actively consumed exports (`saveProjectFile`, `loadProjectFile`, `exportProfessionalReportToPDF`). Internal modules (`jsonIO`) are imported directly by sibling modules.
+`src/lib/exports/` uses a barrel `index.ts` so consumers import from `./lib/exports` unchanged. The barrel exposes: `saveProjectFile`, `loadProjectFile`, `FileSystemFileHandle` (type), `exportProfessionalReportToPDF`. Internal modules (`jsonIO`) are imported directly by sibling modules.
 
 ### File Size Limits
 - Target: 200-600 lines per file, 800 max

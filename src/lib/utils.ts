@@ -114,21 +114,52 @@ export function deepMerge<T extends object>(target: T, source: Partial<T>): T {
 // DEBOUNCE
 // ============================================================================
 
+export interface DebouncedFunction<T extends unknown[]> {
+  (...args: T): void;
+  flush: () => void;
+  cancel: () => void;
+}
+
 export function debounce<T extends unknown[]>(
   func: (...args: T) => void,
   wait: number,
-): (...args: T) => void {
+): DebouncedFunction<T> {
   let timeout: ReturnType<typeof setTimeout> | null = null;
+  let lastArgs: T | null = null;
 
-  return (...args: T) => {
+  const debounced = (...args: T) => {
+    lastArgs = args;
     if (timeout !== null) {
       clearTimeout(timeout);
     }
 
     timeout = setTimeout(() => {
-      func(...args);
+      const argsToUse = lastArgs;
+      lastArgs = null;
+      timeout = null;
+      if (argsToUse !== null) func(...argsToUse);
     }, wait);
   };
+
+  debounced.flush = () => {
+    if (timeout !== null && lastArgs !== null) {
+      clearTimeout(timeout);
+      const args = lastArgs;
+      lastArgs = null;
+      timeout = null;
+      func(...args);
+    }
+  };
+
+  debounced.cancel = () => {
+    if (timeout !== null) {
+      clearTimeout(timeout);
+      timeout = null;
+      lastArgs = null;
+    }
+  };
+
+  return debounced;
 }
 
 // ============================================================================

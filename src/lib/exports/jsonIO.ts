@@ -41,5 +41,6 @@ export function downloadJSON(
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  // Différer la révocation pour laisser le temps au téléchargement de démarrer
+  setTimeout(() => URL.revokeObjectURL(url), 5_000);
 }

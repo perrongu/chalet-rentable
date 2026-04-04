@@ -5,6 +5,8 @@ import React, {
   useEffect,
   useCallback,
   useRef,
+  useState,
+  useMemo,
 } from "react";
 import type { ReactNode } from "react";
 import type {
@@ -18,6 +20,7 @@ import type {
 import { ExpenseCategory } from "../types";
 import { calculateKPIs } from "../lib/calculations";
 import { debounce, deepMerge, deepClone } from "../lib/utils";
+import type { DebouncedFunction } from "../lib/utils";
 import { validateProject } from "../lib/validation";
 import {
   DEFAULT_ANNUAL_APPRECIATION_RATE,
@@ -25,6 +28,8 @@ import {
   LIMITS,
 } from "../lib/constants";
 import { createDefaultProject } from "./defaultProject";
+
+export type SaveStatus = "idle" | "saving" | "saved" | "error";
 
 // ============================================================================
 // INITIAL STATE
@@ -351,6 +356,7 @@ interface ProjectContextType {
   getCurrentKPIs: () => ReturnType<typeof calculateKPIs>;
   hasUnsavedChanges: () => boolean;
   saveError: string | null;
+  saveStatus: SaveStatus;
 }
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
@@ -369,40 +375,108 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   // Référence au dernier état sauvegardé (pour détecter les changements non sauvegardés)
   const lastSavedStateRef = useRef<string>(JSON.stringify(project));
 
-  // Autosave avec debounce
-  // Utiliser useRef pour persister la fonction de save
-  const [saveError, setSaveError] = React.useState<string | null>(null);
+  // Ref stable vers le project courant (pour beforeunload qui ne doit pas dépendre du state)
+  const projectRef = useRef(project);
+  projectRef.current = project;
 
-  const saveToStorageRef = useRef((projectToSave: Project) => {
-    try {
-      const serialized = JSON.stringify(projectToSave);
-      localStorage.setItem(STORAGE_KEY, serialized);
-      setSaveError(null);
-    } catch (error) {
-      if (error instanceof Error && error.name === "QuotaExceededError") {
-        setSaveError(
-          "Espace de stockage insuffisant. Veuillez exporter vos données et libérer de l'espace.",
-        );
-      } else if (error instanceof Error && error.name === "SecurityError") {
-        setSaveError(
-          "Accès au stockage local refusé. Vérifiez les paramètres de votre navigateur.",
-        );
-      } else {
-        setSaveError("Erreur lors de la sauvegarde automatique.");
+  // État de sauvegarde pour feedback visuel
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const saveStatusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Fonction de sauvegarde vers localStorage avec gestion d'état
+  const saveToStorage = useCallback(
+    (projectToSave: Project) => {
+      setSaveStatus("saving");
+      try {
+        const serialized = JSON.stringify(projectToSave);
+        localStorage.setItem(STORAGE_KEY, serialized);
+        setSaveError(null);
+        setSaveStatus("saved");
+
+        // Revenir à 'idle' après 3 secondes
+        if (saveStatusTimerRef.current !== null) {
+          clearTimeout(saveStatusTimerRef.current);
+        }
+        saveStatusTimerRef.current = setTimeout(() => {
+          setSaveStatus("idle");
+        }, 3000);
+      } catch (error) {
+        setSaveStatus("error");
+        if (error instanceof Error && error.name === "QuotaExceededError") {
+          setSaveError(
+            "Espace de stockage insuffisant. Veuillez exporter vos données et libérer de l'espace.",
+          );
+        } else if (error instanceof Error && error.name === "SecurityError") {
+          setSaveError(
+            "Accès au stockage local refusé. Vérifiez les paramètres de votre navigateur.",
+          );
+        } else {
+          setSaveError("Erreur lors de la sauvegarde automatique.");
+        }
       }
-    }
-  });
+    },
+    [], // setSaveStatus et setSaveError sont des setters React stables
+  );
 
-  // Créer le debounce une seule fois
-  const debouncedSave = useRef(
-    debounce((project: Project) => {
-      saveToStorageRef.current(project);
-    }, LIMITS.AUTOSAVE_DELAY_MS),
-  ).current;
+  // Ref stable vers saveToStorage pour le debounce
+  const saveToStorageRef = useRef(saveToStorage);
+  saveToStorageRef.current = saveToStorage;
+
+  // Debounce créé une seule fois via useMemo — appelle toujours saveToStorageRef.current
+  const debouncedSave = useMemo<DebouncedFunction<[Project]>>(
+    () =>
+      debounce((p: Project) => {
+        saveToStorageRef.current(p);
+      }, LIMITS.AUTOSAVE_DELAY_MS),
+    [], // Stable: ne dépend que de saveToStorageRef (ref) et LIMITS (constante)
+  );
 
   useEffect(() => {
     debouncedSave(project);
   }, [project, debouncedSave]);
+
+  // Annuler le debounce à la destruction du composant
+  useEffect(() => {
+    return () => {
+      debouncedSave.cancel();
+    };
+  }, [debouncedSave]);
+
+  // beforeunload + pagehide : flush le debounce pour sauvegarder immédiatement
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // Flush pour sauvegarder les changements en attente vers localStorage
+      debouncedSave.flush();
+
+      // Avertir seulement s'il reste des changements non enregistrés dans un fichier
+      // (lastSavedStateRef est mis à jour par MARK_AS_SAVED lors d'un save explicite)
+      const currentState = JSON.stringify(projectRef.current);
+      if (currentState !== lastSavedStateRef.current) {
+        e.preventDefault();
+      }
+    };
+
+    const handlePageHide = () => {
+      debouncedSave.flush();
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("pagehide", handlePageHide);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("pagehide", handlePageHide);
+    };
+  }, [debouncedSave]);
+
+  // Nettoyage du timer de saveStatus à la destruction
+  useEffect(() => {
+    return () => {
+      if (saveStatusTimerRef.current !== null) {
+        clearTimeout(saveStatusTimerRef.current);
+      }
+    };
+  }, []);
 
   // Wrapper du dispatch pour gérer MARK_AS_SAVED
   const wrappedDispatch = useCallback(
@@ -428,11 +502,9 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     );
 
     if (!activeScenario || activeScenario.isBase) {
-      // Toujours retourner un clone profond pour éviter toute mutation accidentelle cross-scenarios
       return deepClone(project.baseInputs);
     }
 
-    // Merger les overrides avec les inputs de base (deep merge)
     return deepMerge(
       deepClone(project.baseInputs),
       activeScenario.overrides || {},
@@ -453,6 +525,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         getCurrentKPIs,
         hasUnsavedChanges,
         saveError,
+        saveStatus,
       }}
     >
       {children}
