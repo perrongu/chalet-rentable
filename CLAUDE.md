@@ -56,6 +56,11 @@ Pure function `calculateKPIs(inputs)` returns `KPIResults` with **full traceabil
 
 Inverse solver using bisection method. Finds the value of a variable (purchase price, ADR, occupancy) needed to reach a target KPI (DSCR, cashflow, cap rate). Bounded at 50 iterations with domain-range validation on inputs.
 
+- **Co-variation**: When varying `purchasePrice`, the solver automatically co-varies `downPayment` to maintain the same percentage ratio. Without this, the loan amount becomes nonsensical at extreme search bounds (e.g., negative loan when price < fixed down payment).
+- **Result details**: `GoalSeekResult.details` provides intermediate calculation values (price, down payment, loan, debt service, KPI) displayed in the UI for transparency.
+- Module-level `TARGET_LABELS` and `VARIABLE_LABELS` constants avoid duplication across `buildResult` and `buildDetails`.
+- Exhaustive `never` guard on the `solveFor` switch ensures compile-time errors if a new variable is added without a corresponding case.
+
 ### Key Type: `InputWithSource<T>`
 
 Every numeric input is wrapped with `value`, optional `range` (min/max for sensitivity), `useRange` flag, and optional `sourceInfo` (URL/remarks for data provenance). Defined in `src/types/index.ts`.
