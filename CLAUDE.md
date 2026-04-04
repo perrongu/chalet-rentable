@@ -32,7 +32,7 @@ No test runner is configured. There are no test files.
 
 Single global state via **React Context + useReducer** in `src/store/ProjectContext.tsx`:
 - Root state is a `Project` object containing `baseInputs`, scenarios, sensitivity configs, and projections
-- 15 typed action types dispatched via `ProjectAction` union
+- 14 typed action types dispatched via `ProjectAction` union
 - Autosave to `localStorage` with 2-second debounce
 - `getCurrentInputs()` deep-merges base inputs with active scenario overrides (immutable clone + merge)
 - `getCurrentKPIs()` computes KPIs on demand from current inputs
@@ -117,7 +117,7 @@ No `console.error` in production paths — use user-facing messages (alerts, ban
 ### File Size Limits
 - Target: 200-600 lines per file, 800 max
 - If a file exceeds 800 lines, split by domain boundary
-- Current largest files: `calculations.ts` (~710), `InputForm.tsx` (~750), `reportAnnexes.ts` (~570)
+- Current largest files: `InputForm.tsx` (~1175 — needs splitting), `calculations.ts` (~710), `SensitivityAnalysis.tsx` (~687), `ProjectionAnalysis.tsx` (~687), `KPIDashboard.tsx` (~621), `metricAdvice.ts` (~584), `reportAnnexes.ts` (~569)
 
 ## Domain Conventions
 
